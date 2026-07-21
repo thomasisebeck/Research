@@ -1,21 +1,11 @@
 const std = @import("std");
 const print = std.debug.print;
 
-pub const Quality = enum { HIGH, MED, LOW };
+pub const Mode = enum { HIGH, MED, LOW };
 
-pub const PipelineConfig = struct { color_mode: Quality, blur_mode: Quality, apply_blur: bool, sharpen_mode: Quality, quantize_mode: Quality, apply_quantization: bool };
+pub const PipelineConfig = struct { color_mode: Mode, blur_mode: Mode, apply_blur: bool, sharpen_mode: Mode, quantize_mode: Mode, apply_quantization: bool, saturation_mode: Mode, apply_saturation: bool };
 
 pub const Color = struct { r: f32, g: f32, b: f32 };
-
-pub fn Quantize(comptime cfg: PipelineConfig, color: f32) f32 {
-    // downsample the pixel into different "resolutions"
-    const res: f32 = switch (cfg.quantize_mode) {
-        .HIGH => @round(color * 255.0) / 255.0,
-        .MED => @round(color * 16.0) / 16.0,
-        .LOW => if (color > 0.5) 1.0 else 0.0,
-    };
-    return res;
-}
 
 // Helper container struct to cleanly bundle neighborhood data for the Blur function
 pub const Neighbors = struct {
@@ -29,20 +19,44 @@ pub const Neighbors = struct {
     topMiddle: Color,
 };
 
+pub fn Quantize(comptime cfg: PipelineConfig, color: f32) f32 {
+    // downsample the pixel into different "resolutions"
+    const res: f32 = switch (cfg.quantize_mode) {
+        .HIGH => @round(color * 255.0) / 255.0,
+        .MED => @round(color * 16.0) / 16.0,
+        .LOW => if (color > 0.5) 1.0 else 0.0,
+    };
+    return res;
+}
+
 pub fn Blur(comptime cfg: PipelineConfig, item: *Color, n: Neighbors) void {
-    if (cfg.blur_mode == Quality.LOW) {
+    if (cfg.blur_mode == Mode.LOW) {
         item.r = (n.middleLeft.r + item.r + n.middelRight.r) / 3.0;
         item.g = (n.middleLeft.g + item.g + n.middelRight.g) / 3.0;
         item.b = (n.middleLeft.b + item.b + n.middelRight.b) / 3.0;
-    } else if (cfg.blur_mode == Quality.MED) {
+    } else if (cfg.blur_mode == Mode.MED) {
         item.r = (n.topMiddle.r + n.bottomMiddle.r + n.middleLeft.r + n.middelRight.r + item.r) / 5.0;
         item.g = (n.topMiddle.g + n.bottomMiddle.g + n.middleLeft.g + n.middelRight.g + item.g) / 5.0;
         item.b = (n.topMiddle.b + n.bottomMiddle.b + n.middleLeft.b + n.middelRight.b + item.b) / 5.0;
-    } else if (cfg.blur_mode == Quality.HIGH) {
+    } else if (cfg.blur_mode == Mode.HIGH) {
         item.r = (n.topLeft.r + n.middleLeft.r + n.bottomLeft.r + n.bottomMiddle.r + n.bottomRight.r + n.middelRight.r + n.topRight.r + n.topMiddle.r + item.r) / 9.0;
         item.g = (n.topLeft.g + n.middleLeft.g + n.bottomLeft.g + n.bottomMiddle.g + n.bottomRight.g + n.middelRight.g + n.topRight.g + n.topMiddle.g + item.g) / 9.0;
         item.b = (n.topLeft.b + n.middleLeft.b + n.bottomLeft.b + n.bottomMiddle.b + n.bottomRight.b + n.middelRight.b + n.topRight.b + n.topMiddle.b + item.b) / 9.0;
     }
+}
+
+pub fn Saturation(comptime cfg: PipelineConfig, item: *Color) void {
+    const luma = (0.299 * item.r) + (0.587 * item.g) + (0.144 * item.b);
+
+    const delta: f32 = switch (cfg.saturation_mode) {
+        .LOW => 1.5,
+        .MED => 2.5,
+        .HIGH => 3.5,
+    };
+
+    item.r = std.math.clamp(luma + (delta * (item.r - luma)), 0.0, 255.0);
+    item.g = std.math.clamp(luma + (delta * (item.g - luma)), 0.0, 255.0);
+    item.b = std.math.clamp(luma + (delta * (item.b - luma)), 0.0, 255.0);
 }
 
 const SIZE = 1000;
@@ -83,6 +97,10 @@ pub fn Process(comptime cfg: PipelineConfig, mat: *[SIZE][SIZE]Color) void {
                 item.g = Quantize(cfg, item.g);
                 item.b = Quantize(cfg, item.b);
             }
+
+            if (cfg.apply_saturation) {
+                Saturation(cfg, item);
+            }
         }
     }
 }
@@ -102,9 +120,7 @@ pub fn printImage(mat: *const [SIZE][SIZE]Color) !void {
     print("]\n", .{});
 }
 
-pub fn main(init: std.process.Init) !void {
-    const io = init.io;
-
+pub fn writeImageToFile(io: anytype, path: []const u8) !void {
     var my_image: [SIZE][SIZE]Color = undefined;
 
     var pseudo_rand_state: u32 = 12345;
@@ -125,17 +141,53 @@ pub fn main(init: std.process.Init) !void {
         }
     }
 
-    //print("THIS IS THE IMAGE: ", .{});
-    //_ = try printImage(&my_image);
+    // 1. Open/create the target binary file
+    var file = try std.Io.Dir.cwd().createFile(io, path, .{ .truncate = true });
+    defer file.close(io);
 
-    // 3. Set up a sample configuration
+    // 2. Cast the entire multidimensional array down to a raw byte slice
+    const bytes = std.mem.asBytes(&my_image);
+
+    // 3. Initialize the streaming writer context and dump the bytes
+    var file_writer = file.writer(io, &.{});
+    try file_writer.interface.writeAll(bytes);
+}
+
+pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[SIZE][SIZE]Color) !void {
+    // 1. Calculate the exact structural byte size required by the grid
+    const expected_bytes = @sizeOf([SIZE][SIZE]Color);
+
+    // 2. Cast the destination matrix memory space straight down to a raw byte slice
+    const dest_bytes = std.mem.asBytes(mat);
+
+    // 3. Read the file data directly into the array's memory space using your I/O style
+    const file_bytes = try std.Io.Dir.cwd().readFile(io, path, dest_bytes);
+
+    // 4. Validate that the file wasn't truncated or corrupted
+    if (file_bytes.len != expected_bytes) {
+        return error.ImageFileCorruptedOrTruncated;
+    }
+}
+
+pub fn main(init: std.process.Init) !void {
+    const io = init.io;
+
+    // write the image
+    // _ = try writeImageToFile(io, "input_image.bin");
+
+    // read the image
+    var my_image: [SIZE][SIZE]Color = undefined;
+    try readImageFromFile(io, "input_image.bin", &my_image);
+
     const config = PipelineConfig{
         .color_mode = .HIGH,
         .apply_blur = true,
         .apply_quantization = true,
-        .blur_mode = .LOW,
-        .sharpen_mode = .LOW,
+        .blur_mode = .HIGH,
+        .sharpen_mode = .HIGH,
         .quantize_mode = .HIGH,
+        .apply_saturation = true,
+        .saturation_mode = .HIGH,
     };
 
     var start_time = std.Io.Clock.now(.awake, io);
@@ -145,9 +197,6 @@ pub fn main(init: std.process.Init) !void {
     const end_time = std.Io.Clock.now(.awake, io);
 
     const duration = start_time.durationTo(end_time);
-
-    //print("AFTER BLUR (LOW): ", .{});
-    //_ = try printImage(&my_image);
 
     std.debug.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
 }
