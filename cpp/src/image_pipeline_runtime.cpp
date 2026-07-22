@@ -5,26 +5,25 @@
 #include <print>
 #include <utility>
 
-template <utils::PipelineConfig cfg>
-[[nodiscard]] constexpr float Quantize(float color) {
+[[nodiscard]] float Quantize(const utils::PipelineConfig &cfg, float color) {
   float res = 0;
-  if constexpr (cfg.quantize_mode == utils::Mode::HIGH) {
+  if (cfg.quantize_mode == utils::Mode::HIGH) {
     res = std::round(color * 255.0f) / 255.0f;
-  } else if constexpr (cfg.quantize_mode == utils::Mode::MED) {
+  } else if (cfg.quantize_mode == utils::Mode::MED) {
     res = std::round(color * 16.0f) / 16.0f;
-  } else if constexpr (cfg.quantize_mode == utils::Mode::LOW) {
+  } else if (cfg.quantize_mode == utils::Mode::LOW) {
     res = (color > 0.5f) ? 1.0f : 0.0f;
   }
   return res;
 }
 
-template <utils::PipelineConfig cfg>
-constexpr void Blur(utils::Color &item, const utils::Neighbors &n) noexcept {
-  if constexpr (cfg.blur_mode == utils::Mode::LOW) {
+void Blur(const utils::PipelineConfig &cfg, utils::Color &item,
+          const utils::Neighbors &n) noexcept {
+  if (cfg.blur_mode == utils::Mode::LOW) {
     item.r = (n.middleLeft.r + item.r + n.middleRight.r) / 3.0f;
     item.g = (n.middleLeft.g + item.g + n.middleRight.g) / 3.0f;
     item.b = (n.middleLeft.b + item.b + n.middleRight.b) / 3.0f;
-  } else if constexpr (cfg.blur_mode == utils::Mode::MED) {
+  } else if (cfg.blur_mode == utils::Mode::MED) {
 
     item.r = (n.topMiddle.r + n.bottomMiddle.r + n.middleLeft.r +
               n.middleRight.r + item.r) /
@@ -36,7 +35,7 @@ constexpr void Blur(utils::Color &item, const utils::Neighbors &n) noexcept {
     item.b = (n.topMiddle.b + n.bottomMiddle.b + n.middleLeft.b +
               n.middleRight.b + item.b) /
              5.0f;
-  } else if constexpr (cfg.blur_mode == utils::Mode::HIGH) {
+  } else if (cfg.blur_mode == utils::Mode::HIGH) {
     item.r = (n.topLeft.r + n.middleLeft.r + n.bottomLeft.r + n.bottomMiddle.r +
               n.bottomRight.r + n.middleRight.r + n.topRight.r + n.topMiddle.r +
               item.r) /
@@ -52,12 +51,11 @@ constexpr void Blur(utils::Color &item, const utils::Neighbors &n) noexcept {
   }
 }
 
-template <utils::PipelineConfig cfg>
-constexpr void Saturation(utils::Color &item) {
+void Saturation(const utils::PipelineConfig &cfg, utils::Color &item) {
   const float luma = (0.299f * item.r) + (0.587f * item.g) + (0.144f * item.b);
 
   // use a IIFE (Immediately Invoked Function Expression)
-  float delta = []() -> float {
+  float delta = [cfg]() -> float {
     switch (cfg.saturation_mode) {
     case utils::Mode::LOW:
       return 1.5;
@@ -78,15 +76,15 @@ constexpr void Saturation(utils::Color &item) {
   item.b = std::clamp(luma + (delta * (item.b - luma)), 0.0f, 1.0f);
 }
 
-template <utils::PipelineConfig cfg>
-constexpr void Process(utils::Color (&mat)[utils::SIZE][utils::SIZE]) {
+void Process(const utils::PipelineConfig &cfg,
+             utils::Color (&mat)[utils::SIZE][utils::SIZE]) {
   for (int row_num = 1; row_num < utils::SIZE - 1; row_num++) {
 
     for (int col_num = 1; col_num < utils::SIZE - 1; col_num++) {
       // ref to the item
       utils::Color &item = mat[row_num][col_num];
 
-      if constexpr (cfg.apply_blur) {
+      if (cfg.apply_blur) {
         const utils::Neighbors n = {.topLeft = mat[row_num - 1][col_num - 1],
                                     .middleLeft = mat[row_num][col_num - 1],
                                     .bottomLeft = mat[row_num + 1][col_num - 1],
@@ -99,17 +97,17 @@ constexpr void Process(utils::Color (&mat)[utils::SIZE][utils::SIZE]) {
 
         };
 
-        Blur<cfg>(item, n);
+        Blur(cfg, item, n);
       };
 
-      if constexpr (cfg.apply_quantization) {
-        item.r = Quantize<cfg>(item.r);
-        item.g = Quantize<cfg>(item.g);
-        item.b = Quantize<cfg>(item.b);
+      if (cfg.apply_quantization) {
+        item.r = Quantize(cfg, item.r);
+        item.g = Quantize(cfg, item.g);
+        item.b = Quantize(cfg, item.b);
       }
 
-      if constexpr (cfg.apply_saturation) {
-        Saturation<cfg>(item);
+      if (cfg.apply_saturation) {
+        Saturation(cfg, item);
       }
     }
   }
@@ -119,7 +117,9 @@ int main() {
 
   utils::Color my_image[utils::SIZE][utils::SIZE];
 
-  readImageFromFile("input_image.txt", my_image);
+  // const auto good = writeImageToFile<utils::SIZE>("image.txt");
+
+  utils::readImageFromFile("input_image.txt", my_image);
 
   constexpr auto config =
       utils::PipelineConfig{.color_mode = utils::Mode::LOW,
@@ -133,7 +133,7 @@ int main() {
 
   const auto start_time = std::chrono::steady_clock::now();
 
-  Process<config>(my_image);
+  Process(config, my_image);
 
   const auto end_time = std::chrono::steady_clock::now();
   const auto duration = end_time - start_time;

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(Practice)
 
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -11,6 +11,9 @@ option(Optimise "Build with high optimizations and no assertions" OFF)
 
 # 1. Source files
 set(SOURCES src/image_pipeline_comptime.cpp)
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/input_image.txt"
+               "${CMAKE_CURRENT_BINARY_DIR}/input_image.txt" COPYONLY)
 
 add_executable(out ${SOURCES})
 
