@@ -1,6 +1,7 @@
 const std = @import("std");
 pub const SIZE = 150;
 const print = std.debug.print;
+const assert = std.debug.assert;
 
 pub const Color = struct { r: f32, g: f32, b: f32 };
 
@@ -55,6 +56,33 @@ pub fn writeImageToFile(io: anytype, path: []const u8) !void {
             try file_writer.interface.print("{d:.6} {d:.6} {d:.6}\n", .{ rf, gf, bf });
         }
     }
+}
+
+pub fn readArrayFromFile(comptime size: usize, comptime T: type, io: std.Io, path: []const u8) ![size]T {
+    //var stdout_writer = std.Io.File.stdout().writer(io, &.{});
+    //const stdout = &stdout_writer.interface;
+    var file_buf: [size * 32]u8 = undefined;
+    const file = try std.Io.Dir.cwd().readFile(io, path, &file_buf);
+
+    // init the array to all 0, len 5
+    var input_array = [_]i64{0} ** size;
+    var counter: u32 = 0;
+
+    var iter = std.mem.tokenizeScalar(u8, file, '\n');
+    while (iter.next()) |line| {
+        if (counter >= size) break;
+
+        const clean_line = std.mem.trim(u8, line, "\r");
+
+        // pass the buffer as base 10
+        input_array[counter] = try std.fmt.parseInt(i64, clean_line, 10);
+
+        counter += 1;
+    }
+
+    assert(counter == size);
+
+    return input_array;
 }
 
 pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[SIZE][SIZE]Color) !i32 {

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(Practice)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -21,15 +21,22 @@ add_executable(out ${SOURCES})
 if(Optimise)
   message(STATUS "Build Mode: OPTIMIZED (Assertions disabled)")
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(out PRIVATE -O3 -march=native -mtune=native -flto
-                                       -ffast-math -fno-tree-vectorize)
+    target_compile_options(
+      out
+      PRIVATE -O3
+              -std=c++26
+              -march=native
+              -mtune=native
+              -flto
+              -ffast-math
+              -fno-tree-vectorize)
     target_compile_definitions(out PRIVATE NDEBUG) # This removes the
                                                    # assertions!
   endif()
 else()
   message(STATUS "Build Mode: DEBUG (Assertions enabled, slow)")
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(out PRIVATE -g -O0)
+    target_compile_options(out PRIVATE -g -O0 -std=c++26)
     # Note: We do NOT define NDEBUG here, so assert() stays active.
   endif()
 endif()
