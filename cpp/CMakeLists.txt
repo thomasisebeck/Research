@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(Practice)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(Optimise "Build with high optimizations and no assertions" OFF)
 
 # 1. Source files
-set(SOURCES expression_templates.cpp)
+set(SOURCES src/image_pipeline_comptime.cpp)
 
 add_executable(out ${SOURCES})
 
