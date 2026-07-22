@@ -19,7 +19,7 @@ pub const Neighbors = struct {
     topMiddle: Color,
 };
 
-pub fn Quantize(comptime cfg: PipelineConfig, color: f32) f32 {
+pub fn Quantize(cfg: PipelineConfig, color: f32) f32 {
     // downsample the pixel into different "resolutions"
     const res: f32 = switch (cfg.quantize_mode) {
         .HIGH => @round(color * 255.0) / 255.0,
@@ -29,7 +29,7 @@ pub fn Quantize(comptime cfg: PipelineConfig, color: f32) f32 {
     return res;
 }
 
-pub fn Blur(comptime cfg: PipelineConfig, item: *Color, n: Neighbors) void {
+pub fn Blur(cfg: PipelineConfig, item: *Color, n: Neighbors) void {
     if (cfg.blur_mode == Mode.LOW) {
         item.r = (n.middleLeft.r + item.r + n.middelRight.r) / 3.0;
         item.g = (n.middleLeft.g + item.g + n.middelRight.g) / 3.0;
@@ -45,7 +45,7 @@ pub fn Blur(comptime cfg: PipelineConfig, item: *Color, n: Neighbors) void {
     }
 }
 
-pub fn Saturation(comptime cfg: PipelineConfig, item: *Color) void {
+pub fn Saturation(cfg: PipelineConfig, item: *Color) void {
     const luma = (0.299 * item.r) + (0.587 * item.g) + (0.144 * item.b);
 
     const delta: f32 = switch (cfg.saturation_mode) {
@@ -61,7 +61,7 @@ pub fn Saturation(comptime cfg: PipelineConfig, item: *Color) void {
 
 const SIZE = 1000;
 
-pub fn Process(comptime cfg: PipelineConfig, mat: *[SIZE][SIZE]Color) void {
+pub fn Process(cfg: PipelineConfig, mat: *[SIZE][SIZE]Color) void {
     // low: get the avg of next, prev and curr
     // med: get the avg of 3by3
     // high: get the average of 3by3, and add jitter
@@ -180,14 +180,14 @@ pub fn main(init: std.process.Init) !void {
     try readImageFromFile(io, "input_image.bin", &my_image);
 
     const config = PipelineConfig{
-        .color_mode = .HIGH,
+        .color_mode = .LOW,
         .apply_blur = true,
         .apply_quantization = true,
-        .blur_mode = .HIGH,
-        .sharpen_mode = .HIGH,
-        .quantize_mode = .HIGH,
+        .blur_mode = .LOW,
+        .sharpen_mode = .LOW,
+        .quantize_mode = .LOW,
         .apply_saturation = true,
-        .saturation_mode = .HIGH,
+        .saturation_mode = .LOW,
     };
 
     var start_time = std.Io.Clock.now(.awake, io);
