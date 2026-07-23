@@ -58,7 +58,7 @@ pub fn writeImageToFile(io: anytype, path: []const u8) !void {
     }
 }
 
-pub fn readArrayFromFile(comptime size: usize, comptime T: type, io: std.Io, path: []const u8) ![size]T {
+pub fn readArrayFromFile(comptime size: usize, io: std.Io, path: []const u8) ![size]i64 {
     //var stdout_writer = std.Io.File.stdout().writer(io, &.{});
     //const stdout = &stdout_writer.interface;
     var file_buf: [size * 32]u8 = undefined;

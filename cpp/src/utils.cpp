@@ -1,5 +1,8 @@
 
+#include <array>
 #include <fstream>
+#include <iostream>
+#include <ostream>
 #include <print>
 
 namespace utils {
@@ -78,6 +81,35 @@ void readImageFromFile(std::string_view path, Color (&mat)[SIZE][SIZE]) {
     throw "did not reach the end of the file";
   }
   file.close();
+}
+
+template <int Size>
+std::array<int, Size> readArrayFromFile(std::string_view path) {
+
+  std::ifstream file(path.data(), std::ios::in);
+  if (!file.is_open()) {
+    throw "Cannot open file";
+  }
+  auto myArr = std::array<int, Size>();
+
+  int counter = 0;
+
+  for (int i; file >> i;) {
+    myArr[counter++] = i;
+  }
+
+  return myArr;
+}
+
+template <int Size> void printArray(const std::array<int, Size> &arr) {
+  std::cout << "[";
+  for (int i = 0; i < Size; ++i) {
+    std::cout << arr[i];
+    if (i < Size - 1) {
+      std::cout << ", ";
+    }
+  }
+  std::cout << "]\n";
 }
 
 } // namespace utils

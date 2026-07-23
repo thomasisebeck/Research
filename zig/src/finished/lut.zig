@@ -4,6 +4,7 @@ const utils = @import("utils.zig");
 const print = std.debug.print;
 
 // TODO: this is the experimental change
+// 1 increment -> must still test
 // 0.1 increment -> comptime is faster, fits in the L1 cache
 // 0.01 increment -> runtime is faster, does not fit in the L1 cache
 const increment: comptime_float = 2;
@@ -50,7 +51,7 @@ fn generateTestCases(io: anytype, path: []const u8) !void {
 
 pub fn main(init: std.process.Init) !void {
     _ = try generateTestCases(init.io, "lookup.txt");
-    const test_cases = try utils.readArrayFromFile(TEST_SIZE, i64, init.io, "lookup.txt");
+    const test_cases = try utils.readArrayFromFile(TEST_SIZE, init.io, "lookup.txt");
 
     const myLut = comptime generateLUT();
 
@@ -84,8 +85,8 @@ pub fn main(init: std.process.Init) !void {
 
     end_time = std.Io.Clock.now(.awake, io);
     const duration_run = start_time.durationTo(end_time);
-    std.debug.print("Runtime processed in: {} ns\n", .{duration_run.toNanoseconds()});
-    std.debug.print("Comptime processed in: {} ns\n", .{duration_comp.toNanoseconds()});
+    print("Runtime processed in: {} ns\n", .{duration_run.toNanoseconds()});
+    print("Comptime processed in: {} ns\n", .{duration_comp.toNanoseconds()});
     print("Sum comp: {d}\n", .{sum_comp});
     print("Sum run: {d}\n", .{sum_run});
 }

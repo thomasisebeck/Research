@@ -1,10 +1,11 @@
+#include "utils.cpp"
 #include <array>
-#include <cmath>
 #include <cstddef>
+#include <iostream>
 #include <ranges>
 
-constexpr float increment = 0.1;
-constexpr size_t TEST_SIZE = 1000;
+constexpr float increment = 0.1f;
+constexpr size_t TEST_SIZE = 500;
 constexpr float degrees = 360;
 constexpr int steps = static_cast<size_t>(degrees / increment);
 
@@ -25,12 +26,16 @@ constexpr std::array<float, steps> generateLUT() {
 }
 
 int main() {
-  constexpr float increment = 0.1f;
-  constexpr std::size_t steps = 3600;
 
-  constexpr toLookUp = generateTestCases();
+  const auto test_cases = utils::readArrayFromFile<TEST_SIZE>("lookup.txt");
 
-  // This line will fail to compile under C++20 and C++23
-  constexpr auto test_lut = generateLUT();
+  // Must use C++ 26 (clang is still registering as an error, but it compiles)
+  constexpr auto myLut = generateLUT();
+
+  double sum_comp = 0;
+
+  std::cout << "This is the array read from the file: " << std::endl;
+  utils::printArray<TEST_SIZE>(test_cases);
+
   return 0;
 }
