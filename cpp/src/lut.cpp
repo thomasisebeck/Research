@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstddef>
+#include <numeric>
 #include <print>
 #include <ranges>
 
@@ -14,14 +15,30 @@ constexpr int STEPS = static_cast<size_t>(DEGREES / INCREMENT);
 // template <utils::PipelineConfig cfg>
 //  [[nodiscard]] constexpr float Quantize(float color) {
 
+/*
+
+fn generateLUT() [steps]f64 {
+    @setEvalBranchQuota(1000000);
+    // table empty, but enough to hold all the steps
+    var table: [steps]f64 = undefined;
+
+    for (&table, 0..) |*item, i| {
+        const result: f64 = @as(f64, @floatFromInt(i)) * increment;
+        item.* = @sin(result) + @cos(result);
+    }
+
+    return table;
+}
+
+*/
 constexpr std::array<double, STEPS> generate_lut() {
-  auto table = std::array<double, STEPS>();
+  std::array<double, STEPS> table;
 
   // double ref ? eh
-  for (auto &&[i, item] : table | std::views::enumerate) {
+  for (int i = 0; i < STEPS; i++) {
     const double result = i * INCREMENT;
 
-    item = __builtin_sin(result) + __builtin_cos(result);
+    table[i] = __builtin_sin(result) + __builtin_cos(result);
   }
 
   return table;
@@ -41,16 +58,32 @@ int main() {
       "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
       MY_LUT.size(), INCREMENT, TEST_SIZE, DEGREES, STEPS);
 
-  double sum_comp = 0;
+  // A:
+  // double sum_comp = 0;
 
   auto start_time = std::chrono::steady_clock::now();
 
-  for (const auto &num : test_cases) {
+  /*
 
-    sum_comp += MY_LUT[num];
+  // A:
+
+  for (const auto &num : test_cases) {
+    const size_t idx = (num / INCREMENT);
+
+    sum_comp += MY_LUT[idx];
 
     //  std::print("curr comptime test case: {}, lut value: {}\n", num,
     //  myLut[num]);
+  }
+
+  */
+  double sum_comp = 0.0;
+
+  for (const auto &num : test_cases) {
+    // num is strictly a raw test case value here
+    const size_t idx = static_cast<size_t>(num / INCREMENT);
+
+    sum_comp += MY_LUT[idx];
   }
 
   auto end_time = std::chrono::steady_clock::now();
@@ -62,12 +95,8 @@ int main() {
 
   for (const auto &num : test_cases) {
 
-    const double input = num * INCREMENT;
-
-    sum_run += std::sin(input) + std::cos(input);
-
-    // std::print("curr runtime test case: {}, live value: {}\n", num,
-    //            std::sin(input) + std::cos(input));
+    double float_num = static_cast<double>(num);
+    sum_run += std::sin(float_num) + std::cos(float_num);
   }
 
   end_time = std::chrono::steady_clock::now();

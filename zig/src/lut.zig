@@ -41,7 +41,7 @@ fn generateTestCases(io: anytype, path: []const u8) !void {
     for (0..TEST_SIZE) |_| {
         // steps is the max index that you can access in the LUT
         // just store a random index to look up
-        const val = @abs(@mod(prng.random().int(i64), steps));
+        const val = @abs(@mod(prng.random().int(i64), @as(i64, degrees)));
 
         try file_writer.interface.print("{d}\n", .{val});
 
@@ -51,9 +51,9 @@ fn generateTestCases(io: anytype, path: []const u8) !void {
 
 pub fn main(init: std.process.Init) !void {
     _ = try generateTestCases(init.io, "lookup.txt");
-    const test_cases = try utils.readArrayFromFile(TEST_SIZE, init.io, "lookup.txt");
+    const test_cases: [TEST_SIZE]i64 = try utils.readArrayFromFile(TEST_SIZE, init.io, "lookup.txt");
 
-    const myLut = comptime generateLUT();
+    var myLut = comptime generateLUT();
 
     print("LUT size: {d}, increment: {d}, testSize: {d}, degrees: {d}, steps: {d}\n", .{ steps, increment, TEST_SIZE, degrees, steps });
 
@@ -63,10 +63,17 @@ pub fn main(init: std.process.Init) !void {
 
     var start_time = std.Io.Clock.now(.awake, io);
 
+    //  for num in test_cases {
+    //      let idx = (num / INCREMENT).round() as usize;
+    //      sum_comp += MY_LUT[idx];
+    //  }
+
+    // test cases is i64 arr
+    // num / increment, making it larger (if inc between 0 and 1)
     for (test_cases) |num| {
-        //for (0..TEST_SIZE) |num| {
-        // std.debug.print("input: {}, output: {}\n", .{ num, myLut[@intCast(num)] });
-        sum_comp += myLut[@intCast(num)];
+        const float_idx = @as(f64, @floatFromInt(num)) / increment;
+
+        sum_comp += myLut[@intFromFloat(float_idx)];
     }
 
     var end_time = std.Io.Clock.now(.awake, io);
@@ -78,15 +85,18 @@ pub fn main(init: std.process.Init) !void {
 
     // dynamic
     for (test_cases) |num| {
-        // for (0..TEST_SIZE) |num| {
         const float_num = @as(f64, @floatFromInt(num));
-        const angle = float_num * @as(f64, increment);
 
-        sum_run += @sin(angle) + @cos(angle);
+        // no need to offset here, we just use the test case as is
+        sum_run += @sin(float_num) + @cos(float_num);
     }
 
     end_time = std.Io.Clock.now(.awake, io);
     const duration_run = start_time.durationTo(end_time);
+
+    // WARN: dummy mutation to allow us to allocate on the stack
+    myLut[0] += @as(f64, @floatFromInt(test_cases[0]));
+
     print("Runtime processed in: {} ns\n", .{duration_run.toNanoseconds()});
     print("Comptime processed in: {} ns\n", .{duration_comp.toNanoseconds()});
     print("Sum comp: {d}\n", .{sum_comp});
