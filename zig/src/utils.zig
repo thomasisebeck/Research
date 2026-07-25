@@ -1,5 +1,5 @@
 const std = @import("std");
-pub const SIZE = 150;
+pub const SIZE = 500;
 const print = std.debug.print;
 const assert = std.debug.assert;
 

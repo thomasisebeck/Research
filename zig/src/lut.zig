@@ -7,7 +7,7 @@ const print = std.debug.print;
 // 1 increment -> must still test
 // 0.1 increment -> comptime is faster, fits in the L1 cache
 // 0.01 increment -> runtime is faster, does not fit in the L1 cache
-const increment: comptime_float = 2;
+const increment: comptime_float = 0.01;
 const TEST_SIZE: usize = 500;
 const degrees: comptime_float = 360;
 const steps: comptime_int = @intFromFloat(degrees / increment);
@@ -54,6 +54,8 @@ pub fn main(init: std.process.Init) !void {
     const test_cases = try utils.readArrayFromFile(TEST_SIZE, init.io, "lookup.txt");
 
     const myLut = comptime generateLUT();
+
+    print("LUT size: {d}, increment: {d}, testSize: {d}, degrees: {d}, steps: {d}\n", .{ steps, increment, TEST_SIZE, degrees, steps });
 
     var sum_comp: f64 = 0;
 
