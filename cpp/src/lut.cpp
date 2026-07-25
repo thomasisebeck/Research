@@ -6,20 +6,20 @@
 #include <print>
 #include <ranges>
 
-constexpr double increment = 0.01;
+constexpr double INCREMENT = 0.01;
 constexpr size_t TEST_SIZE = 500;
-constexpr double degrees = 360;
-constexpr int steps = static_cast<size_t>(degrees / increment);
+constexpr double DEGREES = 360;
+constexpr int STEPS = static_cast<size_t>(DEGREES / INCREMENT);
 
 // template <utils::PipelineConfig cfg>
 //  [[nodiscard]] constexpr float Quantize(float color) {
 
-constexpr std::array<double, steps> generateLUT() {
-  auto table = std::array<double, steps>();
+constexpr std::array<double, STEPS> generate_lut() {
+  auto table = std::array<double, STEPS>();
 
   // double ref ? eh
   for (auto &&[i, item] : table | std::views::enumerate) {
-    const double result = i * increment;
+    const double result = i * INCREMENT;
 
     item = __builtin_sin(result) + __builtin_cos(result);
   }
@@ -35,11 +35,11 @@ int main() {
   //  utils::printArray<TEST_SIZE>(test_cases);
 
   // Must use C++ 26 (clang is still registering as an error, but it compiles)
-  constexpr auto myLut = generateLUT();
+  constexpr auto MY_LUT = generate_lut();
 
   std::print(
       "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
-      myLut.size(), increment, TEST_SIZE, degrees, steps);
+      MY_LUT.size(), INCREMENT, TEST_SIZE, DEGREES, STEPS);
 
   double sum_comp = 0;
 
@@ -47,7 +47,7 @@ int main() {
 
   for (const auto &num : test_cases) {
 
-    sum_comp += myLut[num];
+    sum_comp += MY_LUT[num];
 
     //  std::print("curr comptime test case: {}, lut value: {}\n", num,
     //  myLut[num]);
@@ -62,7 +62,7 @@ int main() {
 
   for (const auto &num : test_cases) {
 
-    const double input = num * increment;
+    const double input = num * INCREMENT;
 
     sum_run += std::sin(input) + std::cos(input);
 

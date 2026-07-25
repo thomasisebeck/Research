@@ -1,0 +1,12 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "lut" 
+path = "src/lut.rs"
+
+[dependencies]
+trig-const = "0"
+rand = "0.10.2"
