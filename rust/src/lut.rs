@@ -1,4 +1,5 @@
 use trig_const::{cos, sin};
+mod utils;
 
 // use rand::prelude::*;
 
@@ -24,6 +25,11 @@ const fn generate_lut<const STEPS: usize>() -> [f64; STEPS] {
 }
 
 fn main() {
+    let test_cases: [i32; TEST_SIZE] = utils::read_array_from_file::<TEST_SIZE>("lookup.txt");
+
+    println!("This is the array read from the file:");
+    utils::print_array::<TEST_SIZE>(&test_cases);
+
     static MY_LUT: [f64; STEPS] = generate_lut();
 
     for (i, item) in MY_LUT.iter().enumerate() {

@@ -5,7 +5,7 @@
 #include <print>
 #include <utility>
 
-[[nodiscard]] float Quantize(const utils::PipelineConfig &cfg, float color) {
+[[nodiscard]] float quantize(const utils::PipelineConfig &cfg, float color) {
   float res = 0;
   if (cfg.quantize_mode == utils::Mode::HIGH) {
     res = std::round(color * 255.0f) / 255.0f;
@@ -17,7 +17,7 @@
   return res;
 }
 
-void Blur(const utils::PipelineConfig &cfg, utils::Color &item,
+void blur(const utils::PipelineConfig &cfg, utils::Color &item,
           const utils::Neighbors &n) noexcept {
   if (cfg.blur_mode == utils::Mode::LOW) {
     item.r = (n.middleLeft.r + item.r + n.middleRight.r) / 3.0f;
@@ -51,7 +51,7 @@ void Blur(const utils::PipelineConfig &cfg, utils::Color &item,
   }
 }
 
-void Saturation(const utils::PipelineConfig &cfg, utils::Color &item) {
+void saturation(const utils::PipelineConfig &cfg, utils::Color &item) {
   const float luma = (0.299f * item.r) + (0.587f * item.g) + (0.144f * item.b);
 
   // use a IIFE (Immediately Invoked Function Expression)
@@ -76,7 +76,7 @@ void Saturation(const utils::PipelineConfig &cfg, utils::Color &item) {
   item.b = std::clamp(luma + (delta * (item.b - luma)), 0.0f, 1.0f);
 }
 
-void Process(const utils::PipelineConfig &cfg,
+void process(const utils::PipelineConfig &cfg,
              utils::Color (&mat)[utils::SIZE][utils::SIZE]) {
   for (int row_num = 1; row_num < utils::SIZE - 1; row_num++) {
 
@@ -97,17 +97,17 @@ void Process(const utils::PipelineConfig &cfg,
 
         };
 
-        Blur(cfg, item, n);
+        blur(cfg, item, n);
       };
 
       if (cfg.apply_quantization) {
-        item.r = Quantize(cfg, item.r);
-        item.g = Quantize(cfg, item.g);
-        item.b = Quantize(cfg, item.b);
+        item.r = quantize(cfg, item.r);
+        item.g = quantize(cfg, item.g);
+        item.b = quantize(cfg, item.b);
       }
 
       if (cfg.apply_saturation) {
-        Saturation(cfg, item);
+        saturation(cfg, item);
       }
     }
   }
@@ -117,9 +117,7 @@ int main() {
 
   utils::Color my_image[utils::SIZE][utils::SIZE];
 
-  // const auto good = writeImageToFile<utils::SIZE>("image.txt");
-
-  utils::readImageFromFile("input_image.txt", my_image);
+  utils::read_image_from_file("input_image.txt", my_image);
 
   constexpr auto config =
       utils::PipelineConfig{.color_mode = utils::Mode::LOW,
@@ -133,7 +131,7 @@ int main() {
 
   const auto start_time = std::chrono::steady_clock::now();
 
-  Process(config, my_image);
+  process(config, my_image);
 
   const auto end_time = std::chrono::steady_clock::now();
   const auto duration = end_time - start_time;

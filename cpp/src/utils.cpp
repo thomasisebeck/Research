@@ -2,7 +2,6 @@
 #include <array>
 #include <fstream>
 #include <iostream>
-#include <ostream>
 #include <print>
 
 namespace utils {
@@ -38,7 +37,7 @@ struct Neighbors {
 
 const auto SIZE = 150;
 
-void printImage(const Color (&mat)[SIZE][SIZE]) {
+void print_image(const Color (&mat)[SIZE][SIZE]) {
   std::print("[\n");
 
   for (const auto &row : mat) {
@@ -55,7 +54,7 @@ void printImage(const Color (&mat)[SIZE][SIZE]) {
   std::print("]\n");
 }
 
-void readImageFromFile(std::string_view path, Color (&mat)[SIZE][SIZE]) {
+void read_image_from_file(std::string_view path, Color (&mat)[SIZE][SIZE]) {
 
   std::ifstream file(path.data(), std::ios::in);
   if (!file.is_open()) {
@@ -84,24 +83,24 @@ void readImageFromFile(std::string_view path, Color (&mat)[SIZE][SIZE]) {
 }
 
 template <int Size>
-std::array<int, Size> readArrayFromFile(std::string_view path) {
+std::array<int, Size> read_array_from_file(std::string_view path) {
 
   std::ifstream file(path.data(), std::ios::in);
   if (!file.is_open()) {
     throw "Cannot open file";
   }
-  auto myArr = std::array<int, Size>();
+  auto my_arr = std::array<int, Size>();
 
   int counter = 0;
 
   for (int i; file >> i;) {
-    myArr[counter++] = i;
+    my_arr[counter++] = i;
   }
 
-  return myArr;
+  return my_arr;
 }
 
-template <int Size> void printArray(const std::array<int, Size> &arr) {
+template <int Size> void print_array(const std::array<int, Size> &arr) {
   std::cout << "[";
   for (int i = 0; i < Size; ++i) {
     std::cout << arr[i];

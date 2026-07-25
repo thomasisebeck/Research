@@ -6,7 +6,7 @@
 #include <utility>
 
 template <utils::PipelineConfig cfg>
-[[nodiscard]] constexpr float Quantize(float color) {
+[[nodiscard]] constexpr float quantize(float color) {
   float res = 0;
   if constexpr (cfg.quantize_mode == utils::Mode::HIGH) {
     res = std::round(color * 255.0f) / 255.0f;
@@ -19,7 +19,7 @@ template <utils::PipelineConfig cfg>
 }
 
 template <utils::PipelineConfig cfg>
-constexpr void Blur(utils::Color &item, const utils::Neighbors &n) noexcept {
+constexpr void blur(utils::Color &item, const utils::Neighbors &n) noexcept {
   if constexpr (cfg.blur_mode == utils::Mode::LOW) {
     item.r = (n.middleLeft.r + item.r + n.middleRight.r) / 3.0f;
     item.g = (n.middleLeft.g + item.g + n.middleRight.g) / 3.0f;
@@ -53,7 +53,7 @@ constexpr void Blur(utils::Color &item, const utils::Neighbors &n) noexcept {
 }
 
 template <utils::PipelineConfig cfg>
-constexpr void Saturation(utils::Color &item) {
+constexpr void saturation(utils::Color &item) {
   const float luma = (0.299f * item.r) + (0.587f * item.g) + (0.144f * item.b);
 
   // use a IIFE (Immediately Invoked Function Expression)
@@ -79,7 +79,7 @@ constexpr void Saturation(utils::Color &item) {
 }
 
 template <utils::PipelineConfig cfg>
-constexpr void Process(utils::Color (&mat)[utils::SIZE][utils::SIZE]) {
+constexpr void process(utils::Color (&mat)[utils::SIZE][utils::SIZE]) {
   for (int row_num = 1; row_num < utils::SIZE - 1; row_num++) {
 
     for (int col_num = 1; col_num < utils::SIZE - 1; col_num++) {
@@ -99,17 +99,17 @@ constexpr void Process(utils::Color (&mat)[utils::SIZE][utils::SIZE]) {
 
         };
 
-        Blur<cfg>(item, n);
+        blur<cfg>(item, n);
       };
 
       if constexpr (cfg.apply_quantization) {
-        item.r = Quantize<cfg>(item.r);
-        item.g = Quantize<cfg>(item.g);
-        item.b = Quantize<cfg>(item.b);
+        item.r = quantize<cfg>(item.r);
+        item.g = quantize<cfg>(item.g);
+        item.b = quantize<cfg>(item.b);
       }
 
       if constexpr (cfg.apply_saturation) {
-        Saturation<cfg>(item);
+        saturation<cfg>(item);
       }
     }
   }
@@ -119,7 +119,7 @@ int main() {
 
   utils::Color my_image[utils::SIZE][utils::SIZE];
 
-  readImageFromFile("input_image.txt", my_image);
+  utils::read_image_from_file("input_image.txt", my_image);
 
   constexpr auto config =
       utils::PipelineConfig{.color_mode = utils::Mode::LOW,
@@ -133,7 +133,7 @@ int main() {
 
   const auto start_time = std::chrono::steady_clock::now();
 
-  Process<config>(my_image);
+  process<config>(my_image);
 
   const auto end_time = std::chrono::steady_clock::now();
   const auto duration = end_time - start_time;

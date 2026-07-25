@@ -29,7 +29,7 @@ constexpr std::array<double, STEPS> generate_lut() {
 
 int main() {
 
-  const auto test_cases = utils::readArrayFromFile<TEST_SIZE>("lookup.txt");
+  const auto test_cases = utils::read_array_from_file<TEST_SIZE>("lookup.txt");
 
   // std::print("This is the array read from the file: ");
   //  utils::printArray<TEST_SIZE>(test_cases);
