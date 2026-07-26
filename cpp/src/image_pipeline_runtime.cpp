@@ -5,37 +5,43 @@
 #include <print>
 #include <utility>
 
-[[nodiscard]] float quantize(const utils::PipelineConfig &cfg, float color) {
+// if statement
+[[nodiscard]] float quantise(const utils::PipelineConfig &cfg, float colour) {
   float res = 0;
-  if (cfg.quantize_mode == utils::Mode::HIGH) {
-    res = std::round(color * 255.0f) / 255.0f;
-  } else if (cfg.quantize_mode == utils::Mode::MED) {
-    res = std::round(color * 16.0f) / 16.0f;
-  } else if (cfg.quantize_mode == utils::Mode::LOW) {
-    res = (color > 0.5f) ? 1.0f : 0.0f;
+  if (cfg.quantise_mode == utils::Mode::HIGH) {
+    res = std::round(colour * 255.0f) / 255.0f;
+  } else if (cfg.quantise_mode == utils::Mode::MED) {
+    res = std::round(colour * 16.0f) / 16.0f;
+  } else if (cfg.quantise_mode == utils::Mode::LOW) {
+    res = (colour > 0.5f) ? 1.0f : 0.0f;
   }
   return res;
 }
 
-void blur(const utils::PipelineConfig &cfg, utils::Color &item,
-          const utils::Neighbors &n) noexcept {
-  if (cfg.blur_mode == utils::Mode::LOW) {
+// switch statement
+void blur(const utils::PipelineConfig &cfg, utils::Colour &item,
+          const utils::Neighbours &n) {
+  switch (cfg.blur_mode) {
+  case utils::Mode::LOW: {
     item.r = (n.middleLeft.r + item.r + n.middleRight.r) / 3.0f;
     item.g = (n.middleLeft.g + item.g + n.middleRight.g) / 3.0f;
     item.b = (n.middleLeft.b + item.b + n.middleRight.b) / 3.0f;
-  } else if (cfg.blur_mode == utils::Mode::MED) {
 
+    break;
+  }
+  case utils::Mode::MED: {
     item.r = (n.topMiddle.r + n.bottomMiddle.r + n.middleLeft.r +
               n.middleRight.r + item.r) /
              5.0f;
     item.g = (n.topMiddle.g + n.bottomMiddle.g + n.middleLeft.g +
               n.middleRight.g + item.g) /
              5.0f;
-
     item.b = (n.topMiddle.b + n.bottomMiddle.b + n.middleLeft.b +
               n.middleRight.b + item.b) /
              5.0f;
-  } else if (cfg.blur_mode == utils::Mode::HIGH) {
+    break;
+  }
+  case utils::Mode::HIGH: {
     item.r = (n.topLeft.r + n.middleLeft.r + n.bottomLeft.r + n.bottomMiddle.r +
               n.bottomRight.r + n.middleRight.r + n.topRight.r + n.topMiddle.r +
               item.r) /
@@ -48,10 +54,13 @@ void blur(const utils::PipelineConfig &cfg, utils::Color &item,
               n.bottomRight.b + n.middleRight.b + n.topRight.b + n.topMiddle.b +
               item.b) /
              9.0f;
+    break;
+  }
   }
 }
 
-void saturation(const utils::PipelineConfig &cfg, utils::Color &item) {
+// switch expression
+void saturation(const utils::PipelineConfig &cfg, utils::Colour &item) {
   const float luma = (0.299f * item.r) + (0.587f * item.g) + (0.144f * item.b);
 
   // use a IIFE (Immediately Invoked Function Expression)
@@ -77,33 +86,33 @@ void saturation(const utils::PipelineConfig &cfg, utils::Color &item) {
 }
 
 void process(const utils::PipelineConfig &cfg,
-             utils::Color (&mat)[utils::SIZE][utils::SIZE]) {
+             utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
   for (int row_num = 1; row_num < utils::SIZE - 1; row_num++) {
 
     for (int col_num = 1; col_num < utils::SIZE - 1; col_num++) {
       // ref to the item
-      utils::Color &item = mat[row_num][col_num];
+      utils::Colour &item = mat[row_num][col_num];
 
       if (cfg.apply_blur) {
-        const utils::Neighbors n = {.topLeft = mat[row_num - 1][col_num - 1],
-                                    .middleLeft = mat[row_num][col_num - 1],
-                                    .bottomLeft = mat[row_num + 1][col_num - 1],
-                                    .bottomMiddle = mat[row_num + 1][col_num],
-                                    .bottomRight =
-                                        mat[row_num + 1][col_num + 1],
-                                    .middleRight = mat[row_num][col_num + 1],
-                                    .topRight = mat[row_num - 1][col_num + 1],
-                                    .topMiddle = mat[row_num - 1][col_num]
+        const utils::Neighbours n = {
+            .topLeft = mat[row_num - 1][col_num - 1],
+            .middleLeft = mat[row_num][col_num - 1],
+            .bottomLeft = mat[row_num + 1][col_num - 1],
+            .bottomMiddle = mat[row_num + 1][col_num],
+            .bottomRight = mat[row_num + 1][col_num + 1],
+            .middleRight = mat[row_num][col_num + 1],
+            .topRight = mat[row_num - 1][col_num + 1],
+            .topMiddle = mat[row_num - 1][col_num]
 
         };
 
         blur(cfg, item, n);
       };
 
-      if (cfg.apply_quantization) {
-        item.r = quantize(cfg, item.r);
-        item.g = quantize(cfg, item.g);
-        item.b = quantize(cfg, item.b);
+      if (cfg.apply_quantisation) {
+        item.r = quantise(cfg, item.r);
+        item.g = quantise(cfg, item.g);
+        item.b = quantise(cfg, item.b);
       }
 
       if (cfg.apply_saturation) {
@@ -115,17 +124,17 @@ void process(const utils::PipelineConfig &cfg,
 
 int main() {
 
-  utils::Color my_image[utils::SIZE][utils::SIZE];
+  utils::Colour my_image[utils::SIZE][utils::SIZE];
 
   utils::read_image_from_file("input_image.txt", my_image);
 
   constexpr auto config =
-      utils::PipelineConfig{.color_mode = utils::Mode::LOW,
+      utils::PipelineConfig{.colour_mode = utils::Mode::LOW,
                             .blur_mode = utils::Mode::LOW,
                             .apply_blur = true,
                             .sharpen_mode = utils::Mode::LOW,
-                            .quantize_mode = utils::Mode::LOW,
-                            .apply_quantization = true,
+                            .quantise_mode = utils::Mode::LOW,
+                            .apply_quantisation = true,
                             .saturation_mode = utils::Mode::LOW,
                             .apply_saturation = true};
 

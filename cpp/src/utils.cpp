@@ -6,7 +6,7 @@
 
 namespace utils {
 
-struct Color {
+struct Colour {
   float r, g, b;
 };
 
@@ -14,30 +14,30 @@ enum class Mode { HIGH, MED, LOW };
 
 // C++20 allows literal class types to be used as template parameters
 struct PipelineConfig {
-  Mode color_mode;
+  Mode colour_mode;
   Mode blur_mode;
   bool apply_blur;
   Mode sharpen_mode;
-  Mode quantize_mode;
-  bool apply_quantization;
+  Mode quantise_mode;
+  bool apply_quantisation;
   Mode saturation_mode;
   bool apply_saturation;
 };
 
-struct Neighbors {
-  Color topLeft;
-  Color middleLeft;
-  Color bottomLeft;
-  Color bottomMiddle;
-  Color bottomRight;
-  Color middleRight;
-  Color topRight;
-  Color topMiddle;
+struct Neighbours {
+  Colour topLeft;
+  Colour middleLeft;
+  Colour bottomLeft;
+  Colour bottomMiddle;
+  Colour bottomRight;
+  Colour middleRight;
+  Colour topRight;
+  Colour topMiddle;
 };
 
 const auto SIZE = 150;
 
-void print_image(const Color (&mat)[SIZE][SIZE]) {
+void print_image(const Colour (&mat)[SIZE][SIZE]) {
   std::print("[\n");
 
   for (const auto &row : mat) {
@@ -54,7 +54,7 @@ void print_image(const Color (&mat)[SIZE][SIZE]) {
   std::print("]\n");
 }
 
-void read_image_from_file(std::string_view path, Color (&mat)[SIZE][SIZE]) {
+void read_image_from_file(std::string_view path, Colour (&mat)[SIZE][SIZE]) {
 
   std::ifstream file(path.data(), std::ios::in);
   if (!file.is_open()) {
@@ -70,7 +70,7 @@ void read_image_from_file(std::string_view path, Color (&mat)[SIZE][SIZE]) {
         throw "File corrupted";
       }
 
-      // Map the parsed text integers back to your Color floats
+      // Map the parsed text integers back to your colour floats
       mat[row][col].r = static_cast<float>(r);
       mat[row][col].g = static_cast<float>(g);
       mat[row][col].b = static_cast<float>(b);

@@ -5,7 +5,7 @@ edition = "2024"
 
 [[bin]]
 name = "lut" 
-path = "src/lut.rs"
+path = "src/image_pipeline.rs"
 
 [dependencies]
 trig-const = "0"

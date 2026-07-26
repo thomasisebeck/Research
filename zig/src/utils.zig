@@ -3,25 +3,24 @@ pub const SIZE = 500;
 const print = std.debug.print;
 const assert = std.debug.assert;
 
-pub const Color = struct { r: f32, g: f32, b: f32 };
+pub const Colour = struct { r: f32, g: f32, b: f32 };
 
 pub const Mode = enum { HIGH, MED, LOW };
 
-pub const PipelineConfig = struct { color_mode: Mode, blur_mode: Mode, apply_blur: bool, sharpen_mode: Mode, quantize_mode: Mode, apply_quantization: bool, saturation_mode: Mode, apply_saturation: bool };
+pub const PipelineConfig = struct { colour_mode: Mode, blur_mode: Mode, apply_blur: bool, sharpen_mode: Mode, quantise_mode: Mode, apply_quantisation: bool, saturation_mode: Mode, apply_saturation: bool };
 
-// Helper container struct to cleanly bundle neighborhood data for the Blur function
-pub const Neighbors = struct {
-    topLeft: Color,
-    middleLeft: Color,
-    bottomLeft: Color,
-    bottomMiddle: Color,
-    bottomRight: Color,
-    middleRight: Color,
-    topRight: Color,
-    topMiddle: Color,
+pub const Neighbours = struct {
+    topLeft: Colour,
+    middleLeft: Colour,
+    bottomLeft: Colour,
+    bottomMiddle: Colour,
+    bottomRight: Colour,
+    middleRight: Colour,
+    topRight: Colour,
+    topMiddle: Colour,
 };
 
-pub fn printImage(mat: [SIZE][SIZE]Color) !void {
+pub fn printImage(mat: [SIZE][SIZE]Colour) !void {
     print("[\n", .{});
 
     for (mat) |row| {
@@ -85,7 +84,7 @@ pub fn readArrayFromFile(comptime size: usize, io: std.Io, path: []const u8) ![s
     return input_array;
 }
 
-pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[SIZE][SIZE]Color) !i32 {
+pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[SIZE][SIZE]Colour) !i32 {
     const file = try std.Io.Dir.cwd().openFile(io, path, .{});
     defer file.close(io);
 

@@ -3,34 +3,13 @@
 #include <chrono>
 #include <cmath>
 #include <cstddef>
-#include <numeric>
 #include <print>
-#include <ranges>
 
 constexpr double INCREMENT = 0.01;
 constexpr size_t TEST_SIZE = 500;
 constexpr double DEGREES = 360;
 constexpr int STEPS = static_cast<size_t>(DEGREES / INCREMENT);
 
-// template <utils::PipelineConfig cfg>
-//  [[nodiscard]] constexpr float Quantize(float color) {
-
-/*
-
-fn generateLUT() [steps]f64 {
-    @setEvalBranchQuota(1000000);
-    // table empty, but enough to hold all the steps
-    var table: [steps]f64 = undefined;
-
-    for (&table, 0..) |*item, i| {
-        const result: f64 = @as(f64, @floatFromInt(i)) * increment;
-        item.* = @sin(result) + @cos(result);
-    }
-
-    return table;
-}
-
-*/
 constexpr std::array<double, STEPS> generate_lut() {
   std::array<double, STEPS> table;
 
