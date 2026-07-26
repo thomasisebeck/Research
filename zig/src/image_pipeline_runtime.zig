@@ -49,6 +49,7 @@ pub fn saturation(cfg: utils.PipelineConfig, item: *utils.Colour) void {
         .HIGH => 3.5,
     };
 
+    // calculte the new value, and then clamp it
     item.r = std.math.clamp(luma + (delta * (item.r - luma)), 0.0, 1.0);
     item.g = std.math.clamp(luma + (delta * (item.g - luma)), 0.0, 1.0);
     item.b = std.math.clamp(luma + (delta * (item.b - luma)), 0.0, 1.0);

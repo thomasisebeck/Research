@@ -1,3 +1,5 @@
+mod utils;
+
 enum Mode {
     HIGH,
     MED,
@@ -61,16 +63,16 @@ struct Colour {
     pub b: f32,
 }
 
-struct Neighbours {
-    pub top_left: Colour,
-    pub middle_left: Colour,
-    pub bottom_left: Colour,
-    pub bottom_middle: Colour,
-    pub bottom_right: Colour,
-    pub middle_right: Colour,
-    pub top_right: Colour,
-
-    pub top_middle: Colour,
+// <> is the lifetime param
+pub struct Neighbours<'a> {
+    pub top_left: &'a Colour,
+    pub middle_left: &'a Colour,
+    pub bottom_left: &'a Colour,
+    pub bottom_middle: &'a Colour,
+    pub bottom_right: &'a Colour,
+    pub middle_right: &'a Colour,
+    pub top_right: &'a Colour,
+    pub top_middle: &'a Colour,
 }
 
 // if statement
@@ -141,4 +143,69 @@ fn blur<CFG: PipelineConfig>(item: &mut Colour, n: Neighbours) {
     }
 }
 
+// switch expression
+fn saturation<CFG: PipelineConfig>(item: &mut Colour) {
+    let LUMA: f32 = (0.299 * item.r) + (0.587 * item.g) + (0.144 * item.b);
+
+    let delta: f32 = match CFG::COLOUR_MODE {
+        Mode::LOW => 1.5,
+        Mode::MED => 2.5,
+        Mode::HIGH => 3.5,
+    };
+
+    item.r = (LUMA + (delta * (item.r - LUMA))).clamp(0.0, 1.0);
+    item.g = LUMA + (delta * (item.g - LUMA)).clamp(0.0, 1.0);
+    item.b = LUMA + (delta * (item.b - LUMA)).clamp(0.0, 1.0);
+}
+
+// constexpr void process(utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
+fn process<CFG: PipelineConfig>(mat: &mut [[Colour; utils::SIZE]; utils::SIZE]) {
+    for row_num in 1..=(utils::SIZE - 1) {
+        for col_num in 1..=(utils::SIZE - 1) {
+            let item: &mut Colour = &mut mat[row_num][col_num];
+
+            if CFG::APPLY_BLUR {
+                // these are non-mutable refs
+                // no need to fight with the borrow checker
+                let n = Neighbours {
+                    top_left: &mat[row_num - 1][col_num - 1],
+                    middle_left: &mat[row_num][col_num - 1],
+                    bottom_left: &mat[row_num + 1][col_num - 1],
+                    bottom_middle: &mat[row_num + 1][col_num],
+                    bottom_right: &mat[row_num + 1][col_num + 1],
+                    middle_right: &mat[row_num][col_num + 1],
+                    top_right: &mat[row_num - 1][col_num + 1],
+                    top_middle: &mat[row_num - 1][col_num],
+                };
+            }
+        }
+    }
+}
+
+/*
+
+
+constexpr void process(utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
+  for (int row_num = 1; row_num < utils::SIZE - 1; row_num++) {
+
+    for (int col_num = 1; col_num < utils::SIZE - 1; col_num++) {
+      // ref to the item
+      utils::Colour &item = mat[row_num][col_num];
+
+      if constexpr (cfg.apply_blur) {
+        const utils::Neighbours n = {
+            .topLeft = mat[row_num - 1][col_num - 1],
+            .middleLeft = mat[row_num][col_num - 1],
+            .bottomLeft = mat[row_num + 1][col_num - 1],
+            .bottomMiddle = mat[row_num + 1][col_num],
+            .bottomRight = mat[row_num + 1][col_num + 1],
+            .middleRight = mat[row_num][col_num + 1],
+            .topRight = mat[row_num - 1][col_num + 1],
+            .topMiddle = mat[row_num - 1][col_num]
+
+        };
+
+        blur<cfg>(item, n);
+      };
+*/
 fn main() {}

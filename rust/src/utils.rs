@@ -1,5 +1,7 @@
 use std::fs::read_to_string;
 
+pub const SIZE: usize = 500;
+
 pub fn read_array_from_file<const STEPS: usize>(path: &str) -> [f64; STEPS] {
     let mut my_arr: [f64; STEPS] = [0.0; STEPS];
 
