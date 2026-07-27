@@ -27,6 +27,22 @@ const Mouse = struct {
     }
 };
 
+const Animal = union(enum) {
+    cat: Cat,
+    dog: Dog,
+
+    mouse: Mouse,
+
+    // This method handles the direct, high-performance static branch lookup
+    pub fn sound(self: Animal) SoundEnum {
+        return switch (self) {
+            .cat => |c| c.sound(),
+            .dog => |d| d.sound(),
+            .mouse => |m| m.sound(),
+        };
+    }
+};
+
 pub fn makeSoundHelper(comptime myAnimal: anytype) SoundEnum {
     return myAnimal.sound();
 }
@@ -34,43 +50,30 @@ pub fn makeSoundHelper(comptime myAnimal: anytype) SoundEnum {
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
 
-    const SIZE = 50;
-
-    const types = [SIZE]type{
-        Cat,   Dog,   Mouse, Cat,   Cat,   Dog,   Mouse,
-        Dog,   Cat,   Mouse, Dog,   Cat,   Mouse, Mouse,
-        Dog,   Cat,   Dog,   Mouse, Cat,   Dog,   Mouse,
-        Mouse, Cat,   Dog,   Dog,   Cat,   Mouse, Cat,
-        Dog,   Mouse, Cat,   Mouse, Dog,   Mouse, Dog,
-        Cat,   Dog,   Cat,   Mouse, Dog,   Cat,   Mouse,
-        Mouse, Dog,   Cat,   Dog,   Mouse, Cat,   Dog,
-        Mouse,
-    };
-
-    // Instantiate our compile-time heterogeneous tuple collection
-    const ZooTuple = std.meta.Tuple(&types);
-    var duck_zoo: ZooTuple = undefined;
+    const SIZE = 3;
     var sound_outputs: [SIZE]SoundEnum = undefined;
 
-    // Initialize every structural slot
-    inline for (&duck_zoo, 0..) |*animal, i| {
-        animal.* = types[i]{};
-    }
+    // A perfectly normal, runtime-accessible array!
+    // Every element is an identical 'Animal' container.
+    const zoo = [SIZE]Animal{
+        .{ .cat = Cat{} },
+        .{ .dog = Dog{} },
+        .{ .mouse = Mouse{} },
+    };
 
     var start_time = std.Io.Clock.now(.awake, io);
 
-    inline for (duck_zoo, 0..) |animal, i| {
-        sound_outputs[i] = makeSoundHelper(animal);
+    // Look! A completely standard runtime for loop. No 'inline' needed!
+    for (zoo, 0..) |animal, i| {
+        sound_outputs[i] = animal.sound();
     }
 
     const end_time = std.Io.Clock.now(.awake, io);
+    const duration = start_time.durationTo(end_time);
 
     std.debug.print("\n---  VERIFYING OUTPUTS ---\n", .{});
     for (sound_outputs, 0..) |res, i| {
         std.debug.print("Index {}: {s}\n", .{ i, @tagName(res) });
     }
-
-    const duration = start_time.durationTo(end_time);
-
     std.debug.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
 }
