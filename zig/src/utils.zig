@@ -1,5 +1,5 @@
 const std = @import("std");
-pub const SIZE = 500;
+pub const IMAGE_SIZE = 500;
 const print = std.debug.print;
 const assert = std.debug.assert;
 
@@ -20,7 +20,7 @@ pub const Neighbours = struct {
     topMiddle: Colour,
 };
 
-pub fn printImage(mat: [SIZE][SIZE]Colour) !void {
+pub fn printImage(mat: [IMAGE_SIZE][IMAGE_SIZE]Colour) !void {
     print("[\n", .{});
 
     for (mat) |row| {
@@ -35,6 +35,24 @@ pub fn printImage(mat: [SIZE][SIZE]Colour) !void {
     print("]\n", .{});
 }
 
+pub fn generateRandomArray(comptime array_size: usize, io: anytype, path: []const u8) !void {
+    var file = try std.Io.Dir.cwd().createFile(io, path, .{ .truncate = true });
+    defer file.close(io);
+
+    // 2. Wrap the file in a buffered writer to drastically reduce system call overhead
+    var file_writer = file.writer(io, &.{});
+
+    // 3. Obtain a high-quality seed from the OS cryptographically secure random source
+    var prng = std.Random.DefaultPrng.init(12345);
+
+    for (0..array_size) |_| {
+        // Generates an integer between 1 and 3 inclusive
+        const num = prng.random().intRangeAtMost(u8, 1, 3);
+
+        try file_writer.interface.print("{}\n", .{num});
+    }
+}
+
 pub fn writeImageToFile(io: anytype, path: []const u8) !void {
     var file = try std.Io.Dir.cwd().createFile(io, path, .{ .truncate = true });
     defer file.close(io);
@@ -44,8 +62,8 @@ pub fn writeImageToFile(io: anytype, path: []const u8) !void {
     var prng = std.Random.DefaultPrng.init(12345);
 
     // 2. Safely populate the matrix with example pixel data
-    for (0..SIZE) |_| {
-        for (0..SIZE) |_| {
+    for (0..IMAGE_SIZE) |_| {
+        for (0..IMAGE_SIZE) |_| {
             // Generate distinct procedural values between 0.0 and 1.0 based on layout
             const rf = prng.random().float(f32);
             const gf = prng.random().float(f32);
@@ -57,19 +75,19 @@ pub fn writeImageToFile(io: anytype, path: []const u8) !void {
     }
 }
 
-pub fn readArrayFromFile(comptime size: usize, io: std.Io, path: []const u8) ![size]i64 {
+pub fn readArrayFromFile(comptime array_size: usize, io: std.Io, path: []const u8) ![array_size]i64 {
     //var stdout_writer = std.Io.File.stdout().writer(io, &.{});
     //const stdout = &stdout_writer.interface;
-    var file_buf: [size * 32]u8 = undefined;
+    var file_buf: [array_size * 32]u8 = undefined;
     const file = try std.Io.Dir.cwd().readFile(io, path, &file_buf);
 
     // init the array to all 0, len 5
-    var input_array = [_]i64{0} ** size;
+    var input_array = [_]i64{0} ** array_size;
     var counter: u32 = 0;
 
     var iter = std.mem.tokenizeScalar(u8, file, '\n');
     while (iter.next()) |line| {
-        if (counter >= size) break;
+        if (counter >= array_size) break;
 
         const clean_line = std.mem.trim(u8, line, "\r");
 
@@ -79,12 +97,12 @@ pub fn readArrayFromFile(comptime size: usize, io: std.Io, path: []const u8) ![s
         counter += 1;
     }
 
-    assert(counter == size);
+    assert(counter == array_size);
 
     return input_array;
 }
 
-pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[SIZE][SIZE]Colour) !i32 {
+pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[IMAGE_SIZE][IMAGE_SIZE]Colour) !i32 {
     const file = try std.Io.Dir.cwd().openFile(io, path, .{});
     defer file.close(io);
 
@@ -108,7 +126,7 @@ pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[SIZE][SIZE]Colour
             channel += 1;
         }
         col += 1;
-        if (col >= SIZE) {
+        if (col >= IMAGE_SIZE) {
             col = 0;
             row += 1;
         }
