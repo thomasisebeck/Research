@@ -1,12 +1,24 @@
 mod utils;
 use std::time::Instant;
 
+// use a normal struct instead of a trait
+struct PipelineConfig {
+    blur_mode: utils::Mode,
+    apply_blur: bool,
+    quantise_mode: utils::Mode,
+    apply_quantisation: bool,
+    saturation_mode: utils::Mode,
+    apply_saturation: bool,
+}
+
+// <> is the lifetime param
+
 // if statement
-fn quantise<CFG: utils::PipelineConfig>(colour: f32) -> f32 {
+fn quantise(cfg: &PipelineConfig, colour: f32) -> f32 {
     let res;
-    if matches!(CFG::QUANTISE_MODE, utils::Mode::HIGH) {
+    if matches!(cfg.quantise_mode, utils::Mode::HIGH) {
         res = f32::round(colour * 255.0) / 255.0;
-    } else if matches!(CFG::QUANTISE_MODE, utils::Mode::MED) {
+    } else if matches!(cfg.quantise_mode, utils::Mode::MED) {
         res = f32::round(colour * 16.0) / 16.0;
     } else {
         res = if colour > 0.5 { 1.0 } else { 0.0 }
@@ -16,8 +28,8 @@ fn quantise<CFG: utils::PipelineConfig>(colour: f32) -> f32 {
 }
 
 // switch statement
-fn blur<CFG: utils::PipelineConfig>(item: &mut utils::Colour, n: utils::Neighbours) {
-    match CFG::BLUR_MODE {
+fn blur(cfg: &PipelineConfig, item: &mut utils::Colour, n: utils::Neighbours) {
+    match cfg.blur_mode {
         utils::Mode::LOW => {
             item.r = (n.middle_left.r + item.r + n.middle_right.r) / 3.0;
             item.g = (n.middle_left.g + item.g + n.middle_right.g) / 3.0;
@@ -70,26 +82,26 @@ fn blur<CFG: utils::PipelineConfig>(item: &mut utils::Colour, n: utils::Neighbou
 }
 
 // switch expression
-fn saturation<CFG: utils::PipelineConfig>(item: &mut utils::Colour) {
-    let luma: f32 = (0.299 * item.r) + (0.587 * item.g) + (0.144 * item.b);
+fn saturation(cfg: &PipelineConfig, item: &mut utils::Colour) {
+    let LUMA: f32 = (0.299 * item.r) + (0.587 * item.g) + (0.144 * item.b);
 
-    let delta: f32 = match CFG::SATURATION_MODE {
+    let delta: f32 = match cfg.saturation_mode {
         utils::Mode::LOW => 1.5,
         utils::Mode::MED => 2.5,
         utils::Mode::HIGH => 3.5,
     };
 
-    item.r = (luma + (delta * (item.r - luma))).clamp(0.0, 1.0);
-    item.g = (luma + (delta * (item.g - luma))).clamp(0.0, 1.0);
-    item.b = (luma + (delta * (item.b - luma))).clamp(0.0, 1.0);
+    item.r = (LUMA + (delta * (item.r - LUMA))).clamp(0.0, 1.0);
+    item.g = (LUMA + (delta * (item.g - LUMA))).clamp(0.0, 1.0);
+    item.b = (LUMA + (delta * (item.b - LUMA))).clamp(0.0, 1.0);
 }
 
 // constexpr void process(utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
-fn process<CFG: utils::PipelineConfig>(mat: &mut [[utils::Colour; utils::SIZE]; utils::SIZE]) {
+fn process(cfg: &PipelineConfig, mat: &mut [[utils::Colour; utils::SIZE]; utils::SIZE]) {
     // not ..= (we want exclusive loop)
     for row_num in 1..(utils::SIZE - 1) {
         for col_num in 1..(utils::SIZE - 1) {
-            if CFG::APPLY_BLUR {
+            if cfg.apply_blur {
                 // these are non-mutable refs
                 // no need to fight with the borrow checker
 
@@ -111,23 +123,19 @@ fn process<CFG: utils::PipelineConfig>(mat: &mut [[utils::Colour; utils::SIZE]; 
                 let item: &mut utils::Colour = &mut mat[row_num][col_num];
 
                 // must be mutable
-                blur::<CFG>(item, n);
+                blur(cfg, item, n);
             }
 
-            if CFG::APPLY_QUANTIZATION {
-                // grab a mutable ref
-                let item: &mut utils::Colour = &mut mat[row_num][col_num];
-
-                item.r = quantise::<CFG>(item.r);
-                item.g = quantise::<CFG>(item.g);
-                item.b = quantise::<CFG>(item.b);
+            if cfg.apply_quantisation {
+                let item = &mut mat[row_num][col_num];
+                item.r = quantise(cfg, item.r);
+                item.g = quantise(cfg, item.g);
+                item.b = quantise(cfg, item.b);
             }
 
-            if CFG::APPLY_SATURATION {
-                let item: &mut utils::Colour = &mut mat[row_num][col_num];
-
-                // pass the entire item in
-                saturation::<CFG>(item);
+            if cfg.apply_saturation {
+                let item = &mut mat[row_num][col_num];
+                saturation(cfg, item);
             }
         }
     }
@@ -148,10 +156,19 @@ fn main() {
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
+    let config = PipelineConfig {
+        blur_mode: utils::Mode::HIGH,
+        apply_blur: true,
+        quantise_mode: utils::Mode::HIGH,
+        apply_quantisation: true,
+        saturation_mode: utils::Mode::HIGH,
+        apply_saturation: true,
+    };
+
     let start_time = Instant::now();
 
     // configs are declared above as traits...
-    process::<utils::MediumQualityConfig>(&mut my_image);
+    process(&config, &mut my_image);
 
     let duration = start_time.elapsed();
 

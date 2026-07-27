@@ -13,11 +13,11 @@ struct Colour {
 enum class Mode { HIGH, MED, LOW };
 
 // C++20 allows literal class types to be used as template parameters
+
 struct PipelineConfig {
   Mode colour_mode;
   Mode blur_mode;
   bool apply_blur;
-  Mode sharpen_mode;
   Mode quantise_mode;
   bool apply_quantisation;
   Mode saturation_mode;

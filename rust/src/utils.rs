@@ -10,6 +10,66 @@ pub struct Colour {
     pub b: f32,
 }
 
+pub enum Mode {
+    HIGH,
+    MED,
+    LOW,
+}
+
+pub trait PipelineConfig {
+    const SATURATION_MODE: Mode;
+    const BLUR_MODE: Mode;
+    const APPLY_BLUR: bool;
+    const QUANTISE_MODE: Mode;
+    const APPLY_QUANTIZATION: bool;
+    const APPLY_SATURATION: bool;
+}
+
+pub struct HighQualityConfig;
+
+impl PipelineConfig for HighQualityConfig {
+    const SATURATION_MODE: Mode = Mode::HIGH;
+    const BLUR_MODE: Mode = Mode::HIGH;
+    const APPLY_BLUR: bool = true;
+    const QUANTISE_MODE: Mode = Mode::HIGH;
+    const APPLY_QUANTIZATION: bool = true;
+    const APPLY_SATURATION: bool = true;
+}
+
+pub struct MediumQualityConfig;
+
+impl PipelineConfig for MediumQualityConfig {
+    const SATURATION_MODE: Mode = Mode::MED;
+    const BLUR_MODE: Mode = Mode::MED;
+    const APPLY_BLUR: bool = true;
+    const QUANTISE_MODE: Mode = Mode::MED;
+    const APPLY_QUANTIZATION: bool = true;
+    const APPLY_SATURATION: bool = false;
+}
+
+pub struct LowQualityConfig;
+
+impl PipelineConfig for LowQualityConfig {
+    const SATURATION_MODE: Mode = Mode::LOW;
+    const BLUR_MODE: Mode = Mode::LOW;
+    const APPLY_BLUR: bool = true;
+    const QUANTISE_MODE: Mode = Mode::LOW;
+    const APPLY_QUANTIZATION: bool = false; // Skip entirely
+    const APPLY_SATURATION: bool = true;
+}
+
+#[derive(Clone, Copy)] // to copy out of the node
+pub struct Neighbours {
+    pub top_left: Colour,
+    pub middle_left: Colour,
+    pub bottom_left: Colour,
+    pub bottom_middle: Colour,
+    pub bottom_right: Colour,
+    pub middle_right: Colour,
+    pub top_right: Colour,
+    pub top_middle: Colour,
+}
+
 pub fn read_array_from_file<const STEPS: usize>(path: &str) -> [f64; STEPS] {
     let mut my_arr: [f64; STEPS] = [0.0; STEPS];
 
