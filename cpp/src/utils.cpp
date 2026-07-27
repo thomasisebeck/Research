@@ -6,6 +6,11 @@
 
 namespace utils {
 
+constexpr double INCREMENT = 0.01;
+constexpr size_t TEST_SIZE = 500;
+constexpr double DEGREES = 360;
+constexpr int STEPS = static_cast<size_t>(DEGREES / INCREMENT);
+
 struct Colour {
   float r, g, b;
 };
