@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(Optimise "Build with high optimizations and no assertions" OFF)
 
 # 1. Source files
-set(SOURCES src/image_pipeline_runtime.cpp)
+set(SOURCES src/expression_templates.cpp)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/input_image.txt"
                "${CMAKE_CURRENT_BINARY_DIR}/input_image.txt" COPYONLY)
