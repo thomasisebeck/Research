@@ -14,9 +14,9 @@ int main() {
       "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
       "N/A", utils::INCREMENT, utils::TEST_SIZE, utils::DEGREES, utils::STEPS);
 
-  auto start_time = std::chrono::steady_clock::now();
-
+  // start perf, then the clock
   prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  auto start_time = std::chrono::steady_clock::now();
 
   for (const auto &num : test_cases) {
 
@@ -24,9 +24,10 @@ int main() {
     sum += std::sin(float_num) + std::cos(float_num);
   }
 
+  // end the clock, then stop perf
+  auto end_time = std::chrono::steady_clock::now();
   prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-  auto end_time = std::chrono::steady_clock::now();
   const auto duration_comp = end_time - start_time;
 
   std::print("Processed in: {} ns\n", duration_comp);

@@ -33,9 +33,9 @@ int main() {
 
   double sum = 0.0;
 
-  auto start_time = std::chrono::steady_clock::now();
-
+  // start perf, then the clock
   prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  auto start_time = std::chrono::steady_clock::now();
 
   for (const auto &num : test_cases) {
     // num is strictly a raw test case value here
@@ -44,9 +44,10 @@ int main() {
     sum += MY_LUT[idx];
   }
 
+  // end the clock, then stop perf
+  auto end_time = std::chrono::steady_clock::now();
   prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-  auto end_time = std::chrono::steady_clock::now();
   const auto duration_comp = end_time - start_time;
 
   std::print("Processed in: {} ns\n", duration_comp);
