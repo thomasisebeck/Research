@@ -30,7 +30,6 @@ const Mouse = struct {
 const Animal = union(enum) {
     cat: Cat,
     dog: Dog,
-
     mouse: Mouse,
 
     // This method handles the direct, high-performance static branch lookup
