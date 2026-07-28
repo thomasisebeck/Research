@@ -1,7 +1,9 @@
 const std = @import("std");
+const print = std.debug.print;
 const utils = @import("utils.zig");
 
-const print = std.debug.print;
+const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
+const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
 
 // TODO: this is the experimental change
 // 1 increment -> must still test
@@ -81,6 +83,7 @@ pub fn main(init: std.process.Init) !void {
 
     var sum_run: f64 = 0;
 
+    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     start_time = std.Io.Clock.now(.awake, io);
 
     // dynamic
@@ -92,6 +95,8 @@ pub fn main(init: std.process.Init) !void {
     }
 
     end_time = std.Io.Clock.now(.awake, io);
+    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
+
     const duration_run = start_time.durationTo(end_time);
 
     // WARN: dummy mutation to allow us to allocate on the stack

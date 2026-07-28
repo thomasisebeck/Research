@@ -2,6 +2,9 @@ const std = @import("std");
 const print = std.debug.print;
 const utils = @import("utils.zig");
 
+const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
+const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
+
 // if statement
 pub fn quantise(cfg: utils.PipelineConfig, colour: f32) f32 {
     // downsample the pixel into different "resolutions"

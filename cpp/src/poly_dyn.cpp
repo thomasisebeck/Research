@@ -27,23 +27,47 @@ struct Mouse : public AnimalInterface {
 };
 
 int main() {
-  const std::size_t SIZE = 3;
-  std::array<SoundEnum, SIZE> sound_outputs;
+  const std::size_t SIZE = 21;
+  const std::size_t ITERS = 100;
+
+  std::array<SoundEnum, SIZE * ITERS> sound_outputs;
 
   std::vector<std::unique_ptr<AnimalInterface>> zoo;
   zoo.reserve(SIZE);
 
+  // push 21 random animals that are polymorphic
+  zoo.push_back(std::make_unique<Dog>());
+  zoo.push_back(std::make_unique<Cat>());
+  zoo.push_back(std::make_unique<Mouse>());
   zoo.push_back(std::make_unique<Cat>());
   zoo.push_back(std::make_unique<Dog>());
   zoo.push_back(std::make_unique<Mouse>());
+  zoo.push_back(std::make_unique<Dog>());
+  zoo.push_back(std::make_unique<Mouse>());
+  zoo.push_back(std::make_unique<Cat>());
+  zoo.push_back(std::make_unique<Mouse>());
+  zoo.push_back(std::make_unique<Cat>());
+  zoo.push_back(std::make_unique<Dog>());
+  zoo.push_back(std::make_unique<Mouse>());
+  zoo.push_back(std::make_unique<Dog>());
+  zoo.push_back(std::make_unique<Cat>());
+  zoo.push_back(std::make_unique<Mouse>());
+  zoo.push_back(std::make_unique<Dog>());
+  zoo.push_back(std::make_unique<Cat>());
+  zoo.push_back(std::make_unique<Mouse>());
+  zoo.push_back(std::make_unique<Cat>());
+  zoo.push_back(std::make_unique<Dog>());
+
+  std::size_t ind = 0;
 
   // start perf, then the clock
   prctl(PR_TASK_PERF_EVENTS_ENABLE);
   auto start_time = std::chrono::steady_clock::now();
 
-  for (size_t i = 0; i < SIZE; ++i) {
-    sound_outputs[i] = zoo[i]->sound();
-  }
+  for (int j = 0; j < ITERS; j++)
+    for (size_t i = 0; i < SIZE; ++i) {
+      sound_outputs[ind++] = zoo[i]->sound();
+    }
 
   // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
@@ -54,8 +78,8 @@ int main() {
                       .count();
 
   std::print("\n---  VERIFYING OUTPUTS ---\n");
-  for (size_t i = 0; i < SIZE; ++i) {
-    std::print("Index {}: {}\n", i, static_cast<int>(sound_outputs[i]));
+  for (const auto &sound : sound_outputs) {
+    std::print("Sound {}\n", static_cast<int>(sound));
   }
   std::print("Processed in: {}\n", duration);
 }

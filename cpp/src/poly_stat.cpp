@@ -29,8 +29,10 @@ struct Mouse : public Animal<Mouse> {
 };
 
 int main() {
-  const std::size_t SIZE = 3;
-  std::array<SoundEnum, SIZE> sound_outputs;
+  const std::size_t SIZE = 21;
+  const std::size_t ITERS = 100;
+
+  std::array<SoundEnum, SIZE * ITERS> sound_outputs;
 
   // variant is for a hetrogenous array
   // uses a tagged union under the hood
@@ -38,20 +40,42 @@ int main() {
   std::vector<AnimalVariant> zoo;
   zoo.reserve(SIZE);
 
+  // push 21 random animals that are static
+  zoo.push_back(Dog{});
+  zoo.push_back(Cat{});
+  zoo.push_back(Mouse{});
   zoo.push_back(Cat{});
   zoo.push_back(Dog{});
   zoo.push_back(Mouse{});
+  zoo.push_back(Dog{});
+  zoo.push_back(Mouse{});
+  zoo.push_back(Cat{});
+  zoo.push_back(Mouse{});
+  zoo.push_back(Cat{});
+  zoo.push_back(Dog{});
+  zoo.push_back(Mouse{});
+  zoo.push_back(Dog{});
+  zoo.push_back(Cat{});
+  zoo.push_back(Mouse{});
+  zoo.push_back(Dog{});
+  zoo.push_back(Cat{});
+  zoo.push_back(Mouse{});
+  zoo.push_back(Cat{});
+  zoo.push_back(Dog{});
 
   // start perf, then the clock
   prctl(PR_TASK_PERF_EVENTS_ENABLE);
   auto start_time = std::chrono::steady_clock::now();
 
-  // std::visit is also a new feature to call the functions
-  // in that hetrogenous array
-  for (size_t i = 0; i < SIZE; ++i) {
-    sound_outputs[i] =
-        std::visit([](const auto &animal) { return animal.sound(); }, zoo[i]);
-  }
+  std::size_t ind = 0;
+
+  for (int j = 0; j < ITERS; j++)
+    // std::visit is also a new feature to call the functions
+    // in that hetrogenous array
+    for (size_t i = 0; i < SIZE; ++i) {
+      sound_outputs[ind++] =
+          std::visit([](const auto &animal) { return animal.sound(); }, zoo[i]);
+    }
 
   // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
@@ -62,8 +86,8 @@ int main() {
                       .count();
 
   std::print("\n---  VERIFYING OUTPUTS ---\n");
-  for (size_t i = 0; i < SIZE; ++i) {
-    std::print("Index {}: {}\n", i, static_cast<int>(sound_outputs[i]));
+  for (const auto &sound : sound_outputs) {
+    std::print("Index {}\n", static_cast<int>(sound));
   }
   std::print("Processed in: {}\n", duration);
 }

@@ -2,6 +2,9 @@ const std = @import("std");
 const print = std.debug.print;
 const utils = @import("utils.zig");
 
+const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
+const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
+
 // if statement
 pub fn quantise(comptime cfg: utils.PipelineConfig, colour: f32) f32 {
     // downsample the pixel into different "resolutions"
@@ -118,11 +121,13 @@ pub fn main(init: std.process.Init) !void {
         .apply_saturation = true,
     };
 
+    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
 
     process(config, &my_image);
 
     const end_time = std.Io.Clock.now(.awake, io);
+    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
 
     const duration = start_time.durationTo(end_time);
 

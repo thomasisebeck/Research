@@ -1,4 +1,8 @@
 const std = @import("std");
+const print = std.debug.print;
+
+const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
+const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
 
 const SoundEnum = enum(u8) {
     woof,
@@ -60,6 +64,7 @@ pub fn main(init: std.process.Init) !void {
         .{ .mouse = Mouse{} },
     };
 
+    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
 
     // Look! A completely standard runtime for loop. No 'inline' needed!
@@ -68,6 +73,8 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const end_time = std.Io.Clock.now(.awake, io);
+    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
+
     const duration = start_time.durationTo(end_time);
 
     std.debug.print("\n---  VERIFYING OUTPUTS ---\n", .{});
