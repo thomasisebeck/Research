@@ -1,7 +1,7 @@
 use std::fs;
 use std::fs::read_to_string;
 
-pub const SIZE: usize = 50;
+pub const IMAGE_SIZE: usize = 50;
 
 #[derive(Clone, Copy)]
 pub struct Colour {
@@ -95,7 +95,7 @@ pub fn print_array<const Size: usize>(arr: &[i32; Size]) {
     print!("]\n");
 }
 
-pub fn read_image_from_file(path: &str, mat: &mut [[Colour; SIZE]; SIZE]) {
+pub fn read_image_from_file(path: &str, mat: &mut [[Colour; IMAGE_SIZE]; IMAGE_SIZE]) {
     let content = fs::read_to_string(path).expect("Cannot open file");
 
     // split by both spaces and newlines
@@ -103,8 +103,8 @@ pub fn read_image_from_file(path: &str, mat: &mut [[Colour; SIZE]; SIZE]) {
     let mut tokens = content.split_whitespace();
     let mut counter = 0;
 
-    for row in 0..SIZE {
-        for col in 0..SIZE {
+    for row in 0..IMAGE_SIZE {
+        for col in 0..IMAGE_SIZE {
             // 3. Extract r, g, and b
             let r: f32 = tokens
                 .next()

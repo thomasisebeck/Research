@@ -99,10 +99,13 @@ fn saturation(cfg: &PipelineConfig, item: &mut utils::Colour) {
 }
 
 // constexpr void process(utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
-fn process(cfg: &PipelineConfig, mat: &mut [[utils::Colour; utils::SIZE]; utils::SIZE]) {
+fn process(
+    cfg: &PipelineConfig,
+    mat: &mut [[utils::Colour; utils::IMAGE_SIZE]; utils::IMAGE_SIZE],
+) {
     // not ..= (we want exclusive loop)
-    for row_num in 1..(utils::SIZE - 1) {
-        for col_num in 1..(utils::SIZE - 1) {
+    for row_num in 1..(utils::IMAGE_SIZE - 1) {
+        for col_num in 1..(utils::IMAGE_SIZE - 1) {
             if cfg.apply_blur {
                 // these are non-mutable refs
                 // no need to fight with the borrow checker
@@ -153,7 +156,7 @@ fn main() {
 
     // pass the init pixel in here
     // type is derived
-    let mut my_image = [[init_pixel; utils::SIZE]; utils::SIZE];
+    let mut my_image = [[init_pixel; utils::IMAGE_SIZE]; utils::IMAGE_SIZE];
 
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);

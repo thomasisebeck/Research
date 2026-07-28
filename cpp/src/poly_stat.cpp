@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <linux/prctl.h>
 #include <print>
+#include <ranges>
 #include <sys/prctl.h>
 #include <variant>
 #include <vector>
@@ -86,8 +87,8 @@ int main() {
                       .count();
 
   std::print("\n---  VERIFYING OUTPUTS ---\n");
-  for (const auto &sound : sound_outputs) {
-    std::print("Index {}\n", static_cast<int>(sound));
+  for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
+    std::print("Index {}, sound: {}\n", ind, static_cast<int>(sound));
   }
   std::print("Processed in: {}\n", duration);
 }

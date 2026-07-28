@@ -9,24 +9,55 @@ enum SoundEnum {
     Squeek,
 }
 
-struct Dog;
+struct Dog {
+    id: u64,
+}
+
 impl Dog {
+    fn new() -> Self {
+        Self { id: 1 }
+    }
+
     fn sound(&self) -> SoundEnum {
-        SoundEnum::Woof
+        if self.id == 0 {
+            SoundEnum::Meow
+        } else {
+            SoundEnum::Woof
+        }
     }
 }
 
-struct Cat;
+struct Cat {
+    id: u64,
+}
+
 impl Cat {
+    fn new() -> Self {
+        Self { id: 1 }
+    }
+
     fn sound(&self) -> SoundEnum {
-        SoundEnum::Meow
+        if self.id == 0 {
+            SoundEnum::Woof
+        } else {
+            SoundEnum::Meow
+        }
     }
 }
 
-struct Mouse;
+struct Mouse {
+    id: u64,
+}
 impl Mouse {
+    fn new() -> Self {
+        Self { id: 1 }
+    }
     fn sound(&self) -> SoundEnum {
-        SoundEnum::Squeek
+        if self.id == 0 {
+            SoundEnum::Woof
+        } else {
+            SoundEnum::Squeek
+        }
     }
 }
 
@@ -47,10 +78,35 @@ impl Animal {
 }
 
 fn main() {
-    const SIZE: usize = 3;
-    let mut sound_outputs: [SoundEnum; SIZE] = [SoundEnum::Woof; SIZE];
+    const SIZE: usize = 21;
+    const ITERS: usize = 100;
 
-    let zoo: [Animal; SIZE] = [Animal::Cat(Cat), Animal::Dog(Dog), Animal::Mouse(Mouse)];
+    let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
+
+    // static = point to static instance
+    let zoo: [Animal; SIZE] = [
+        Animal::Dog(Dog::new()),
+        Animal::Cat(Cat::new()),
+        Animal::Mouse(Mouse::new()),
+        Animal::Cat(Cat::new()),
+        Animal::Dog(Dog::new()),
+        Animal::Mouse(Mouse::new()),
+        Animal::Dog(Dog::new()),
+        Animal::Mouse(Mouse::new()),
+        Animal::Cat(Cat::new()),
+        Animal::Mouse(Mouse::new()),
+        Animal::Cat(Cat::new()),
+        Animal::Dog(Dog::new()),
+        Animal::Mouse(Mouse::new()),
+        Animal::Dog(Dog::new()),
+        Animal::Cat(Cat::new()),
+        Animal::Mouse(Mouse::new()),
+        Animal::Dog(Dog::new()),
+        Animal::Cat(Cat::new()),
+        Animal::Mouse(Mouse::new()),
+        Animal::Cat(Cat::new()),
+        Animal::Dog(Dog::new()),
+    ];
 
     // using an unsafe block so that it's consistent with the cpp
     unsafe {
@@ -58,8 +114,13 @@ fn main() {
     }
     let start_time = Instant::now();
 
-    for (i, animal) in zoo.iter().enumerate() {
-        sound_outputs[i] = animal.sound();
+    let mut ind: usize = 0;
+
+    for _ in 0..ITERS {
+        for animal in zoo.iter() {
+            sound_outputs[ind] = animal.sound();
+            ind += 1;
+        }
     }
 
     let duration = start_time.elapsed();

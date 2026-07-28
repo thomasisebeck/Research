@@ -1,5 +1,5 @@
 const std = @import("std");
-pub const IMAGE_SIZE = 500;
+pub const IMAGE_SIZE = 100;
 const print = std.debug.print;
 const assert = std.debug.assert;
 

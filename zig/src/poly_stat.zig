@@ -11,21 +11,25 @@ const SoundEnum = enum(u8) {
 };
 
 const Dog = struct {
+    id: u64 = 1,
     pub fn sound(self: Dog) SoundEnum {
-        _ = self;
+        if (self.id == 0) return SoundEnum.meow;
+
         return SoundEnum.woof;
     }
 };
 const Cat = struct {
+    id: u64 = 1,
     pub fn sound(self: Cat) SoundEnum {
-        _ = self;
+        if (self.id == 0) return SoundEnum.woof;
 
         return SoundEnum.meow;
     }
 };
 const Mouse = struct {
+    id: u64 = 1,
     pub fn sound(self: Mouse) SoundEnum {
-        _ = self;
+        if (self.id == 0) return SoundEnum.woof;
 
         return SoundEnum.squeek;
     }
@@ -53,23 +57,32 @@ pub fn makeSoundHelper(comptime myAnimal: anytype) SoundEnum {
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
 
-    const SIZE = 3;
-    var sound_outputs: [SIZE]SoundEnum = undefined;
+    const SIZE = 21;
+    const ITERS = 100;
 
-    // A perfectly normal, runtime-accessible array!
-    // Every element is an identical 'Animal' container.
+    var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
+
+    // static = point to static instance
     const zoo = [SIZE]Animal{
-        .{ .cat = Cat{} },
-        .{ .dog = Dog{} },
-        .{ .mouse = Mouse{} },
+        .{ .dog = Dog{} },     .{ .cat = Cat{} },     .{ .mouse = Mouse{} },
+        .{ .cat = Cat{} },     .{ .dog = Dog{} },     .{ .mouse = Mouse{} },
+        .{ .dog = Dog{} },     .{ .mouse = Mouse{} }, .{ .cat = Cat{} },
+        .{ .mouse = Mouse{} }, .{ .cat = Cat{} },     .{ .dog = Dog{} },
+        .{ .mouse = Mouse{} }, .{ .dog = Dog{} },     .{ .cat = Cat{} },
+        .{ .mouse = Mouse{} }, .{ .dog = Dog{} },     .{ .cat = Cat{} },
+        .{ .mouse = Mouse{} }, .{ .cat = Cat{} },     .{ .dog = Dog{} },
     };
-
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
 
+    var ind: usize = 0;
+
     // Look! A completely standard runtime for loop. No 'inline' needed!
-    for (zoo, 0..) |animal, i| {
-        sound_outputs[i] = animal.sound();
+    for (0..ITERS) |_| {
+        for (zoo) |animal| {
+            sound_outputs[ind] = animal.sound();
+            ind += 1;
+        }
     }
 
     const end_time = std.Io.Clock.now(.awake, io);

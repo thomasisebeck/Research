@@ -9,38 +9,84 @@ enum SoundEnum {
     Squeek,
 }
 
-trait AnimalTrait {
+trait Animal {
     fn sound(&self) -> SoundEnum;
 }
 
-struct Dog;
-struct Cat;
-struct Mouse;
+struct Dog {
+    id: u64,
+}
 
-impl AnimalTrait for Dog {
+impl Dog {
+    fn new() -> Self {
+        Self { id: 1 }
+    }
+}
+impl Animal for Dog {
     fn sound(&self) -> SoundEnum {
-        SoundEnum::Woof
+        if self.id == 0 {
+            SoundEnum::Meow
+        } else {
+            SoundEnum::Woof
+        }
     }
 }
 
-impl AnimalTrait for Cat {
+struct Cat {
+    id: u64,
+}
+
+impl Cat {
+    fn new() -> Self {
+        Self { id: 1 }
+    }
+}
+impl Animal for Cat {
     fn sound(&self) -> SoundEnum {
-        SoundEnum::Meow
+        if self.id == 0 {
+            SoundEnum::Woof
+        } else {
+            SoundEnum::Meow
+        }
     }
 }
 
-impl AnimalTrait for Mouse {
+struct Mouse {
+    id: u64,
+}
+impl Mouse {
+    fn new() -> Self {
+        Self { id: 1 }
+    }
+}
+impl Animal for Mouse {
     fn sound(&self) -> SoundEnum {
-        SoundEnum::Squeek
+        if self.id == 0 {
+            SoundEnum::Woof
+        } else {
+            SoundEnum::Squeek
+        }
     }
 }
 
 fn main() {
-    const SIZE: usize = 3;
-    let mut sound_outputs: [SoundEnum; SIZE] = [SoundEnum::Woof; SIZE];
+    const SIZE: usize = 21;
+    const ITERS: usize = 100;
+
+    let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
 
     // Instantiate directly into the dynamic trait object container
-    let zoo: Vec<Box<dyn AnimalTrait>> = vec![Box::new(Cat), Box::new(Dog), Box::new(Mouse)];
+    let dog = Dog::new();
+    let cat = Cat::new();
+    let mouse = Mouse::new();
+
+    // A array of references (not on the heap)
+    let zoo: [&dyn Animal; SIZE] = [
+        &dog, &cat, &mouse, &cat, &dog, &mouse, &dog, &mouse, &cat, &mouse, &cat, &dog, &mouse,
+        &dog, &cat, &mouse, &dog, &cat, &mouse, &cat, &dog,
+    ];
+
+    let zoo = std::hint::black_box(zoo);
 
     // using an unsafe block so that it's consistent with the cpp
     unsafe {
@@ -48,11 +94,15 @@ fn main() {
     }
     let start_time = Instant::now();
 
-    // Loop over dynamic coll
-    for (i, animal) in zoo.iter().enumerate() {
-        sound_outputs[i] = animal.sound();
+    let mut ind: usize = 0;
 
-        std::hint::black_box(sound_outputs[i]);
+    for _ in 0..ITERS {
+        // Loop over dynamic coll
+        for animal in zoo.iter() {
+            sound_outputs[ind] = animal.sound();
+            std::hint::black_box(sound_outputs[ind]);
+            ind += 1;
+        }
     }
 
     let duration = start_time.elapsed();

@@ -58,14 +58,14 @@ pub fn saturation(cfg: utils.PipelineConfig, item: *utils.Colour) void {
     item.b = std.math.clamp(luma + (delta * (item.b - luma)), 0.0, 1.0);
 }
 
-pub fn process(cfg: utils.PipelineConfig, mat: *[utils.SIZE][utils.SIZE]utils.Colour) void {
+pub fn process(cfg: utils.PipelineConfig, mat: *[utils.IMAGE_SIZE][utils.IMAGE_SIZE]utils.Colour) void {
     // low: get the avg of next, prev and curr
     // med: get the avg of 3by3
     // high: get the average of 3by3, and add jitter
 
-    for (1..(utils.SIZE - 1)) |row_num| {
+    for (1..(utils.IMAGE_SIZE - 1)) |row_num| {
         // item is mutable
-        for (1..(utils.SIZE - 1)) |col_num| {
+        for (1..(utils.IMAGE_SIZE - 1)) |col_num| {
             // item is utils.Colour
             // want to mutate it here
             const item = &mat[row_num][col_num];
@@ -85,8 +85,8 @@ pub fn process(cfg: utils.PipelineConfig, mat: *[utils.SIZE][utils.SIZE]utils.Co
                 blur(cfg, item, n);
             }
 
-            if (cfg.apply_quantization) {
-                // 3. Perform Step 2: Execute element-wise quantization map on the blurred output
+            if (cfg.apply_quantisation) {
+                // 3. Perform Step 2: Execute element-wise quantisation map on the blurred output
                 item.r = quantise(cfg, item.r);
                 item.g = quantise(cfg, item.g);
                 item.b = quantise(cfg, item.b);
@@ -103,23 +103,23 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
 
     // write the image
-    // _ = try writeImageToFile(io, "input_image.txt");
+    // _ = try utils.writeImageToFile(io, "input_image.txt");
 
     // read the image
-    var my_image: [utils.SIZE][utils.SIZE]utils.Colour = undefined;
+    var my_image: [utils.IMAGE_SIZE][utils.IMAGE_SIZE]utils.Colour = undefined;
     _ = try utils.readImageFromFile(io, "input_image.txt", &my_image);
 
     // try printImage(my_image);
 
     const config = utils.PipelineConfig{
-        .colour_mode = .MED,
-        .blur_mode = .MED,
+        .colour_mode = .LOW,
+        .blur_mode = .LOW,
         .apply_blur = true,
-        .sharpen_mode = .MED,
-        .quantise_mode = .MED,
-        .apply_quantisation = true,
-        .saturation_mode = .MED,
-        .apply_saturation = true,
+        .sharpen_mode = .LOW,
+        .quantise_mode = .LOW,
+        .apply_quantisation = false,
+        .saturation_mode = .LOW,
+        .apply_saturation = false,
     };
 
     var start_time = std.Io.Clock.now(.awake, io);
