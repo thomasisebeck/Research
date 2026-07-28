@@ -1,6 +1,8 @@
 mod utils;
 use std::time::Instant;
 
+use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
+
 // use a normal struct instead of a trait
 struct PipelineConfig {
     blur_mode: utils::Mode,
@@ -165,14 +167,20 @@ fn main() {
         apply_saturation: true,
     };
 
+    unsafe {
+        libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
+    }
     let start_time = Instant::now();
 
     // configs are declared above as traits...
     process(&config, &mut my_image);
 
-    let duration = start_time.elapsed();
+    let end_time = Instant::now();
+    unsafe {
+        libc::prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
+    }
 
-    let nanoseconds = duration.as_nanos();
+    let duration = end_time.duration_since(start_time).as_nanos();
 
-    println!("Processed in: {} ns", nanoseconds);
+    println!("Processed in: {} ns", duration);
 }

@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
+
 #[derive(Debug, Clone, Copy)]
 enum SoundEnum {
     Woof,
@@ -50,6 +52,10 @@ fn main() {
 
     let zoo: [Animal; SIZE] = [Animal::Cat(Cat), Animal::Dog(Dog), Animal::Mouse(Mouse)];
 
+    // using an unsafe block so that it's consistent with the cpp
+    unsafe {
+        libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
+    }
     let start_time = Instant::now();
 
     for (i, animal) in zoo.iter().enumerate() {
@@ -57,6 +63,9 @@ fn main() {
     }
 
     let duration = start_time.elapsed();
+    unsafe {
+        libc::prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
+    }
 
     println!("\n---  VERIFYING OUTPUTS ---");
     for (i, res) in sound_outputs.iter().enumerate() {

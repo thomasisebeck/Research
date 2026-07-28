@@ -1,6 +1,8 @@
 mod utils;
 use std::time::Instant;
 
+use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
+
 // if statement
 fn quantise<CFG: utils::PipelineConfig>(colour: f32) -> f32 {
     let res;
@@ -148,14 +150,20 @@ fn main() {
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
+    unsafe {
+        libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
+    }
     let start_time = Instant::now();
 
     // configs are declared above as traits...
     process::<utils::MediumQualityConfig>(&mut my_image);
 
-    let duration = start_time.elapsed();
+    let end_time = Instant::now();
+    unsafe {
+        libc::prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
+    }
 
-    let nanoseconds = duration.as_nanos();
+    let duration = end_time.duration_since(start_time).as_nanos();
 
-    println!("Processed in: {} ns", nanoseconds);
+    println!("Processed in: {} ns", duration);
 }
