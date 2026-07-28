@@ -63,7 +63,7 @@ pub fn main(init: std.process.Init) !void {
     var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
 
     // static = point to static instance
-    const zoo = [SIZE]Animal{
+    var zoo = [SIZE]Animal{
         .{ .dog = Dog{} },     .{ .cat = Cat{} },     .{ .mouse = Mouse{} },
         .{ .cat = Cat{} },     .{ .dog = Dog{} },     .{ .mouse = Mouse{} },
         .{ .dog = Dog{} },     .{ .mouse = Mouse{} }, .{ .cat = Cat{} },
@@ -72,6 +72,12 @@ pub fn main(init: std.process.Init) !void {
         .{ .mouse = Mouse{} }, .{ .dog = Dog{} },     .{ .cat = Cat{} },
         .{ .mouse = Mouse{} }, .{ .cat = Cat{} },     .{ .dog = Dog{} },
     };
+
+    //asm volatile (""
+    //    :
+    //    : [ptr] "r" (&zoo),
+    //    : "memory");
+
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
 
@@ -89,6 +95,8 @@ pub fn main(init: std.process.Init) !void {
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
 
     const duration = start_time.durationTo(end_time);
+
+    zoo[0] = .{ .cat = Cat{} };
 
     std.debug.print("\n---  VERIFYING OUTPUTS ---\n", .{});
     for (sound_outputs, 0..) |res, i| {

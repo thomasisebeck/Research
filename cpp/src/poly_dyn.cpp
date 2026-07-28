@@ -16,15 +16,33 @@ struct AnimalInterface {
 };
 
 struct Dog : public AnimalInterface {
-  SoundEnum sound() const override { return SoundEnum::Woof; }
+  uint64_t id = 1;
+
+  SoundEnum sound() const override {
+    if (id == 0)
+      return SoundEnum::Meow;
+    return SoundEnum::Woof;
+  }
 };
 
 struct Cat : public AnimalInterface {
-  SoundEnum sound() const override { return SoundEnum::Meow; }
+  uint64_t id = 1;
+
+  SoundEnum sound() const override {
+    if (id == 0)
+      return SoundEnum::Woof;
+    return SoundEnum::Meow;
+  }
 };
 
 struct Mouse : public AnimalInterface {
-  SoundEnum sound() const override { return SoundEnum::Squeek; }
+  uint64_t id = 1;
+
+  SoundEnum sound() const override {
+    if (id == 0)
+      return SoundEnum::Woof;
+    return SoundEnum::Squeek;
+  };
 };
 
 int main() {

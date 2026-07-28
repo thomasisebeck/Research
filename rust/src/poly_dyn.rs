@@ -75,15 +75,29 @@ fn main() {
 
     let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
 
-    // Instantiate directly into the dynamic trait object container
-    let dog = Dog::new();
-    let cat = Cat::new();
-    let mouse = Mouse::new();
-
-    // A array of references (not on the heap)
-    let zoo: [&dyn Animal; SIZE] = [
-        &dog, &cat, &mouse, &cat, &dog, &mouse, &dog, &mouse, &cat, &mouse, &cat, &dog, &mouse,
-        &dog, &cat, &mouse, &dog, &cat, &mouse, &cat, &dog,
+    // A array of references heap for dyn
+    let zoo: [Box<dyn Animal>; SIZE] = [
+        Box::new(Dog::new()),
+        Box::new(Cat::new()),
+        Box::new(Mouse::new()),
+        Box::new(Cat::new()),
+        Box::new(Dog::new()),
+        Box::new(Mouse::new()),
+        Box::new(Dog::new()),
+        Box::new(Mouse::new()),
+        Box::new(Cat::new()),
+        Box::new(Mouse::new()),
+        Box::new(Cat::new()),
+        Box::new(Dog::new()),
+        Box::new(Mouse::new()),
+        Box::new(Dog::new()),
+        Box::new(Cat::new()),
+        Box::new(Mouse::new()),
+        Box::new(Dog::new()),
+        Box::new(Cat::new()),
+        Box::new(Mouse::new()),
+        Box::new(Cat::new()),
+        Box::new(Dog::new()),
     ];
 
     let zoo = std::hint::black_box(zoo);

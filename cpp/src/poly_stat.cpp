@@ -18,15 +18,33 @@ template <typename Derived> struct Animal {
 };
 
 struct Dog : public Animal<Dog> {
-  SoundEnum sound_impl() const { return SoundEnum::Woof; }
+  uint64_t id = 1;
+
+  SoundEnum sound_impl() const {
+    if (id == 0)
+      return SoundEnum::Meow;
+    return SoundEnum::Woof;
+  }
 };
 
 struct Cat : public Animal<Cat> {
-  SoundEnum sound_impl() const { return SoundEnum::Meow; }
+  uint64_t id = 1;
+
+  SoundEnum sound_impl() const {
+    if (id == 0)
+      return SoundEnum::Woof;
+    return SoundEnum::Meow;
+  }
 };
 
 struct Mouse : public Animal<Mouse> {
-  SoundEnum sound_impl() const { return SoundEnum::Squeek; }
+  uint64_t id = 1;
+
+  SoundEnum sound_impl() const {
+    if (id == 0)
+      return SoundEnum::Woof;
+    return SoundEnum::Squeek;
+  }
 };
 
 int main() {
