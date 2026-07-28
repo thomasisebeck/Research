@@ -63,12 +63,8 @@ pub fn main(init: std.process.Init) !void {
 
     const io = init.io;
 
+    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
-
-    //  for num in test_cases {
-    //      let idx = (num / INCREMENT).round() as usize;
-    //      sum_comp += MY_LUT[idx];
-    //  }
 
     // test cases is i64 arr
     // num / increment, making it larger (if inc between 0 and 1)
@@ -78,32 +74,14 @@ pub fn main(init: std.process.Init) !void {
         sum_comp += myLut[@intFromFloat(float_idx)];
     }
 
-    var end_time = std.Io.Clock.now(.awake, io);
-    const duration_comp = start_time.durationTo(end_time);
-
-    var sum_run: f64 = 0;
-
-    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
-    start_time = std.Io.Clock.now(.awake, io);
-
-    // dynamic
-    for (test_cases) |num| {
-        const float_num = @as(f64, @floatFromInt(num));
-
-        // no need to offset here, we just use the test case as is
-        sum_run += @sin(float_num) + @cos(float_num);
-    }
-
-    end_time = std.Io.Clock.now(.awake, io);
+    const end_time = std.Io.Clock.now(.awake, io);
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
 
-    const duration_run = start_time.durationTo(end_time);
+    const duration_comp = start_time.durationTo(end_time);
 
     // WARN: dummy mutation to allow us to allocate on the stack
     myLut[0] += @as(f64, @floatFromInt(test_cases[0]));
 
-    print("Runtime processed in: {} ns\n", .{duration_run.toNanoseconds()});
     print("Comptime processed in: {} ns\n", .{duration_comp.toNanoseconds()});
     print("Sum comp: {d}\n", .{sum_comp});
-    print("Sum run: {d}\n", .{sum_run});
 }
