@@ -2,7 +2,9 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <linux/prctl.h>
 #include <print>
+#include <sys/prctl.h>
 #include <utility>
 
 // if statement
@@ -132,17 +134,21 @@ int main() {
       utils::PipelineConfig{.colour_mode = utils::Mode::LOW,
                             .blur_mode = utils::Mode::LOW,
                             .apply_blur = true,
-                            .sharpen_mode = utils::Mode::LOW,
                             .quantise_mode = utils::Mode::LOW,
                             .apply_quantisation = true,
                             .saturation_mode = utils::Mode::LOW,
                             .apply_saturation = true};
 
-  const auto start_time = std::chrono::steady_clock::now();
+  // start perf, then the clock
+  prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  auto start_time = std::chrono::steady_clock::now();
 
   process(config, my_image);
 
-  const auto end_time = std::chrono::steady_clock::now();
+  // end the clock, then stop perf
+  auto end_time = std::chrono::steady_clock::now();
+  prctl(PR_TASK_PERF_EVENTS_DISABLE);
+
   const auto duration = end_time - start_time;
 
   const auto nanoseconds =

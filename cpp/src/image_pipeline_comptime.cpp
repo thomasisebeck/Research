@@ -135,7 +135,6 @@ int main() {
       utils::PipelineConfig{.colour_mode = utils::Mode::LOW,
                             .blur_mode = utils::Mode::LOW,
                             .apply_blur = true,
-                            .sharpen_mode = utils::Mode::LOW,
                             .quantise_mode = utils::Mode::LOW,
                             .apply_quantisation = true,
                             .saturation_mode = utils::Mode::LOW,

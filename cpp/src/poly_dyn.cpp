@@ -1,8 +1,10 @@
 #include <array>
 #include <chrono>
 #include <cstddef>
+#include <linux/prctl.h>
 #include <memory>
 #include <print>
+#include <sys/prctl.h>
 #include <vector>
 enum class SoundEnum { Woof, Meow, Squeek };
 
@@ -35,13 +37,18 @@ int main() {
   zoo.push_back(std::make_unique<Dog>());
   zoo.push_back(std::make_unique<Mouse>());
 
-  const auto start_time = std::chrono::steady_clock::now();
+  // start perf, then the clock
+  prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  auto start_time = std::chrono::steady_clock::now();
 
   for (size_t i = 0; i < SIZE; ++i) {
     sound_outputs[i] = zoo[i]->sound();
   }
 
+  // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
+  prctl(PR_TASK_PERF_EVENTS_DISABLE);
+
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
                       end_time - start_time)
                       .count();

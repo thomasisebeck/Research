@@ -1,7 +1,9 @@
 #include <array>
 #include <chrono>
 #include <cstddef>
+#include <linux/prctl.h>
 #include <print>
+#include <sys/prctl.h>
 #include <variant>
 #include <vector>
 
@@ -40,7 +42,9 @@ int main() {
   zoo.push_back(Dog{});
   zoo.push_back(Mouse{});
 
-  const auto start_time = std::chrono::steady_clock::now();
+  // start perf, then the clock
+  prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  auto start_time = std::chrono::steady_clock::now();
 
   // std::visit is also a new feature to call the functions
   // in that hetrogenous array
@@ -49,7 +53,10 @@ int main() {
         std::visit([](const auto &animal) { return animal.sound(); }, zoo[i]);
   }
 
+  // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
+  prctl(PR_TASK_PERF_EVENTS_DISABLE);
+
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
                       end_time - start_time)
                       .count();
