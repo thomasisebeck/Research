@@ -51,31 +51,18 @@ int main() {
 
   std::array<SoundEnum, SIZE * ITERS> sound_outputs;
 
-  std::vector<std::unique_ptr<AnimalInterface>> zoo;
-  zoo.reserve(SIZE);
-
-  // push 21 random animals that are polymorphic
-  zoo.push_back(std::make_unique<Dog>());
-  zoo.push_back(std::make_unique<Cat>());
-  zoo.push_back(std::make_unique<Mouse>());
-  zoo.push_back(std::make_unique<Cat>());
-  zoo.push_back(std::make_unique<Dog>());
-  zoo.push_back(std::make_unique<Mouse>());
-  zoo.push_back(std::make_unique<Dog>());
-  zoo.push_back(std::make_unique<Mouse>());
-  zoo.push_back(std::make_unique<Cat>());
-  zoo.push_back(std::make_unique<Mouse>());
-  zoo.push_back(std::make_unique<Cat>());
-  zoo.push_back(std::make_unique<Dog>());
-  zoo.push_back(std::make_unique<Mouse>());
-  zoo.push_back(std::make_unique<Dog>());
-  zoo.push_back(std::make_unique<Cat>());
-  zoo.push_back(std::make_unique<Mouse>());
-  zoo.push_back(std::make_unique<Dog>());
-  zoo.push_back(std::make_unique<Cat>());
-  zoo.push_back(std::make_unique<Mouse>());
-  zoo.push_back(std::make_unique<Cat>());
-  zoo.push_back(std::make_unique<Dog>());
+  std::array<std::unique_ptr<AnimalInterface>, SIZE> zoo = {
+      std::make_unique<Dog>(),   std::make_unique<Cat>(),
+      std::make_unique<Mouse>(), std::make_unique<Cat>(),
+      std::make_unique<Dog>(),   std::make_unique<Mouse>(),
+      std::make_unique<Dog>(),   std::make_unique<Mouse>(),
+      std::make_unique<Cat>(),   std::make_unique<Mouse>(),
+      std::make_unique<Cat>(),   std::make_unique<Dog>(),
+      std::make_unique<Mouse>(), std::make_unique<Dog>(),
+      std::make_unique<Cat>(),   std::make_unique<Mouse>(),
+      std::make_unique<Dog>(),   std::make_unique<Cat>(),
+      std::make_unique<Mouse>(), std::make_unique<Cat>(),
+      std::make_unique<Dog>()};
 
   std::size_t ind = 0;
 

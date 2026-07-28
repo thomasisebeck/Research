@@ -56,31 +56,11 @@ int main() {
   // variant is for a hetrogenous array
   // uses a tagged union under the hood
   using AnimalVariant = std::variant<Cat, Dog, Mouse>;
-  std::vector<AnimalVariant> zoo;
-  zoo.reserve(SIZE);
+  std::array<AnimalVariant, SIZE> zoo = {
+      Dog{},   Cat{}, Mouse{},
 
-  // push 21 random animals that are static
-  zoo.push_back(Dog{});
-  zoo.push_back(Cat{});
-  zoo.push_back(Mouse{});
-  zoo.push_back(Cat{});
-  zoo.push_back(Dog{});
-  zoo.push_back(Mouse{});
-  zoo.push_back(Dog{});
-  zoo.push_back(Mouse{});
-  zoo.push_back(Cat{});
-  zoo.push_back(Mouse{});
-  zoo.push_back(Cat{});
-  zoo.push_back(Dog{});
-  zoo.push_back(Mouse{});
-  zoo.push_back(Dog{});
-  zoo.push_back(Cat{});
-  zoo.push_back(Mouse{});
-  zoo.push_back(Dog{});
-  zoo.push_back(Cat{});
-  zoo.push_back(Mouse{});
-  zoo.push_back(Cat{});
-  zoo.push_back(Dog{});
+      Cat{},   Dog{}, Mouse{}, Dog{},   Mouse{}, Cat{}, Mouse{}, Cat{}, Dog{},
+      Mouse{}, Dog{}, Cat{},   Mouse{}, Dog{},   Cat{}, Mouse{}, Cat{}, Dog{}};
 
   // start perf, then the clock
   prctl(PR_TASK_PERF_EVENTS_ENABLE);

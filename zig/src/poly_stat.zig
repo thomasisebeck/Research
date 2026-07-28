@@ -73,11 +73,6 @@ pub fn main(init: std.process.Init) !void {
         .{ .mouse = Mouse{} }, .{ .cat = Cat{} },     .{ .dog = Dog{} },
     };
 
-    //asm volatile (""
-    //    :
-    //    : [ptr] "r" (&zoo),
-    //    : "memory");
-
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
 
