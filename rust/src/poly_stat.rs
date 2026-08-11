@@ -107,6 +107,7 @@ fn main() {
         Animal::Cat(Cat::new()),
         Animal::Dog(Dog::new()),
     ];
+    let zoo = std::hint::black_box(zoo);
 
     // using an unsafe block so that it's consistent with the cpp
     unsafe {

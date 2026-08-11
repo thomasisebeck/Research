@@ -75,31 +75,39 @@ fn main() {
 
     let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
 
-    // A array of references heap for dyn
-    let zoo: [Box<dyn Animal>; SIZE] = [
-        Box::new(Dog::new()),
-        Box::new(Cat::new()),
-        Box::new(Mouse::new()),
-        Box::new(Cat::new()),
-        Box::new(Dog::new()),
-        Box::new(Mouse::new()),
-        Box::new(Dog::new()),
-        Box::new(Mouse::new()),
-        Box::new(Cat::new()),
-        Box::new(Mouse::new()),
-        Box::new(Cat::new()),
-        Box::new(Dog::new()),
-        Box::new(Mouse::new()),
-        Box::new(Dog::new()),
-        Box::new(Cat::new()),
-        Box::new(Mouse::new()),
-        Box::new(Dog::new()),
-        Box::new(Cat::new()),
-        Box::new(Mouse::new()),
-        Box::new(Cat::new()),
-        Box::new(Dog::new()),
-    ];
+    let (d1, d2, d3, d4, d5, d6, d7) = (
+        Dog::new(),
+        Dog::new(),
+        Dog::new(),
+        Dog::new(),
+        Dog::new(),
+        Dog::new(),
+        Dog::new(),
+    );
+    let (c1, c2, c3, c4, c5, c6, c7) = (
+        Cat::new(),
+        Cat::new(),
+        Cat::new(),
+        Cat::new(),
+        Cat::new(),
+        Cat::new(),
+        Cat::new(),
+    );
+    let (m1, m2, m3, m4, m5, m6, m7) = (
+        Mouse::new(),
+        Mouse::new(),
+        Mouse::new(),
+        Mouse::new(),
+        Mouse::new(),
+        Mouse::new(),
+        Mouse::new(),
+    );
 
+    // 2. Populate array with trait object references (Zero heap!)
+    let zoo: [&dyn Animal; SIZE] = [
+        &d1, &c1, &m1, &c2, &d2, &m2, &d3, &m3, &c3, &m4, &c4, &d4, &m5, &d5, &c5, &m6, &d6, &c6,
+        &m7, &c7, &d7,
+    ];
     let zoo = std::hint::black_box(zoo);
 
     // using an unsafe block so that it's consistent with the cpp
@@ -113,8 +121,8 @@ fn main() {
     for _ in 0..ITERS {
         // Loop over dynamic coll
         for animal in zoo.iter() {
-            sound_outputs[ind] = animal.sound();
-            std::hint::black_box(sound_outputs[ind]);
+            let opaque_animal = std::hint::black_box(*animal);
+            sound_outputs[ind] = opaque_animal.sound();
             ind += 1;
         }
     }
