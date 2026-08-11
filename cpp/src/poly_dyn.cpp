@@ -2,16 +2,13 @@
 #include <chrono>
 #include <cstddef>
 #include <linux/prctl.h>
-#include <memory>
 #include <print>
 #include <ranges>
 #include <sys/prctl.h>
-#include <vector>
 enum class SoundEnum { Woof, Meow, Squeek };
 
 struct AnimalInterface {
   virtual SoundEnum sound() const = 0;
-  // virtual destructor, since it is abstract
   virtual ~AnimalInterface() = default;
 };
 
@@ -51,18 +48,15 @@ int main() {
 
   std::array<SoundEnum, SIZE * ITERS> sound_outputs;
 
-  std::array<std::unique_ptr<AnimalInterface>, SIZE> zoo = {
-      std::make_unique<Dog>(),   std::make_unique<Cat>(),
-      std::make_unique<Mouse>(), std::make_unique<Cat>(),
-      std::make_unique<Dog>(),   std::make_unique<Mouse>(),
-      std::make_unique<Dog>(),   std::make_unique<Mouse>(),
-      std::make_unique<Cat>(),   std::make_unique<Mouse>(),
-      std::make_unique<Cat>(),   std::make_unique<Dog>(),
-      std::make_unique<Mouse>(), std::make_unique<Dog>(),
-      std::make_unique<Cat>(),   std::make_unique<Mouse>(),
-      std::make_unique<Dog>(),   std::make_unique<Cat>(),
-      std::make_unique<Mouse>(), std::make_unique<Cat>(),
-      std::make_unique<Dog>()};
+  // allocate on stack, not heap
+  Dog d1, d2, d3, d4, d5, d6, d7;
+  Cat c1, c2, c3, c4, c5, c6, c7;
+  Mouse m1, m2, m3, m4, m5, m6, m7;
+
+  // populate with the addresses
+  std::array<AnimalInterface *, SIZE> zoo = {&d1, &c1, &m1, &d2, &c2, &m2, &d3,
+                                             &c3, &m3, &d4, &c4, &m4, &d5, &c5,
+                                             &m5, &d6, &c6, &m6, &d7, &c7, &m7};
 
   std::size_t ind = 0;
 
