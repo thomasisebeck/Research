@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -e
 
-zig run src/poly_stat.zig -O ReleaseFast -mcpu=native --name out
+zig run src/lut_runtime.zig -O ReleaseFast -mcpu=native --name lut_runtime

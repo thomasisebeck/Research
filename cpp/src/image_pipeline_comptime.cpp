@@ -64,28 +64,37 @@ constexpr void blur(utils::Colour &item, const utils::Neighbours &n) noexcept {
 // switch expression
 template <utils::PipelineConfig cfg>
 constexpr void saturation(utils::Colour &item) {
-  const float luma = (0.299f * item.r) + (0.587f * item.g) + (0.144f * item.b);
 
-  // use a IIFE (Immediately Invoked Function Expression)
-  float delta = []() -> float {
+  const float LUMA = [item]() -> float {
     switch (cfg.saturation_mode) {
     case utils::Mode::LOW:
-      return 1.5;
+      return (0.3f * item.r) + (0.6f * item.g) + (0.1f * item.b);
 
     case utils::Mode::MED:
-      return 2.5;
+      return (0.29f * item.r) + (0.59f * item.g) + (0.14f * item.b);
 
     case utils::Mode::HIGH:
-      return 3.5;
+      return (0.294f * item.r) + (0.587f * item.g) + (0.144f * item.b);
 
     default:
       std::unreachable();
     }
   }();
 
-  item.r = std::clamp(luma + (delta * (item.r - luma)), 0.0f, 1.0f);
-  item.g = std::clamp(luma + (delta * (item.g - luma)), 0.0f, 1.0f);
-  item.b = std::clamp(luma + (delta * (item.b - luma)), 0.0f, 1.0f);
+  const float DELTA = []() -> float {
+    switch (cfg.saturation_mode) {
+    case utils::Mode::LOW:
+      return 1.5;
+    case utils::Mode::MED:
+      return 2.5;
+    case utils::Mode::HIGH:
+      return 3.5;
+    };
+  }();
+
+  item.r = std::clamp(LUMA + (DELTA * (item.r - LUMA)), 0.0f, 1.0f);
+  item.g = std::clamp(LUMA + (DELTA * (item.g - LUMA)), 0.0f, 1.0f);
+  item.b = std::clamp(LUMA + (DELTA * (item.b - LUMA)), 0.0f, 1.0f);
 }
 
 template <utils::PipelineConfig cfg>

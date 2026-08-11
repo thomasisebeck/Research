@@ -83,9 +83,45 @@ fn blur(cfg: &PipelineConfig, item: &mut utils::Colour, n: utils::Neighbours) {
     }
 }
 
+/*
+ 
+// switch expression
+template <utils::PipelineConfig cfg>
+constexpr void saturation(utils::Colour &item) {
+
+  const float LUMA = [item]() -> float {
+    switch (cfg.saturation_mode) {
+    case utils::Mode::LOW:
+      return (0.3f * item.r) + (0.6f * item.g) + (0.1f * item.b);
+
+    case utils::Mode::MED:
+      return (0.29f * item.r) + (0.59f * item.g) + (0.14f * item.b);
+
+    case utils::Mode::HIGH:
+      return (0.294f * item.r) + (0.587f * item.g) + (0.144f * item.b);
+
+    default:
+      std::unreachable();
+    }
+  }();
+
+  const float DELTA = 1.5f;
+
+  item.r = std::clamp(LUMA + (DELTA * (item.r - LUMA)), 0.0f, 1.0f);
+  item.g = std::clamp(LUMA + (DELTA * (item.g - LUMA)), 0.0f, 1.0f);
+  item.b = std::clamp(LUMA + (DELTA * (item.b - LUMA)), 0.0f, 1.0f);
+}
+
+ */ 
+
 // switch expression
 fn saturation(cfg: &PipelineConfig, item: &mut utils::Colour) {
-    let LUMA: f32 = (0.299 * item.r) + (0.587 * item.g) + (0.144 * item.b);
+
+    let LUMA: f32 = match cfg.saturation_mode {
+        utils::Mode::LOW => (0.3 * item.r) + (0.6 * item.g) + (0.1 * item.b),
+        utils::Mode::MED => (0.29f * item.r) + (0.59f * item.g) + (0.14f * item.b),
+        utils::Mode::HIGH => (0.294f * item.r) + (0.587f * item.g) + (0.144f * item.b),
+    };
 
     let delta: f32 = match cfg.saturation_mode {
         utils::Mode::LOW => 1.5,
