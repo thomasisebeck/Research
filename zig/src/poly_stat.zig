@@ -36,9 +36,9 @@ const Mouse = struct {
 };
 
 const Animal = union(enum) {
-    cat: Cat,
-    dog: Dog,
-    mouse: Mouse,
+    cat: *Cat,
+    dog: *Dog,
+    mouse: *Mouse,
 
     // This method handles the direct, high-performance static branch lookup
     pub fn sound(self: Animal) SoundEnum {
@@ -47,6 +47,15 @@ const Animal = union(enum) {
             .dog => |d| d.sound(),
             .mouse => |m| m.sound(),
         };
+    }
+
+    // Helper to free memory
+    pub fn deinit(self: Animal, allocator: std.mem.Allocator) void {
+        switch (self) {
+            .dog => |ptr| allocator.destroy(ptr),
+            .cat => |ptr| allocator.destroy(ptr),
+            .mouse => |ptr| allocator.destroy(ptr),
+        }
     }
 };
 
@@ -60,17 +69,17 @@ pub fn main(init: std.process.Init) !void {
     const SIZE = 21;
     const ITERS = 100;
 
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
     var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
 
     // static = point to static instance
     var zoo = [SIZE]Animal{
-        .{ .dog = Dog{} },     .{ .cat = Cat{} },     .{ .mouse = Mouse{} },
-        .{ .cat = Cat{} },     .{ .dog = Dog{} },     .{ .mouse = Mouse{} },
-        .{ .dog = Dog{} },     .{ .mouse = Mouse{} }, .{ .cat = Cat{} },
-        .{ .mouse = Mouse{} }, .{ .cat = Cat{} },     .{ .dog = Dog{} },
-        .{ .mouse = Mouse{} }, .{ .dog = Dog{} },     .{ .cat = Cat{} },
-        .{ .mouse = Mouse{} }, .{ .dog = Dog{} },     .{ .cat = Cat{} },
-        .{ .mouse = Mouse{} }, .{ .cat = Cat{} },     .{ .dog = Dog{} },
+        .{ .dog = try allocator.create(Dog) },
+        .{ .cat = try allocator.create(Cat) },
+        .{ .mouse = try allocator.create(Mouse) },
     };
 
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
