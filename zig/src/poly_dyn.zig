@@ -102,7 +102,7 @@ pub fn main(init: std.process.Init) !void {
     var m6: Mouse = .{};
     var m7: Mouse = .{};
 
-    const zoo = [_]Component{
+    var zoo = [_]Component{
         asDog(&d1), asCat(&c1), asMouse(&m1),
         asDog(&d2), asCat(&c2), asMouse(&m2),
         asDog(&d3), asCat(&c3), asMouse(&m3),
@@ -112,10 +112,12 @@ pub fn main(init: std.process.Init) !void {
         asDog(&d7), asCat(&c7), asMouse(&m7),
     };
 
-    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
-    var start_time = std.Io.Clock.now(.awake, io);
+    std.mem.doNotOptimizeAway(&zoo);
 
     var ind: usize = 0;
+
+    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
+    var start_time = std.Io.Clock.now(.awake, io);
 
     for (0..ITERS) |_| {
         for (zoo) |animal| {
@@ -127,6 +129,8 @@ pub fn main(init: std.process.Init) !void {
     const end_time = std.Io.Clock.now(.awake, io);
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
 
+    std.mem.doNotOptimizeAway(&sound_outputs);
+
     const duration = start_time.durationTo(end_time);
 
     std.debug.print("\n---  VERIFYING OUTPUTS ---\n", .{});
@@ -134,6 +138,9 @@ pub fn main(init: std.process.Init) !void {
     for (sound_outputs, 0..) |res, i| {
         std.debug.print("Index {}: {s}\n", .{ i, @tagName(res) });
     }
+
+    // must mutate
+    zoo[0] = asDog(&d1);
 
     std.debug.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
 }

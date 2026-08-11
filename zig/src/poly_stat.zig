@@ -48,15 +48,6 @@ const Animal = union(enum) {
             .mouse => |m| m.sound(),
         };
     }
-
-    // Helper to free memory
-    pub fn deinit(self: Animal, allocator: std.mem.Allocator) void {
-        switch (self) {
-            .dog => |ptr| allocator.destroy(ptr),
-            .cat => |ptr| allocator.destroy(ptr),
-            .mouse => |ptr| allocator.destroy(ptr),
-        }
-    }
 };
 
 pub fn makeSoundHelper(comptime myAnimal: anytype) SoundEnum {
@@ -104,6 +95,8 @@ pub fn main(init: std.process.Init) !void {
         .{ .dog = &d7 }, .{ .cat = &c7 }, .{ .mouse = &m7 },
     };
 
+    std.mem.doNotOptimizeAway(&zoo);
+
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
 
@@ -122,6 +115,7 @@ pub fn main(init: std.process.Init) !void {
     const duration = start_time.durationTo(end_time);
 
     zoo[0] = .{ .cat = &c1 };
+    std.mem.doNotOptimizeAway(&sound_outputs);
 
     std.debug.print("\n---  VERIFYING OUTPUTS ---\n", .{});
     for (sound_outputs, 0..) |res, i| {

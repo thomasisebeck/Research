@@ -19,9 +19,9 @@ pub fn build(b: *std.Build) void {
     });
     // INFO: change this source file
     const exe = b.addExecutable(.{
-        .name = "image_pipeline_comptime_high_zig",
+        .name = "poly_stat",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/image_pipeline_comptime.zig"),
+            .root_source_file = b.path("src/poly_stat.zig"),
             .target = target,
             .optimize = optimize,
         }),
@@ -50,5 +50,4 @@ pub fn build(b: *std.Build) void {
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
-
 }
