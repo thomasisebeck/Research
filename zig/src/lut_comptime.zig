@@ -55,7 +55,10 @@ pub fn main(init: std.process.Init) !void {
     _ = try generateTestCases(init.io, "lookup.txt");
     const test_cases: [TEST_SIZE]i64 = try utils.readArrayFromFile(TEST_SIZE, init.io, "lookup.txt");
 
-    var myLut = comptime generateLUT();
+    var compLut = comptime generateLUT();
+
+    // keep the LUT on the function stack by marking it as volatile
+    const myLut: *volatile [steps]f64 = @volatileCast(&compLut);
 
     print("LUT size: {d}, increment: {d}, testSize: {d}, degrees: {d}, steps: {d}\n", .{ steps, increment, TEST_SIZE, degrees, steps });
 
@@ -78,9 +81,6 @@ pub fn main(init: std.process.Init) !void {
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
 
     const duration_comp = start_time.durationTo(end_time);
-
-    // WARN: dummy mutation to allow us to allocate on the stack
-    myLut[0] += @as(f64, @floatFromInt(test_cases[0]));
 
     print("Comptime processed in: {} ns\n", .{duration_comp.toNanoseconds()});
     print("Sum comp: {d}\n", .{sum_comp});
