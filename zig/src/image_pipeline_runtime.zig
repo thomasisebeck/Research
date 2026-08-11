@@ -111,16 +111,41 @@ pub fn main(init: std.process.Init) !void {
 
     // try printImage(my_image);
 
-    const config = utils.PipelineConfig{
-        .colour_mode = .LOW,
-        .blur_mode = .LOW,
-        .apply_blur = true,
-        .sharpen_mode = .LOW,
-        .quantise_mode = .LOW,
-        .apply_quantisation = false,
-        .saturation_mode = .LOW,
-        .apply_saturation = false,
-    };
+ // LOW
+//const config = utils.PipelineConfig{
+//    .colour_mode = .LOW,
+//    .blur_mode = .LOW,
+//    .apply_blur = true,
+//    .sharpen_mode = .LOW,
+//    .quantise_mode = .LOW,
+//    .apply_quantisation = false,
+//    .saturation_mode = .LOW,
+//    .apply_saturation = false,
+//};
+ 
+    // MED
+ // const config = utils.PipelineConfig{
+ //     .colour_mode = .MED,
+ //     .blur_mode = .MED,
+ //     .apply_blur = true,
+ //     .sharpen_mode = .MED,
+ //     .quantise_mode = .MED,
+ //     .apply_quantisation = true,
+ //     .saturation_mode = .MED,
+ //     .apply_saturation = true,
+ // };
+
+    // HIGH
+  const config = utils.PipelineConfig{
+      .colour_mode = .HIGH,
+      .blur_mode = .HIGH,
+      .apply_blur = true,
+      .sharpen_mode = .HIGH,
+      .quantise_mode = .HIGH,
+      .apply_quantisation = true,
+      .saturation_mode = .HIGH,
+      .apply_saturation = true,
+  };
 
     var start_time = std.Io.Clock.now(.awake, io);
 

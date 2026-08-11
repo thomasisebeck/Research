@@ -4,10 +4,17 @@ go into the Cargo.toml
 
 update the path!!!
 
-eg: 
+eg:
 
 ```
 [[bin]]
-name = "lut" 
+name = "lut"
 path = "src/image_pipeline_comptime.rs"
+```
+
+run:
+
+```
+cargo build --release
+cargo run
 ```

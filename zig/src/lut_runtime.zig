@@ -21,6 +21,19 @@ pub fn main(init: std.process.Init) !void {
 
     const io = init.io;
 
+    // --- WARMUP ---
+    // Prime the branch predictors
+    var warmup_sum: f64 = 0;
+    for (test_cases) |num| {
+        const float_num = @as(f64, @floatFromInt(num));
+        warmup_sum += @sin(float_num) + @cos(float_num);
+    }
+    // this must be used by the compiler
+    std.mem.doNotOptimizeAway(&warmup_sum); 
+
+
+    // --- BENCMARK ---
+    // Calculate the actual values
     var sum: f64 = 0;
 
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
