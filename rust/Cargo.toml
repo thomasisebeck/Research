@@ -5,7 +5,7 @@ edition = "2024"
 
 [[bin]]
 name = "lut" 
-path = "src/poly_dyn.rs"
+path = "src/lut_comptime.rs"
 
 [dependencies]
 trig-const = "0"

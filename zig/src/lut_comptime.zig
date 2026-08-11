@@ -55,6 +55,7 @@ pub fn main(init: std.process.Init) !void {
     _ = try generateTestCases(init.io, "lookup.txt");
     const test_cases: [TEST_SIZE]i64 = try utils.readArrayFromFile(TEST_SIZE, init.io, "lookup.txt");
 
+    // needs to be var for the volatile cast
     var compLut = comptime generateLUT();
 
     // keep the LUT on the function stack by marking it as volatile

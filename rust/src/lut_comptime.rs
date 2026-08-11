@@ -34,11 +34,13 @@ fn main() {
 
     // force to be placed on the stack, so that it
     // has better cache locality using let
-    let MY_LUT: [f64; STEPS] = generate_lut();
+    static COMPTIME_LUT: [f64; STEPS] = generate_lut();
+
+    let my_lut = std::hint::black_box(COMPTIME_LUT);
 
     println!(
         "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
-        MY_LUT.len(),
+        my_lut.len(),
         INCREMENT,
         TEST_SIZE,
         DEGREES,
@@ -54,7 +56,7 @@ fn main() {
         .iter()
         .map(|&num| {
             let float_idx = (num as f64) / INCREMENT;
-            MY_LUT[float_idx as usize]
+            my_lut[float_idx as usize]
         })
         .sum();
 
