@@ -69,17 +69,39 @@ pub fn main(init: std.process.Init) !void {
     const SIZE = 21;
     const ITERS = 100;
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
     var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
+
+    var d1: Dog = .{};
+    var d2: Dog = .{};
+    var d3: Dog = .{};
+    var d4: Dog = .{};
+    var d5: Dog = .{};
+    var d6: Dog = .{};
+    var d7: Dog = .{};
+    var c1: Cat = .{};
+    var c2: Cat = .{};
+    var c3: Cat = .{};
+    var c4: Cat = .{};
+    var c5: Cat = .{};
+    var c6: Cat = .{};
+    var c7: Cat = .{};
+    var m1: Mouse = .{};
+    var m2: Mouse = .{};
+    var m3: Mouse = .{};
+    var m4: Mouse = .{};
+    var m5: Mouse = .{};
+    var m6: Mouse = .{};
+    var m7: Mouse = .{};
 
     // static = point to static instance
     var zoo = [SIZE]Animal{
-        .{ .dog = try allocator.create(Dog) },
-        .{ .cat = try allocator.create(Cat) },
-        .{ .mouse = try allocator.create(Mouse) },
+        .{ .dog = &d1 }, .{ .cat = &c1 }, .{ .mouse = &m1 },
+        .{ .dog = &d2 }, .{ .cat = &c2 }, .{ .mouse = &m2 },
+        .{ .dog = &d3 }, .{ .cat = &c3 }, .{ .mouse = &m3 },
+        .{ .dog = &d4 }, .{ .cat = &c4 }, .{ .mouse = &m4 },
+        .{ .dog = &d5 }, .{ .cat = &c5 }, .{ .mouse = &m5 },
+        .{ .dog = &d6 }, .{ .cat = &c6 }, .{ .mouse = &m6 },
+        .{ .dog = &d7 }, .{ .cat = &c7 }, .{ .mouse = &m7 },
     };
 
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
@@ -87,7 +109,6 @@ pub fn main(init: std.process.Init) !void {
 
     var ind: usize = 0;
 
-    // Look! A completely standard runtime for loop. No 'inline' needed!
     for (0..ITERS) |_| {
         for (zoo) |animal| {
             sound_outputs[ind] = animal.sound();
@@ -100,7 +121,7 @@ pub fn main(init: std.process.Init) !void {
 
     const duration = start_time.durationTo(end_time);
 
-    zoo[0] = .{ .cat = Cat{} };
+    zoo[0] = .{ .cat = &c1 };
 
     std.debug.print("\n---  VERIFYING OUTPUTS ---\n", .{});
     for (sound_outputs, 0..) |res, i| {

@@ -55,33 +55,20 @@ const Mouse = struct {
 const Component = struct {
     ptr: *anyopaque,
     makeSound: *const fn (*anyopaque) SoundEnum,
-    destroyFn: *const fn (*anyopaque, std.mem.Allocator) void,
 
     pub fn sound(self: Component) SoundEnum {
         return self.makeSound(self.ptr);
     }
-    pub fn destroy(self: Component, allocator: std.mem.Allocator) void {
-        self.destroyFn(self.ptr, allocator);
-    }
 };
 
-fn makeDestroyer(comptime T: type) *const fn (*anyopaque, std.mem.Allocator) void {
-    return struct {
-        fn destroy(p: *anyopaque, allocator: std.mem.Allocator) void {
-            const self: *T = @ptrCast(@alignCast(p));
-            allocator.destroy(self);
-        }
-    }.destroy;
-}
-
 fn asDog(self: *Dog) Component {
-    return .{ .ptr = self, .makeSound = Dog.wrapSound, .destroyFn = makeDestroyer(Dog) };
+    return .{ .ptr = self, .makeSound = Dog.wrapSound };
 }
 fn asCat(self: *Cat) Component {
-    return .{ .ptr = self, .makeSound = Cat.wrapSound, .destroyFn = makeDestroyer(Cat) };
+    return .{ .ptr = self, .makeSound = Cat.wrapSound };
 }
 fn asMouse(self: *Mouse) Component {
-    return .{ .ptr = self, .makeSound = Mouse.wrapSound, .destroyFn = makeDestroyer(Mouse) };
+    return .{ .ptr = self, .makeSound = Mouse.wrapSound };
 }
 
 const Type = enum { CAT, MOUSE, DOG };
@@ -91,20 +78,38 @@ pub fn main(init: std.process.Init) !void {
 
     const SIZE = 21;
     const ITERS = 100;
-    var zoo: [SIZE]Component = undefined;
     var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
 
-    const allocator = std.heap.page_allocator;
+    var d1: Dog = .{};
+    var d2: Dog = .{};
+    var d3: Dog = .{};
+    var d4: Dog = .{};
+    var d5: Dog = .{};
+    var d6: Dog = .{};
+    var d7: Dog = .{};
+    var c1: Cat = .{};
+    var c2: Cat = .{};
+    var c3: Cat = .{};
+    var c4: Cat = .{};
+    var c5: Cat = .{};
+    var c6: Cat = .{};
+    var c7: Cat = .{};
+    var m1: Mouse = .{};
+    var m2: Mouse = .{};
+    var m3: Mouse = .{};
+    var m4: Mouse = .{};
+    var m5: Mouse = .{};
+    var m6: Mouse = .{};
+    var m7: Mouse = .{};
 
-    // dynamic = point to single ref
-    zoo = .{
-        asDog(try allocator.create(Dog)),     asCat(try allocator.create(Cat)),     asMouse(try allocator.create(Mouse)),
-        asCat(try allocator.create(Cat)),     asDog(try allocator.create(Dog)),     asMouse(try allocator.create(Mouse)),
-        asDog(try allocator.create(Dog)),     asMouse(try allocator.create(Mouse)), asCat(try allocator.create(Cat)),
-        asMouse(try allocator.create(Mouse)), asCat(try allocator.create(Cat)),     asDog(try allocator.create(Dog)),
-        asMouse(try allocator.create(Mouse)), asDog(try allocator.create(Dog)),     asCat(try allocator.create(Cat)),
-        asMouse(try allocator.create(Mouse)), asDog(try allocator.create(Dog)),     asCat(try allocator.create(Cat)),
-        asMouse(try allocator.create(Mouse)), asCat(try allocator.create(Cat)),     asDog(try allocator.create(Dog)),
+    const zoo = [_]Component{
+        asDog(&d1), asCat(&c1), asMouse(&m1),
+        asDog(&d2), asCat(&c2), asMouse(&m2),
+        asDog(&d3), asCat(&c3), asMouse(&m3),
+        asDog(&d4), asCat(&c4), asMouse(&m4),
+        asDog(&d5), asCat(&c5), asMouse(&m5),
+        asDog(&d6), asCat(&c6), asMouse(&m6),
+        asDog(&d7), asCat(&c7), asMouse(&m7),
     };
 
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
@@ -131,11 +136,4 @@ pub fn main(init: std.process.Init) !void {
     }
 
     std.debug.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
-
-    for (zoo) |component| {
-
-        // Cast the typeless ptr back to an alignment of 1 (or match your struct alignment)
-        // so the allocator can safely reclaim the chunk of heap memory
-        component.destroy(allocator);
-    }
 }
