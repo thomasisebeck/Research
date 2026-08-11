@@ -24,11 +24,25 @@ int main() {
       utils::read_array_from_file<utils::TEST_SIZE>("lookup.txt");
 
   // Must use C++ 26 (clang is still registering as an error, but it compiles)
-  constexpr auto MY_LUT = generate_lut();
+
+  constexpr auto COMPTIME_LUT = generate_lut();
+
+  // not really needed for cpp, stack allocation by default,
+  // but keeping for consistency
+  auto myLut = COMPTIME_LUT;
+  asm volatile("" : "+m"(myLut));
+
+  std::println("ROData Address: {}",
+               static_cast<const void *>(COMPTIME_LUT.data()));
+  std::println("Stack Address:  {}", static_cast<const void *>(myLut.data()));
+
+  /*
+  constexpr auto myLut = generate_lut();
+  */
 
   std::print(
       "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
-      MY_LUT.size(), utils::INCREMENT, utils::TEST_SIZE, utils::DEGREES,
+      myLut.size(), utils::INCREMENT, utils::TEST_SIZE, utils::DEGREES,
       utils::STEPS);
 
   double sum = 0.0;
@@ -41,7 +55,7 @@ int main() {
     // num is strictly a raw test case value here
     const size_t idx = static_cast<size_t>(num / utils::INCREMENT);
 
-    sum += MY_LUT[idx];
+    sum += myLut[idx];
   }
 
   // end the clock, then stop perf
