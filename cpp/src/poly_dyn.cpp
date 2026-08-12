@@ -1,4 +1,5 @@
 #include <array>
+#include <benchmark/benchmark.h>
 #include <chrono>
 #include <cstddef>
 #include <linux/prctl.h>
@@ -58,6 +59,8 @@ int main() {
                                              &c3, &m3, &d4, &c4, &m4, &d5, &c5,
                                              &m5, &d6, &c6, &m6, &d7, &c7, &m7};
 
+  benchmark::DoNotOptimize(zoo);
+
   std::size_t ind = 0;
 
   // start perf, then the clock
@@ -73,6 +76,8 @@ int main() {
   auto end_time = std::chrono::steady_clock::now();
   prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
+  benchmark::DoNotOptimize(sound_outputs);
+
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
                       end_time - start_time)
                       .count();
@@ -81,5 +86,5 @@ int main() {
   for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
     std::print("Index {}, sound: {}\n", ind, static_cast<int>(sound));
   }
-  std::print("Processed in: {}\n", duration);
+  std::print("Processed in: {}ns\n", duration);
 }

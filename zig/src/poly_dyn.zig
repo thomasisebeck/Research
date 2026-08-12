@@ -103,13 +103,13 @@ pub fn main(init: std.process.Init) !void {
     var m7: Mouse = .{};
 
     var zoo = [_]Component{
-        asDog(&d1), asCat(&c1), asMouse(&m1),
-        asDog(&d2), asCat(&c2), asMouse(&m2),
-        asDog(&d3), asCat(&c3), asMouse(&m3),
-        asDog(&d4), asCat(&c4), asMouse(&m4),
-        asDog(&d5), asCat(&c5), asMouse(&m5),
-        asDog(&d6), asCat(&c6), asMouse(&m6),
-        asDog(&d7), asCat(&c7), asMouse(&m7),
+        asDog(&d1),   asCat(&c1),   asMouse(&m1),
+        asCat(&c2),   asDog(&d2),   asMouse(&m2),
+        asDog(&d3),   asMouse(&m3), asCat(&c3),
+        asMouse(&m4), asCat(&c4),   asDog(&d4),
+        asMouse(&m5), asDog(&d5),   asCat(&c5),
+        asMouse(&m6), asDog(&d6),   asCat(&c6),
+        asMouse(&m7), asCat(&c7),   asDog(&d7),
     };
 
     std.mem.doNotOptimizeAway(&zoo);

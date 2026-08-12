@@ -1,4 +1,5 @@
 #include <array>
+#include <benchmark/benchmark.h>
 #include <chrono>
 #include <cstddef>
 #include <linux/prctl.h>
@@ -6,7 +7,6 @@
 #include <ranges>
 #include <sys/prctl.h>
 #include <variant>
-#include <vector>
 
 enum class SoundEnum { Woof, Meow, Squeek };
 
@@ -53,14 +53,18 @@ int main() {
 
   std::array<SoundEnum, SIZE * ITERS> sound_outputs;
 
+  Dog d1, d2, d3, d4, d5, d6, d7;
+  Cat c1, c2, c3, c4, c5, c6, c7;
+  Mouse m1, m2, m3, m4, m5, m6, m7;
+
   // variant is for a hetrogenous array
   // uses a tagged union under the hood
-  using AnimalVariant = std::variant<Cat, Dog, Mouse>;
-  std::array<AnimalVariant, SIZE> zoo = {
-      Dog{},   Cat{}, Mouse{},
+  using AnimalVariant = std::variant<Cat *, Dog *, Mouse *>;
+  std::array<AnimalVariant, SIZE> zoo = {&d1, &c1, &m1, &c2, &d2, &m2, &d3,
+                                         &m3, &c3, &m4, &c4, &d4, &m5, &d5,
+                                         &c5, &m6, &d6, &c6, &m7, &c7, &d7};
 
-      Cat{},   Dog{}, Mouse{}, Dog{},   Mouse{}, Cat{}, Mouse{}, Cat{}, Dog{},
-      Mouse{}, Dog{}, Cat{},   Mouse{}, Dog{},   Cat{}, Mouse{}, Cat{}, Dog{}};
+  benchmark::DoNotOptimize(zoo);
 
   // start perf, then the clock
   prctl(PR_TASK_PERF_EVENTS_ENABLE);
@@ -72,13 +76,15 @@ int main() {
     // std::visit is also a new feature to call the functions
     // in that hetrogenous array
     for (size_t i = 0; i < SIZE; ++i) {
-      sound_outputs[ind++] =
-          std::visit([](const auto &animal) { return animal.sound(); }, zoo[i]);
+      sound_outputs[ind++] = std::visit(
+          [](const auto &animal) { return animal->sound(); }, zoo[i]);
     }
 
   // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
   prctl(PR_TASK_PERF_EVENTS_DISABLE);
+
+  benchmark::DoNotOptimize(sound_outputs);
 
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
                       end_time - start_time)

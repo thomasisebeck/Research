@@ -118,11 +118,11 @@ fn main() {
 
     let mut ind: usize = 0;
 
+    //16700
     for _ in 0..ITERS {
         // Loop over dynamic coll
         for animal in zoo.iter() {
-            let opaque_animal = std::hint::black_box(*animal);
-            sound_outputs[ind] = opaque_animal.sound();
+            sound_outputs[ind] = animal.sound();
             ind += 1;
         }
     }

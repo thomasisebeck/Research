@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(Optimise "Build with high optimizations and no assertions" OFF)
 
 # 1. Source files
-set(SOURCES src/poly_dyn.cpp)
+set(SOURCES src/poly_stat.cpp)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/input_image.txt"
                "${CMAKE_CURRENT_BINARY_DIR}/input_image.txt" COPYONLY)
@@ -18,7 +18,11 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/input_image.txt"
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lookup.txt"
                "${CMAKE_CURRENT_BINARY_DIR}/lookup.txt" COPYONLY)
 
+find_package(benchmark REQUIRED)
+
 add_executable(out ${SOURCES})
+
+target_link_libraries(out PRIVATE benchmark::benchmark pthread)
 
 # 1. Apply Flags based on the Optimize option
 if(Optimise)

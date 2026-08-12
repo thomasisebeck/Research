@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
-name = "lut" 
-path = "src/poly_dyn.rs"
+name = "polystat" 
+path = "src/poly_stat.rs"
 
 [dependencies]
 trig-const = "0"

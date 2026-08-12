@@ -86,21 +86,21 @@ pub fn main(init: std.process.Init) !void {
 
     // static = point to static instance
     var zoo = [SIZE]Animal{
-        .{ .dog = &d1 }, .{ .cat = &c1 }, .{ .mouse = &m1 },
-        .{ .dog = &d2 }, .{ .cat = &c2 }, .{ .mouse = &m2 },
-        .{ .dog = &d3 }, .{ .cat = &c3 }, .{ .mouse = &m3 },
-        .{ .dog = &d4 }, .{ .cat = &c4 }, .{ .mouse = &m4 },
-        .{ .dog = &d5 }, .{ .cat = &c5 }, .{ .mouse = &m5 },
-        .{ .dog = &d6 }, .{ .cat = &c6 }, .{ .mouse = &m6 },
-        .{ .dog = &d7 }, .{ .cat = &c7 }, .{ .mouse = &m7 },
+        .{ .dog = &d1 },   .{ .cat = &c1 },   .{ .mouse = &m1 },
+        .{ .cat = &c2 },   .{ .dog = &d2 },   .{ .mouse = &m2 },
+        .{ .dog = &d3 },   .{ .mouse = &m3 }, .{ .cat = &c3 },
+        .{ .mouse = &m4 }, .{ .cat = &c4 },   .{ .dog = &d4 },
+        .{ .mouse = &m5 }, .{ .dog = &d5 },   .{ .cat = &c5 },
+        .{ .mouse = &m6 }, .{ .dog = &d6 },   .{ .cat = &c6 },
+        .{ .mouse = &m7 }, .{ .cat = &c7 },   .{ .dog = &d7 },
     };
 
     std.mem.doNotOptimizeAway(&zoo);
 
+    var ind: usize = 0;
+
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
-
-    var ind: usize = 0;
 
     for (0..ITERS) |_| {
         for (zoo) |animal| {
