@@ -11,7 +11,8 @@ ITERATIONS=${1:-2}
 CSV_FILE="results.csv"
 
 # NB: must regenerate with the zig when you change this
-INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
+# INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
+INCREMENTS=("0.0005")
 
 # 3. Add CSV header if it doesn't exist
 if [ ! -f "$CSV_FILE" ]; then
@@ -50,7 +51,7 @@ for FILENAME in "${FILES[@]}"; do
 
       # Execute benchmark under perf stat (stderr captured for counters)
       PERF_RAW_FILE=$(mktemp)
-      OUT_DATA=$(perf stat -x, -e "$PERF_EVENTS" ./out 2> "$PERF_RAW_FILE")
+      OUT_DATA=$(perf stat -x, --delay=-1 -e "$PERF_EVENTS" ./out 2> "$PERF_RAW_FILE")
 
       # Extract runtime_ns
       RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')

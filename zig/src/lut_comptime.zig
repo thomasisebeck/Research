@@ -57,6 +57,7 @@ pub fn main(init: std.process.Init) !void {
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_file_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
     const stdout_writer = &stdout_file_writer.interface;
+    // file writer 
     // ------------------------------------------------
 
 //      _ = try generateTestCases(init.io, "lookup.txt");
@@ -70,17 +71,6 @@ pub fn main(init: std.process.Init) !void {
 
 
     const prediv: f64 = 1.0 / utils.increment;
-
-    
- // var warmup_sum: f64 = 0.0;
- // for (test_cases) |num| {
- //     const idx: usize = @intFromFloat(num * prediv);
-
- //     warmup_sum += myLut[idx];
- // }
-
-
-  // std.mem.doNotOptimizeAway(warmup_sum);
 
 
     var sum: f64 = 0;

@@ -14,7 +14,7 @@ CSV_FILE="results.csv"
 
 # 2. Target increment values, NB: change with zig if you change this!
 # INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
-INCREMENTS=("0.0005")
+INCREMENTS=("0.5")
 
 
 # 3. Add CSV header if it doesn't exist
@@ -49,8 +49,6 @@ for FILENAME in "${FILES[@]}"; do
         zig build -Dtarget_src="src/${FILENAME}" \
         -Dincrement="${INC}" > /dev/null; } 2>&1 )
 
-      echo "HOT TIME: $HOT_TIME"
-
       if [ ! -f "./zig-out/bin/out" ]; then
         echo "Error: Executable not found!"
         exit 1
@@ -61,7 +59,12 @@ for FILENAME in "${FILES[@]}"; do
 
       # Execute benchmark under perf stat (stderr redirected to temp file, stdout saved to OUT_DATA)
       PERF_RAW_FILE=$(mktemp)
-      OUT_DATA=$(perf stat -x, -e "$PERF_EVENTS" ./zig-out/bin/out 2> "$PERF_RAW_FILE")
+
+      # control with the file 
+      OUT_DATA=$(perf stat -x, --delay=-1 --control=fifo:perf.ctl,perf.ack -e "$PERF_EVENTS" ./zig-out/bin/out 2> "$PERF_RAW_FILE")
+
+      # OUT_DATA=$(perf stat -x, --delay=-1 -e "$PERF_EVENTS" ./zig-out/bin/out 2> "$PERF_RAW_FILE")
+
 
       # Extract runtime_ns cleanly from $OUT_DATA
       RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')

@@ -17,3 +17,9 @@ run:
 ```
 zig run file.zig -O ReleaseFast
 ```
+
+setup perf:
+
+```
+mkfifo perf.ctl perf.ack
+```
