@@ -78,13 +78,11 @@ int main() {
 
   benchmark::DoNotOptimize(sound_outputs);
 
-  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                      end_time - start_time)
-                      .count();
-
   std::print("\n---  VERIFYING OUTPUTS ---\n");
   for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
     std::print("Index {}, sound: {}\n", ind, static_cast<int>(sound));
   }
-  std::print("Processed in: {}ns\n", duration);
+
+  const auto duration = (end_time - start_time).count();
+  std::print("Processed in: [{}] ns\n", duration);
 }

@@ -5,19 +5,15 @@ use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
 use trig_const::{cos, sin};
 mod utils;
 
-const INCREMENT: f64 = 0.01;
-const TEST_SIZE: usize = 500;
-const DEGREES: f64 = 360.0;
-const STEPS: usize = (DEGREES / INCREMENT) as usize;
 
-const fn generate_lut<const STEPS: usize>() -> [f64; STEPS] {
+const fn generate_lut<const utils::STEPS: usize>() -> [f64; utils::STEPS] {
     // init with all 0's
-    let mut arr = [0.0; STEPS];
+    let mut arr = [0.0; utils::STEPS];
 
     let mut i = 0;
 
     // no compile-time for loops, you have to use a while loop
-    while i < STEPS {
+    while i < utils::STEPS {
         // const result: f64 = @as(f64, @floatFromInt(i)) * increment;
 
         let result = (i as f64) * INCREMENT;
@@ -30,21 +26,21 @@ const fn generate_lut<const STEPS: usize>() -> [f64; STEPS] {
 }
 
 fn main() {
-    let test_cases: [f64; TEST_SIZE] = utils::read_array_from_file::<TEST_SIZE>("lookup.txt");
+    let test_cases: [f64; utils::TEST_SIZE] = utils::read_array_from_file::<utils::TEST_SIZE>("lookup.txt");
 
     // force to be placed on the stack, so that it
     // has better cache locality using let
-    static COMPTIME_LUT: [f64; STEPS] = generate_lut();
+    static COMPTIME_LUT: [f64; utils::STEPS] = generate_lut();
 
     let my_lut = std::hint::black_box(COMPTIME_LUT);
 
     println!(
         "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
         my_lut.len(),
-        INCREMENT,
-        TEST_SIZE,
-        DEGREES,
-        STEPS,
+        utils::INCREMENT,
+        utils::TEST_SIZE,
+        utils::DEGREES,
+        utils::STEPS,
     );
 
     unsafe {
@@ -55,7 +51,7 @@ fn main() {
     let sum: f64 = test_cases
         .iter()
         .map(|&num| {
-            let float_idx = (num as f64) / INCREMENT;
+            let float_idx = (num as f64) / utils::INCREMENT;
             my_lut[float_idx as usize]
         })
         .sum();

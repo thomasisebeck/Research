@@ -1,5 +1,4 @@
 const std = @import("std");
-const print = std.debug.print;
 const utils = @import("utils.zig");
 
 const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
@@ -111,41 +110,35 @@ pub fn main(init: std.process.Init) !void {
 
     // try printImage(my_image);
 
- // LOW
+    // LOW
+//  const config = utils.PipelineConfig{
+//      .blur_mode = .LOW,
+//      .apply_blur = false,
+//      .quantise_mode = .LOW,
+//      .apply_quantisation = false,
+//      .saturation_mode = .LOW,
+//      .apply_saturation = true,
+//  };
+
+      // MED
 //const config = utils.PipelineConfig{
-//    .colour_mode = .LOW,
-//    .blur_mode = .LOW,
+//    .blur_mode = .MED,
 //    .apply_blur = true,
-//    .sharpen_mode = .LOW,
-//    .quantise_mode = .LOW,
-//    .apply_quantisation = false,
-//    .saturation_mode = .LOW,
+//    .quantise_mode = .MED,
+//    .apply_quantisation = true,
+//    .saturation_mode = .MED,
 //    .apply_saturation = false,
 //};
- 
-    // MED
- // const config = utils.PipelineConfig{
- //     .colour_mode = .MED,
- //     .blur_mode = .MED,
- //     .apply_blur = true,
- //     .sharpen_mode = .MED,
- //     .quantise_mode = .MED,
- //     .apply_quantisation = true,
- //     .saturation_mode = .MED,
- //     .apply_saturation = true,
- // };
 
     // HIGH
-  const config = utils.PipelineConfig{
-      .colour_mode = .HIGH,
-      .blur_mode = .HIGH,
-      .apply_blur = true,
-      .sharpen_mode = .HIGH,
-      .quantise_mode = .HIGH,
-      .apply_quantisation = true,
-      .saturation_mode = .HIGH,
-      .apply_saturation = true,
-  };
+    const config = utils.PipelineConfig{
+        .blur_mode = .HIGH,
+        .apply_blur = true,
+        .quantise_mode = .HIGH,
+        .apply_quantisation = true,
+        .saturation_mode = .HIGH,
+        .apply_saturation = true,
+    };
 
     var start_time = std.Io.Clock.now(.awake, io);
 
@@ -155,5 +148,5 @@ pub fn main(init: std.process.Init) !void {
 
     const duration = start_time.durationTo(end_time);
 
-    std.debug.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
+    print("Processed in: [{}] ns\n", .{duration.toNanoseconds()});
 }

@@ -1,7 +1,6 @@
 use std::fs;
 use std::fs::read_to_string;
 
-pub const IMAGE_SIZE: usize = 50;
 
 #[derive(Clone, Copy)]
 pub struct Colour {
@@ -16,45 +15,51 @@ pub enum Mode {
     LOW,
 }
 
+pub const IMAGE_SIZE: usize = 500;
+pub const INCREMENT: f64 = 0.01;
+pub const TEST_SIZE: usize = 500;
+pub const DEGREES: f64 = 360.0;
+pub const STEPS: usize = (DEGREES / INCREMENT) as usize;
+
 pub trait PipelineConfig {
-    const SATURATION_MODE: Mode;
     const BLUR_MODE: Mode;
     const APPLY_BLUR: bool;
     const QUANTISE_MODE: Mode;
-    const APPLY_QUANTIZATION: bool;
+    const APPLY_QUANTISATION: bool;
+    const SATURATION_MODE: Mode;
     const APPLY_SATURATION: bool;
 }
 
 pub struct HighQualityConfig;
 
 impl PipelineConfig for HighQualityConfig {
-    const SATURATION_MODE: Mode = Mode::HIGH;
     const BLUR_MODE: Mode = Mode::HIGH;
     const APPLY_BLUR: bool = true;
     const QUANTISE_MODE: Mode = Mode::HIGH;
-    const APPLY_QUANTIZATION: bool = true;
+    const APPLY_QUANTISATION: bool = true;
+    const SATURATION_MODE: Mode = Mode::HIGH;
     const APPLY_SATURATION: bool = true;
 }
 
 pub struct MediumQualityConfig;
 
 impl PipelineConfig for MediumQualityConfig {
-    const SATURATION_MODE: Mode = Mode::MED;
     const BLUR_MODE: Mode = Mode::MED;
     const APPLY_BLUR: bool = true;
     const QUANTISE_MODE: Mode = Mode::MED;
-    const APPLY_QUANTIZATION: bool = true;
+    const APPLY_QUANTISATION: bool = true;
+    const SATURATION_MODE: Mode = Mode::MED;
     const APPLY_SATURATION: bool = false;
 }
 
 pub struct LowQualityConfig;
 
 impl PipelineConfig for LowQualityConfig {
-    const SATURATION_MODE: Mode = Mode::LOW;
     const BLUR_MODE: Mode = Mode::LOW;
-    const APPLY_BLUR: bool = true;
+    const APPLY_BLUR: bool = false;
     const QUANTISE_MODE: Mode = Mode::LOW;
-    const APPLY_QUANTIZATION: bool = false; // Skip entirely
+    const APPLY_QUANTISATION: bool = false; 
+    const SATURATION_MODE: Mode = Mode::LOW;
     const APPLY_SATURATION: bool = true;
 }
 

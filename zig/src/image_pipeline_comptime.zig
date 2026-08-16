@@ -1,5 +1,4 @@
 const std = @import("std");
-const print = std.debug.print;
 const utils = @import("utils.zig");
 
 const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
@@ -99,50 +98,50 @@ pub fn process(comptime cfg: utils.PipelineConfig, mat: *[utils.IMAGE_SIZE][util
 }
 
 pub fn main(init: std.process.Init) !void {
+    // --------------- setup writer -------------------
     const io = init.io;
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_file_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
+    const stdout_writer = &stdout_file_writer.interface;
+    // ------------------------------------------------
 
     // write the image
-    // _ = try writeImageToFile(io, "input_image.txt");
+     // _ = try utils.writeImageToFile(io, "input_image.txt");
 
     // read the image
     var my_image: [utils.IMAGE_SIZE][utils.IMAGE_SIZE]utils.Colour = undefined;
     _ = try utils.readImageFromFile(io, "input_image.txt", &my_image);
 
 
+    // LOW
+  const config = utils.PipelineConfig{
+      .blur_mode = .LOW,
+      .apply_blur = false,
+      .quantise_mode = .LOW,
+      .apply_quantisation = false,
+      .saturation_mode = .LOW,
+      .apply_saturation = true,
+  };
+
+    // MED
 //const config = utils.PipelineConfig{
-//    .colour_mode = .LOW,
-//    .blur_mode = .LOW,
+//    .blur_mode = .MED,
 //    .apply_blur = true,
-//    .sharpen_mode = .LOW,
-//    .quantise_mode = .LOW,
-//    .apply_quantisation = false,
-//    .saturation_mode = .LOW,
+//    .quantise_mode = .MED,
+//    .apply_quantisation = true,
+//    .saturation_mode = .MED,
 //    .apply_saturation = false,
 //};
 
-    // MED
+    // HIGH
 //  const config = utils.PipelineConfig{
-//      .colour_mode = .MED,
-//      .blur_mode = .MED,
+//      .blur_mode = .HIGH,
 //      .apply_blur = true,
-//      .sharpen_mode = .MED,
-//      .quantise_mode = .MED,
+//      .quantise_mode = .HIGH,
 //      .apply_quantisation = true,
-//      .saturation_mode = .MED,
+//      .saturation_mode = .HIGH,
 //      .apply_saturation = true,
 //  };
-
-    // HIGH
-  const config = utils.PipelineConfig{
-      .colour_mode = .HIGH,
-      .blur_mode = .HIGH,
-      .apply_blur = true,
-      .sharpen_mode = .HIGH,
-      .quantise_mode = .HIGH,
-      .apply_quantisation = true,
-      .saturation_mode = .HIGH,
-      .apply_saturation = true,
-  };
 
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
@@ -154,5 +153,5 @@ pub fn main(init: std.process.Init) !void {
 
     const duration = start_time.durationTo(end_time);
 
-    std.debug.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
+    print("Processed in: [{}] ns\n", .{duration.toNanoseconds()});
 }

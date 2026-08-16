@@ -1,8 +1,8 @@
 #include "utils.cpp"
 #include <array>
+#include <benchmark/benchmark.h>
 #include <chrono>
 #include <cstddef>
-#include <print>
 #include <sys/prctl.h>
 
 constexpr std::array<double, utils::STEPS> generate_lut() {
@@ -30,20 +30,23 @@ int main() {
   // not really needed for cpp, stack allocation by default,
   // but keeping for consistency
   auto myLut = COMPTIME_LUT;
-  asm volatile("" : "+m"(myLut));
 
-  std::println("ROData Address: {}",
-               static_cast<const void *>(COMPTIME_LUT.data()));
-  std::println("Stack Address:  {}", static_cast<const void *>(myLut.data()));
-
-  /*
-  constexpr auto myLut = generate_lut();
-  */
+  // don't do division in the hot loop
+  const double prediv = 1.0 / utils::INCREMENT;
 
   std::print(
       "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
       myLut.size(), utils::INCREMENT, utils::TEST_SIZE, utils::DEGREES,
       utils::STEPS);
+
+  // 1 ------ WARMUP LOOP ------
+  double warmup_sum = 0.0;
+  for (const auto &num : test_cases) {
+    const size_t idx = static_cast<size_t>(num * prediv);
+
+    warmup_sum += myLut[idx];
+  }
+  benchmark::DoNotOptimize(warmup_sum);
 
   double sum = 0.0;
 
@@ -53,7 +56,7 @@ int main() {
 
   for (const auto &num : test_cases) {
     // num is strictly a raw test case value here
-    const size_t idx = static_cast<size_t>(num / utils::INCREMENT);
+    const size_t idx = static_cast<size_t>(num * prediv);
 
     sum += myLut[idx];
   }
@@ -62,10 +65,12 @@ int main() {
   auto end_time = std::chrono::steady_clock::now();
   prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-  const auto duration_comp = end_time - start_time;
+  const auto duration = (end_time - start_time).count();
+  std::print("Processed in: [{}] ns\n", duration);
 
-  std::print("Processed in: {} ns\n", duration_comp);
   std::print("Sum: {}\n", sum);
+
+  benchmark::DoNotOptimize(sum);
 
   return 0;
 }

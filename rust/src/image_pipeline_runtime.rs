@@ -119,8 +119,8 @@ fn saturation(cfg: &PipelineConfig, item: &mut utils::Colour) {
 
     let LUMA: f32 = match cfg.saturation_mode {
         utils::Mode::LOW => (0.3 * item.r) + (0.6 * item.g) + (0.1 * item.b),
-        utils::Mode::MED => (0.29f * item.r) + (0.59f * item.g) + (0.14f * item.b),
-        utils::Mode::HIGH => (0.294f * item.r) + (0.587f * item.g) + (0.144f * item.b),
+        utils::Mode::MED => (0.29 * item.r) + (0.59 * item.g) + (0.14 * item.b),
+        utils::Mode::HIGH => (0.294 * item.r) + (0.587 * item.g) + (0.144 * item.b),
     };
 
     let delta: f32 = match cfg.saturation_mode {
@@ -197,14 +197,34 @@ fn main() {
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
-    let config = PipelineConfig {
-        blur_mode: utils::Mode::HIGH,
-        apply_blur: true,
-        quantise_mode: utils::Mode::HIGH,
-        apply_quantisation: true,
-        saturation_mode: utils::Mode::HIGH,
-        apply_saturation: true,
-    };
+
+  let config = PipelineConfig {
+      blur_mode: utils::Mode::LOW,
+      apply_blur: false,
+      quantise_mode: utils::Mode::LOW,
+      apply_quantisation: false,
+      saturation_mode: utils::Mode::LOW,
+      apply_saturation: true,
+  };
+
+ // let config = PipelineConfig {
+ //     blur_mode: utils::Mode::MED,
+ //     apply_blur: true,
+ //     quantise_mode: utils::Mode::MED,
+ //     apply_quantisation: true,
+ //     saturation_mode: utils::Mode::MED,
+ //     apply_saturation: false,
+ // };
+
+
+//let config = PipelineConfig {
+//    blur_mode: utils::Mode::HIGH,
+//    apply_blur: true,
+//    quantise_mode: utils::Mode::HIGH,
+//    apply_quantisation: true,
+//    saturation_mode: utils::Mode::HIGH,
+//    apply_saturation: true,
+//};
 
     unsafe {
         libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);

@@ -2,8 +2,25 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <print>
 #include <utility>
+
+#ifndef QUAL
+#define QUAL utils::Mode::HIGH
+#endif
+
+#ifndef APPLY_ONE
+#define APPLY_ONE true
+#endif
+
+#ifndef APPLY_TWO
+#define APPLY_TWO true
+#endif
+
+#ifndef APPLY_THREE
+#define APPLY_THREE true
+#endif
 
 // if statement
 template <utils::PipelineConfig cfg>
@@ -89,6 +106,8 @@ constexpr void saturation(utils::Colour &item) {
       return 2.5;
     case utils::Mode::HIGH:
       return 3.5;
+    default:
+      std::unreachable();
     };
   }();
 
@@ -136,29 +155,32 @@ constexpr void process(utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
 
 int main() {
 
-  utils::Colour my_image[utils::SIZE][utils::SIZE];
+  try {
 
-  utils::read_image_from_file("input_image.txt", my_image);
+    utils::Colour my_image[utils::SIZE][utils::SIZE];
 
-  constexpr auto config =
-      utils::PipelineConfig{.colour_mode = utils::Mode::LOW,
-                            .blur_mode = utils::Mode::LOW,
-                            .apply_blur = true,
-                            .quantise_mode = utils::Mode::LOW,
-                            .apply_quantisation = true,
-                            .saturation_mode = utils::Mode::LOW,
-                            .apply_saturation = true};
+    utils::read_image_from_file("input_image.txt", my_image);
 
-  const auto start_time = std::chrono::steady_clock::now();
+    constexpr auto config =
+        utils::PipelineConfig{.blur_mode = QUAL,
+                              .apply_blur = APPLY_ONE,
+                              .quantise_mode = QUAL,
+                              .apply_quantisation = APPLY_TWO,
+                              .saturation_mode = QUAL,
+                              .apply_saturation = APPLY_THREE};
 
-  process<config>(my_image);
+    const auto start_time = std::chrono::steady_clock::now();
 
-  const auto end_time = std::chrono::steady_clock::now();
-  const auto duration = end_time - start_time;
+    process<config>(my_image);
 
-  const auto nanoseconds =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-  std::print("Processed in: {} ns\n", nanoseconds);
+    const auto end_time = std::chrono::steady_clock::now();
+
+    const auto duration = (end_time - start_time).count();
+    std::print("Processed in: [{}] ns\n", duration);
+
+  } catch (char const *msg) {
+    std::cout << "MSG: " << msg << std::endl;
+  }
 
   return 0;
 }

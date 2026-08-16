@@ -2,10 +2,23 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <linux/prctl.h>
-#include <print>
 #include <sys/prctl.h>
-#include <utility>
+
+#ifndef QUAL
+#define QUAL utils::Mode::HIGH
+#endif
+
+#ifndef APPLY_ONE
+#define APPLY_ONE true
+#endif
+
+#ifndef APPLY_TWO
+#define APPLY_TWO true
+#endif
+
+#ifndef APPLY_THREE
+#define APPLY_THREE true
+#endif
 
 // if statement
 [[nodiscard]] float quantise(const utils::PipelineConfig &cfg, float colour) {
@@ -88,6 +101,8 @@ void saturation(const utils::PipelineConfig &cfg, utils::Colour &item) {
       return 2.5;
     case utils::Mode::HIGH:
       return 3.5;
+    default:
+      std::unreachable();
     };
   }();
 
@@ -140,13 +155,12 @@ int main() {
   utils::read_image_from_file("input_image.txt", my_image);
 
   constexpr auto config =
-      utils::PipelineConfig{.colour_mode = utils::Mode::LOW,
-                            .blur_mode = utils::Mode::LOW,
-                            .apply_blur = true,
-                            .quantise_mode = utils::Mode::LOW,
-                            .apply_quantisation = true,
-                            .saturation_mode = utils::Mode::LOW,
-                            .apply_saturation = true};
+      utils::PipelineConfig{.blur_mode = QUAL,
+                            .apply_blur = APPLY_ONE,
+                            .quantise_mode = QUAL,
+                            .apply_quantisation = APPLY_TWO,
+                            .saturation_mode = QUAL,
+                            .apply_saturation = APPLY_THREE};
 
   // start perf, then the clock
   prctl(PR_TASK_PERF_EVENTS_ENABLE);
@@ -158,11 +172,8 @@ int main() {
   auto end_time = std::chrono::steady_clock::now();
   prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-  const auto duration = end_time - start_time;
-
-  const auto nanoseconds =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-  std::print("Processed in: {} ns\n", nanoseconds);
+  const auto duration = (end_time - start_time).count();
+  std::print("Processed in: [{}] ns\n", duration);
 
   return 0;
 }

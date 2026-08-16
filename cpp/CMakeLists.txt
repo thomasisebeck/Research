@@ -6,11 +6,36 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+add_compile_options(-fconstexpr-loop-limit=10000000)
+
+if(DEFINED INCREMENT_VAL)
+  add_compile_definitions(INCREMENT_VAL=${INCREMENT_VAL})
+endif()
+
+if(DEFINED QUAL_VAL)
+  add_compile_definitions(QUAL=${QUAL_VAL})
+endif()
+
+if(DEFINED APPLY_ONE_VAL)
+  add_compile_definitions(APPLY_ONE=${APPLY_ONE_VAL})
+endif()
+
+if(DEFINED APPLY_TWO_VAL)
+  add_compile_definitions(APPLY_TWO=${APPLY_TWO_VAL})
+endif()
+
+if(DEFINED APPLY_THREE_VAL)
+  add_compile_definitions(APPLY_THREE=${APPLY_THREE_VAL})
+endif()
+
 # 1. Define the custom toggle (Defaults to OFF/Debug mode)
 option(Optimise "Build with high optimizations and no assertions" OFF)
 
-# 1. Source files
-set(SOURCES src/poly_stat.cpp)
+if(NOT DEFINED TARGET_SRC)
+  set(TARGET_SRC "lut_comptime.cpp")
+endif()
+
+set(SOURCES "src/${TARGET_SRC}")
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/input_image.txt"
                "${CMAKE_CURRENT_BINARY_DIR}/input_image.txt" COPYONLY)
@@ -21,6 +46,24 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lookup.txt"
 find_package(benchmark REQUIRED)
 
 add_executable(out ${SOURCES})
+
+target_precompile_headers(
+  out
+  PRIVATE
+  <algorithm>
+  <array>
+  <benchmark/benchmark.h>
+  <chrono>
+  <cmath>
+  <cstddef>
+  <fstream>
+  <iostream>
+  <linux/prctl.h>
+  <print>
+  <ranges>
+  <sys/prctl.h>
+  <utility>
+  <variant>)
 
 target_link_libraries(out PRIVATE benchmark::benchmark pthread)
 

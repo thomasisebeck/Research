@@ -1,5 +1,4 @@
 const std = @import("std");
-const print = std.debug.print;
 
 const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
 const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
@@ -74,7 +73,12 @@ fn asMouse(self: *Mouse) Component {
 const Type = enum { CAT, MOUSE, DOG };
 
 pub fn main(init: std.process.Init) !void {
+    // --------------- setup writer -------------------
     const io = init.io;
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_file_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
+    const stdout_writer = &stdout_file_writer.interface;
+    // ------------------------------------------------
 
     const SIZE = 21;
     const ITERS = 100;
@@ -133,14 +137,17 @@ pub fn main(init: std.process.Init) !void {
 
     const duration = start_time.durationTo(end_time);
 
-    std.debug.print("\n---  VERIFYING OUTPUTS ---\n", .{});
 
+    _ = try stdout_writer.print("\n---  VERIFYING OUTPUTS ---\n", .{});
     for (sound_outputs, 0..) |res, i| {
-        std.debug.print("Index {}: {s}\n", .{ i, @tagName(res) });
+        _ = try stdout_writer.print("Index {}: {s}\n", .{ i, @tagName(res) });
     }
 
     // must mutate
     zoo[0] = asDog(&d1);
 
-    std.debug.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
+    //---------------------- print and clean ------------------
+    _ = try stdout_writer.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
+    try stdout_writer.flush();
+    //---------------------------------------------------------
 }

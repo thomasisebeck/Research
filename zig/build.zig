@@ -17,15 +17,25 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{
         .preferred_optimize_mode = .ReleaseFast,
     });
+
+    const increment = b.option(f64, "increment", "LUT increment value") orelse 0.01;
+    const target_src = b.option([]const u8, "target_src", "Source file to build") orelse "src/lut_runtime.zig";
+
+    const options = b.addOptions();
+    // Fix: Add the option so 'increment' is used!
+    options.addOption(f64, "increment", increment);
+
     // INFO: change this source file
     const exe = b.addExecutable(.{
-        .name = "poly_stat",
+        .name = "out",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/poly_stat.zig"),
+            .root_source_file = b.path(target_src),
             .target = target,
             .optimize = optimize,
         }),
     });
+
+    exe.root_module.addOptions("config", options);
 
     // This declares intent for the executable to be installed into the
     // install prefix when running `zig build` (i.e. when executing the default

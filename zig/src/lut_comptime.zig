@@ -1,5 +1,4 @@
 const std = @import("std");
-const print = std.debug.print;
 const utils = @import("utils.zig");
 
 const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
@@ -9,18 +8,14 @@ const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
 // 1 increment -> must still test
 // 0.1 increment -> comptime is faster, fits in the L1 cache
 // 0.01 increment -> runtime is faster, does not fit in the L1 cache
-const increment: comptime_float = 0.01;
-const TEST_SIZE: usize = 500;
-const degrees: comptime_float = 360;
-const steps: comptime_int = @intFromFloat(degrees / increment);
 
-fn generateLUT() [steps]f64 {
+fn generateLUT() [utils.steps]f64 {
     @setEvalBranchQuota(1000000);
-    // table empty, but enough to hold all the steps
-    var table: [steps]f64 = undefined;
+    // table empty, but enough to hold all the utils.steps
+    var table: [utils.steps]f64 = undefined;
 
     for (&table, 0..) |*item, i| {
-        const result: f64 = @as(f64, @floatFromInt(i)) * increment;
+        const result: f64 = @as(f64, @floatFromInt(i)) * utils.increment;
         item.* = @sin(result) + @cos(result);
     }
 
@@ -40,32 +35,56 @@ fn generateTestCases(io: anytype, path: []const u8) !void {
 
     var prng = std.Random.DefaultPrng.init(12345);
 
-    for (0..TEST_SIZE) |_| {
-        // steps is the max index that you can access in the LUT
+    for (0..utils.TEST_SIZE) |_| {
+        // utils.steps is the max index that you can access in the LUT
         // just store a random index to look up
-        const val = @abs(@mod(prng.random().int(i64), @as(i64, degrees)));
+        // utils.degrees = 360
 
-        try file_writer.interface.print("{d}\n", .{val});
+        // we need anything between 0 and steps (0 - 3600)
+        // then the test case becomes 0.1 0.2 0.3 ... 
+        const val_deg = prng.random().float(f64) * @as(f64, utils.degrees);
 
-        // std.debug.print("{d},", .{val});
+        try file_writer.interface.print("{d}\n", .{val_deg});
+
+        std.debug.print("{d},", .{val_deg});
     }
 }
 
 pub fn main(init: std.process.Init) !void {
-    _ = try generateTestCases(init.io, "lookup.txt");
-    const test_cases: [TEST_SIZE]i64 = try utils.readArrayFromFile(TEST_SIZE, init.io, "lookup.txt");
 
-    // needs to be var for the volatile cast
+    // --------------- setup writer -------------------
+    const io = init.io;
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_file_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
+    const stdout_writer = &stdout_file_writer.interface;
+    // ------------------------------------------------
+
+//      _ = try generateTestCases(init.io, "lookup.txt");
+     const test_cases: [utils.TEST_SIZE]f64 = try utils.readArrayFromFile(utils.TEST_SIZE, init.io, "lookup.txt");
+
+   // needs to be var for the volatile cast
     var compLut = comptime generateLUT();
 
     // keep the LUT on the function stack by marking it as volatile
-    const myLut: *volatile [steps]f64 = @volatileCast(&compLut);
+    const myLut: *volatile [utils.steps]f64 = @volatileCast(&compLut);
 
-    print("LUT size: {d}, increment: {d}, testSize: {d}, degrees: {d}, steps: {d}\n", .{ steps, increment, TEST_SIZE, degrees, steps });
 
-    var sum_comp: f64 = 0;
+    const prediv: f64 = 1.0 / utils.increment;
 
-    const io = init.io;
+    
+ // var warmup_sum: f64 = 0.0;
+ // for (test_cases) |num| {
+ //     const idx: usize = @intFromFloat(num * prediv);
+
+ //     warmup_sum += myLut[idx];
+ // }
+
+
+  // std.mem.doNotOptimizeAway(warmup_sum);
+
+
+    var sum: f64 = 0;
+
 
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
     var start_time = std.Io.Clock.now(.awake, io);
@@ -73,16 +92,21 @@ pub fn main(init: std.process.Init) !void {
     // test cases is i64 arr
     // num / increment, making it larger (if inc between 0 and 1)
     for (test_cases) |num| {
-        const float_idx = @as(f64, @floatFromInt(num)) / increment;
+        const idx: usize = @intFromFloat(num * prediv);
 
-        sum_comp += myLut[@intFromFloat(float_idx)];
+        sum += myLut[idx];
     }
 
     const end_time = std.Io.Clock.now(.awake, io);
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
 
-    const duration_comp = start_time.durationTo(end_time);
+    const duration = start_time.durationTo(end_time);
 
-    print("Comptime processed in: {} ns\n", .{duration_comp.toNanoseconds()});
-    print("Sum comp: {d}\n", .{sum_comp});
+    
+    //---------------------- print and clean ------------------
+    _ = try stdout_writer.print("Processed in: [{}] ns. Sum: {}", .{duration.toNanoseconds(), sum});
+    try stdout_writer.flush();
+    //---------------------------------------------------------
+
+    std.mem.doNotOptimizeAway(sum);
 }

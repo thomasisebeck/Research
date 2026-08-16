@@ -4,11 +4,17 @@
 #include <iostream>
 #include <print>
 
+#ifndef INCREMENT_VAL
+#define INCREMENT_VAL 0.00001
+#endif
+
 namespace utils {
 
-constexpr double INCREMENT = 0.01;
-constexpr size_t TEST_SIZE = 500;
+constexpr size_t TEST_SIZE = 5000;
 constexpr double DEGREES = 360;
+const auto SIZE = 500;
+constexpr double INCREMENT = INCREMENT_VAL;
+
 constexpr int STEPS = static_cast<size_t>(DEGREES / INCREMENT);
 
 struct Colour {
@@ -20,7 +26,6 @@ enum class Mode { HIGH, MED, LOW };
 // C++20 allows literal class types to be used as template parameters
 
 struct PipelineConfig {
-  Mode colour_mode;
   Mode blur_mode;
   bool apply_blur;
   Mode quantise_mode;
@@ -39,8 +44,6 @@ struct Neighbours {
   Colour topRight;
   Colour topMiddle;
 };
-
-const auto SIZE = 150;
 
 void print_image(const Colour (&mat)[SIZE][SIZE]) {
   std::print("[\n");

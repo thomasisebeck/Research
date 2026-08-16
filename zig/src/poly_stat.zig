@@ -112,14 +112,21 @@ pub fn main(init: std.process.Init) !void {
     const end_time = std.Io.Clock.now(.awake, io);
     _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
 
-    const duration = start_time.durationTo(end_time);
-
-    zoo[0] = .{ .cat = &c1 };
     std.mem.doNotOptimizeAway(&sound_outputs);
 
-    std.debug.print("\n---  VERIFYING OUTPUTS ---\n", .{});
+    const duration = start_time.durationTo(end_time);
+
+
+    _ = try stdout_writer.print("\n---  VERIFYING OUTPUTS ---\n", .{});
     for (sound_outputs, 0..) |res, i| {
-        std.debug.print("Index {}: {s}\n", .{ i, @tagName(res) });
+        _ = try stdout_writer.print("Index {}: {s}\n", .{ i, @tagName(res) });
     }
-    std.debug.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
+
+    // must mutate
+    zoo[0] = asDog(&d1);
+
+    //---------------------- print and clean ------------------
+    _ = try stdout_writer.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
+    try stdout_writer.flush();
+    //---------------------------------------------------------
 }

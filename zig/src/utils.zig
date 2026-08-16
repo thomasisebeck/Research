@@ -1,13 +1,20 @@
 const std = @import("std");
-pub const IMAGE_SIZE = 100;
+pub const IMAGE_SIZE = 500;
 const print = std.debug.print;
 const assert = std.debug.assert;
+
+const config = @import("config");
+
+pub const increment: f64 = config.increment; 
+pub const TEST_SIZE: usize = 50000;
+pub const degrees: comptime_float = 360;
+pub const steps: comptime_int = @intFromFloat(degrees / increment);
 
 pub const Colour = struct { r: f32, g: f32, b: f32 };
 
 pub const Mode = enum { HIGH, MED, LOW };
 
-pub const PipelineConfig = struct { colour_mode: Mode, blur_mode: Mode, apply_blur: bool, sharpen_mode: Mode, quantise_mode: Mode, apply_quantisation: bool, saturation_mode: Mode, apply_saturation: bool };
+pub const PipelineConfig = struct { blur_mode: Mode, apply_blur: bool, quantise_mode: Mode, apply_quantisation: bool, saturation_mode: Mode, apply_saturation: bool };
 
 pub const Neighbours = struct {
     topLeft: Colour,
@@ -75,14 +82,14 @@ pub fn writeImageToFile(io: anytype, path: []const u8) !void {
     }
 }
 
-pub fn readArrayFromFile(comptime array_size: usize, io: std.Io, path: []const u8) ![array_size]i64 {
+pub fn readArrayFromFile(comptime array_size: usize, io: std.Io, path: []const u8) ![array_size]f64 {
     //var stdout_writer = std.Io.File.stdout().writer(io, &.{});
     //const stdout = &stdout_writer.interface;
     var file_buf: [array_size * 32]u8 = undefined;
     const file = try std.Io.Dir.cwd().readFile(io, path, &file_buf);
 
     // init the array to all 0, len 5
-    var input_array = [_]i64{0} ** array_size;
+    var input_array = [_]f64{0} ** array_size;
     var counter: u32 = 0;
 
     var iter = std.mem.tokenizeScalar(u8, file, '\n');
@@ -92,7 +99,7 @@ pub fn readArrayFromFile(comptime array_size: usize, io: std.Io, path: []const u
         const clean_line = std.mem.trim(u8, line, "\r");
 
         // pass the buffer as base 10
-        input_array[counter] = try std.fmt.parseInt(i64, clean_line, 10);
+        input_array[counter] = try std.fmt.parseFloat(f64, clean_line);
 
         counter += 1;
     }

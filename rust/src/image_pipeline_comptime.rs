@@ -117,7 +117,7 @@ fn process<CFG: utils::PipelineConfig>(
                 blur::<CFG>(item, n);
             }
 
-            if CFG::APPLY_QUANTIZATION {
+            if CFG::APPLY_QUANTISATION {
                 // grab a mutable ref
                 let item: &mut utils::Colour = &mut mat[row_num][col_num];
 
@@ -157,7 +157,7 @@ fn main() {
     let start_time = Instant::now();
 
     // configs are declared above as traits...
-    process::<utils::MediumQualityConfig>(&mut my_image);
+    process::<utils::LowQualityConfig>(&mut my_image);
 
     let end_time = Instant::now();
     unsafe {
