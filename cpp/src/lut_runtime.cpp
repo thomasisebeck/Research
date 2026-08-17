@@ -1,14 +1,15 @@
 #include "utils.cpp"
-#include <chrono>
 #include <cmath>
+#include <benchmark/benchmark.h>
+#include <chrono>
+#include <fstream>
 #include <print>
-#include <sys/prctl.h>
-
-template <typename T> inline void do_not_optimize(T &&val) {
-  asm volatile("" : : "g"(val) : "memory");
-}
 
 int main() {
+  // ----- setup writer ---------
+  // Open the perf control FIFO stream
+  std::ofstream perf_ctl("/tmp/perf.ctl");
+  // ------------------------------
 
   const auto test_cases =
       utils::read_array_from_file<utils::TEST_SIZE>("lookup.txt");
@@ -29,7 +30,7 @@ int main() {
   double sum = 0.0;
 
   // start perf, then the clock
-  prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  perf_ctl << "enable\n" << std::flush;
   auto start_time = std::chrono::steady_clock::now();
 
   for (const auto &num : test_cases) {
@@ -39,7 +40,7 @@ int main() {
 
   // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
-  prctl(PR_TASK_PERF_EVENTS_DISABLE);
+  perf_ctl << "disable\n" << std::flush;
 
   const auto duration = (end_time - start_time).count();
   std::print("Processed in: [{}] ns\n", duration);

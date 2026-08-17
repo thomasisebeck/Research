@@ -15,8 +15,9 @@ pub enum Mode {
     LOW,
 }
 
+include!(concat!(env!("OUT_DIR"), "/increment_config.rs"));
+
 pub const IMAGE_SIZE: usize = 500;
-pub const INCREMENT: f64 = 0.01;
 pub const TEST_SIZE: usize = 500;
 pub const DEGREES: f64 = 360.0;
 pub const STEPS: usize = (DEGREES / INCREMENT) as usize;
@@ -81,6 +82,11 @@ pub fn read_array_from_file<const STEPS: usize>(path: &str) -> [f64; STEPS] {
     let mut counter = 0;
 
     for line in read_to_string(path).unwrap().lines() {
+
+        if counter >= STEPS {
+            break;
+        }
+
         my_arr[counter] = line.parse::<f64>().unwrap();
         counter += 1;
     }

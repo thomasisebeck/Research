@@ -9,17 +9,17 @@ FILES=(
   "lut_comptime.zig"
 )
 
-ITERATIONS=${1:-1}
+ITERATIONS=${1:-10}
 CSV_FILE="results.csv"
 
 # 2. Target increment values, NB: change with zig if you change this!
-# INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
-INCREMENTS=("0.5")
+INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
 
+PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 
 # 3. Add CSV header if it doesn't exist
 if [ ! -f "$CSV_FILE" ]; then
-  echo "label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns,cycles,instructions,cache-references,cache-misses" > "$CSV_FILE"
+  echo "label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns,$PERF_EVENTS" > "$CSV_FILE"
 fi
 
 for FILENAME in "${FILES[@]}"; do
@@ -55,17 +55,8 @@ for FILENAME in "${FILES[@]}"; do
       fi
 
       # create the perf files
-      
-      sudo rm -rf /tmp/perf.ctl
-      sudo rm -rf /tmp/perf.ack
-
-      sudo touch /tmp/perf.ctl
-      sudo touch /tmp/perf.ack
-
-
-      # PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
-      # Ice Lake supported PMU event string
-      PERF_EVENTS="cycles,instructions,cache-references,cache-misses"
+      sudo rm -rf /tmp/perf.ctl /tmp/perf.ack
+      sudo mkfifo /tmp/perf.ctl /tmp/perf.ack
 
       # Execute benchmark under perf stat (stderr redirected to temp file, stdout saved to OUT_DATA)
       PERF_RAW_FILE=$(mktemp)
@@ -73,11 +64,11 @@ for FILENAME in "${FILES[@]}"; do
       # control with the file 
       # Capture stdout into RUNTIME_NS while keeping stderr routed through grep
       OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
-      -e "cycles,instructions,cache-references,cache-misses" \
+      -e "$PERF_EVENTS" \
       ./zig-out/bin/out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 
       # Extract runtime_ns cleanly from $OUT_DATA
-     RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')
+      RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')
 
       # Parse perf values safely
       PERF_METRICS=$(awk -F',' '{

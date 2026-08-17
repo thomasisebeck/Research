@@ -1,2 +1,38 @@
 label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns,cycles,instructions,fe_stalls_uops,backend_stalls,branches,branch_misses,cache_refs,cache_misses,l1_loads,l1_misses,ctx_switches,page_faults
 lut_runtime,INC_0.0005,1,7.93,7.39,0.33,4.57,4.04,0.16,23587,3609028,5165462,5643197,5176605,978428,25836,71521,33882,1336843,67108,1,162
+lut_runtime,INC_0.0005,1,6.18,5.06,0.76,2.89,2.64,0.24,,event syntax error: '..vered.core,                                  \___ Bad event name,0,Unable to find event on a PMU of 'topdown.backend_bound_slots',Run 'perf list' for a list of valid events,0, Usage: perf stat [<options>] [<command>],0,    -e
+lut_runtime,INC_0.0005,2,5.67,4.89,0.77,2.88,2.69,0.18,,event syntax error: '..vered.core,                                  \___ Bad event name,0,Unable to find event on a PMU of 'topdown.backend_bound_slots',Run 'perf list' for a list of valid events,0, Usage: perf stat [<options>] [<command>],0,    -e
+lut_comptime,INC_0.0005,1,/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp: In function ‘int main()’:
+/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp:31:45:   in ‘constexpr’ expansion of ‘generate_lut()’
+/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp:15:14: error: ‘constexpr’ evaluation operation count exceeds limit of 33554432 (use ‘-fconstexpr-ops-limit=’ to increase the limit)
+   15 |     table[i] = __builtin_sin(result) + __builtin_cos(result);
+make[2]: *** [CMakeFiles/out.dir/build.make:96: CMakeFiles/out.dir/src/lut_comptime.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:87: CMakeFiles/out.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+Command exited with non-zero status 2
+19.88,18.41,1.45,/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp: In function ‘int main()’:
+/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp:31:45:   in ‘constexpr’ expansion of ‘generate_lut()’
+/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp:15:14: error: ‘constexpr’ evaluation operation count exceeds limit of 33554432 (use ‘-fconstexpr-ops-limit=’ to increase the limit)
+   15 |     table[i] = __builtin_sin(result) + __builtin_cos(result);
+make[2]: *** [CMakeFiles/out.dir/build.make:96: CMakeFiles/out.dir/src/lut_comptime.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:87: CMakeFiles/out.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+Command exited with non-zero status 2
+17.16,16.17,0.98,,event syntax error: '..vered.core,                                  \___ Bad event name,0,Unable to find event on a PMU of 'topdown.backend_bound_slots',Run 'perf list' for a list of valid events,0, Usage: perf stat [<options>] [<command>],0,    -e
+lut_comptime,INC_0.0005,2,/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp: In function ‘int main()’:
+/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp:31:45:   in ‘constexpr’ expansion of ‘generate_lut()’
+/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp:15:14: error: ‘constexpr’ evaluation operation count exceeds limit of 33554432 (use ‘-fconstexpr-ops-limit=’ to increase the limit)
+   15 |     table[i] = __builtin_sin(result) + __builtin_cos(result);
+make[2]: *** [CMakeFiles/out.dir/build.make:96: CMakeFiles/out.dir/src/lut_comptime.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:87: CMakeFiles/out.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+Command exited with non-zero status 2
+19.98,18.61,1.36,/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp: In function ‘int main()’:
+/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp:31:45:   in ‘constexpr’ expansion of ‘generate_lut()’
+/home/thomas/git-repos/Research/cpp/src/lut_comptime.cpp:15:14: error: ‘constexpr’ evaluation operation count exceeds limit of 33554432 (use ‘-fconstexpr-ops-limit=’ to increase the limit)
+   15 |     table[i] = __builtin_sin(result) + __builtin_cos(result);
+make[2]: *** [CMakeFiles/out.dir/build.make:96: CMakeFiles/out.dir/src/lut_comptime.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:87: CMakeFiles/out.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+Command exited with non-zero status 2
+17.09,15.96,1.12,,event syntax error: '..vered.core,                                  \___ Bad event name,0,Unable to find event on a PMU of 'topdown.backend_bound_slots',Run 'perf list' for a list of valid events,0, Usage: perf stat [<options>] [<command>],0,    -e

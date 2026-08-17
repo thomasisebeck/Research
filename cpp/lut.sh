@@ -12,11 +12,14 @@ CSV_FILE="results.csv"
 
 # NB: must regenerate with the zig when you change this
 # INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
-INCREMENTS=("0.0005")
+INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
+
+PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
+
 
 # 3. Add CSV header if it doesn't exist
 if [ ! -f "$CSV_FILE" ]; then
-  echo "label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns,cycles,instructions,fe_stalls_uops,backend_stalls,branches,branch_misses,cache_refs,cache_misses,l1_loads,l1_misses,ctx_switches,page_faults" > "$CSV_FILE"
+  echo "label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns,cycles,instructions,cache-misses,cache-references,branches,branch-misses" > "$CSV_FILE"
 fi
 
 for FILENAME in "${FILES[@]}"; do
@@ -35,7 +38,7 @@ for FILENAME in "${FILES[@]}"; do
       mkdir -p build && cd build || exit 1
 
       # Configure CMake with injected increment parameter
-      cmake .. -DOptimise=ON \
+      CCACHE_DISABLE=1 cmake .. -DOptimise=ON \
                -DTARGET_SRC="${FILENAME}" \
                -DINCREMENT_VAL="${INC}" > /dev/null 2>&1
 
@@ -46,12 +49,15 @@ for FILENAME in "${FILES[@]}"; do
 
       make -j$(nproc) > /dev/null 2>&1
 
-      # Ice Lake supported PMU event string
-      PERF_EVENTS="cycles,instructions,idq_uops_not_delivered.core,topdown.backend_bound_slots,branches,branch-misses,cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses,context-switches,page-faults"
+      # create perf files
+      sudo rm -rf /tmp/perf.ctl /tmp/perf.ack
+      sudo mkfifo /tmp/perf.ctl /tmp/perf.ack
 
       # Execute benchmark under perf stat (stderr captured for counters)
       PERF_RAW_FILE=$(mktemp)
-      OUT_DATA=$(perf stat -x, --delay=-1 -e "$PERF_EVENTS" ./out 2> "$PERF_RAW_FILE")
+      OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
+      -e "$PERF_EVENTS" \
+      ./out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 
       # Extract runtime_ns
       RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')
@@ -62,6 +68,7 @@ for FILENAME in "${FILES[@]}"; do
         if (val ~ /<not supported>/ || val == "") val = "0";
         print val;
       }' "$PERF_RAW_FILE" | tr '\n' ',' | sed 's/,$//')
+
       rm -f "$PERF_RAW_FILE"
 
       # Log single flattened row to CSV
