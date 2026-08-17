@@ -1,14 +1,21 @@
+use std::fs::File;
+use std::io::Write;
 use std::time::Instant;
 
-use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
 enum SoundEnum {
     Woof,
     Meow,
     Squeek,
 }
 
+// 1. Define the trait
+trait Soundable {
+    fn sound(&self) -> SoundEnum;
+}
+
+#[derive(Clone, Copy)]
 struct Dog {
     id: u64,
 }
@@ -16,6 +23,10 @@ impl Dog {
     fn new() -> Self {
         Self { id: 1 }
     }
+}
+// Implement Soundable for Dog
+impl Soundable for Dog {
+    #[inline(always)]
     fn sound(&self) -> SoundEnum {
         if self.id == 0 {
             SoundEnum::Meow
@@ -25,6 +36,7 @@ impl Dog {
     }
 }
 
+#[derive(Clone, Copy)]
 struct Cat {
     id: u64,
 }
@@ -32,7 +44,10 @@ impl Cat {
     fn new() -> Self {
         Self { id: 1 }
     }
-
+}
+// Implement Soundable for Cat
+impl Soundable for Cat {
+    #[inline(always)]
     fn sound(&self) -> SoundEnum {
         if self.id == 0 {
             SoundEnum::Woof
@@ -42,6 +57,7 @@ impl Cat {
     }
 }
 
+#[derive(Clone, Copy)]
 struct Mouse {
     id: u64,
 }
@@ -49,6 +65,10 @@ impl Mouse {
     fn new() -> Self {
         Self { id: 1 }
     }
+}
+// Implement Soundable for Mouse
+impl Soundable for Mouse {
+    #[inline(always)]
     fn sound(&self) -> SoundEnum {
         if self.id == 0 {
             SoundEnum::Woof
@@ -59,26 +79,35 @@ impl Mouse {
 }
 
 #[derive(Clone, Copy)]
-enum AnimalRef<'a> {
-    Dog(&'a Dog),
-    Cat(&'a Cat),
-    Mouse(&'a Mouse),
+enum Animal {
+    Dog(Dog),
+    Cat(Cat),
+    Mouse(Mouse),
 }
 
-impl<'a> AnimalRef<'a> {
+// Implement Soundable for the Animal enum wrapper
+impl Soundable for Animal {
+    #[inline(always)]
     fn sound(&self) -> SoundEnum {
         match self {
-            AnimalRef::Dog(d) => d.sound(),
-
-            AnimalRef::Cat(c) => c.sound(),
-
-            AnimalRef::Mouse(m) => m.sound(),
+            Animal::Dog(d) => d.sound(),
+            Animal::Cat(c) => c.sound(),
+            Animal::Mouse(m) => m.sound(),
         }
     }
 }
 
-fn main() {
-    const SIZE: usize = 21;
+// Generic batch processor constrained by Soundable
+fn process_batch<T: Soundable>(animals: &[T], outputs: &mut [SoundEnum]) {
+    for (i, animal) in animals.iter().enumerate() {
+        outputs[i] = animal.sound(); // Direct monomorphized or static match call
+    }
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>>  {
+    let mut perf_ctl = File::create("/tmp/perf.ctl")?;
+
+   const SIZE: usize = 21;
     const ITERS: usize = 100;
 
     let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
@@ -111,54 +140,50 @@ fn main() {
         Mouse::new(),
     );
 
-    // 2. Build the array pointing to those stack-allocated variables
-    let zoo: [AnimalRef; SIZE] = [
-        AnimalRef::Dog(&d1),
-        AnimalRef::Cat(&c1),
-        AnimalRef::Mouse(&m1),
-        AnimalRef::Cat(&c2),
-        AnimalRef::Dog(&d2),
-        AnimalRef::Mouse(&m2),
-        AnimalRef::Dog(&d3),
-        AnimalRef::Mouse(&m3),
-        AnimalRef::Cat(&c3),
-        AnimalRef::Mouse(&m4),
-        AnimalRef::Cat(&c4),
-        AnimalRef::Dog(&d4),
-        AnimalRef::Mouse(&m5),
-        AnimalRef::Dog(&d5),
-        AnimalRef::Cat(&c5),
-        AnimalRef::Mouse(&m6),
-        AnimalRef::Dog(&d6),
-        AnimalRef::Cat(&c6),
-        AnimalRef::Mouse(&m7),
-        AnimalRef::Cat(&c7),
-        AnimalRef::Dog(&d7),
+    let zoo: [Animal; SIZE] = [
+     Animal::Dog(d1),
+     Animal::Cat(c1),
+     Animal::Mouse(m1),
+     Animal::Cat(c2),
+     Animal::Dog(d2),
+     Animal::Mouse(m2),
+     Animal::Dog(d3),
+     Animal::Mouse(m3),
+     Animal::Cat(c3),
+     Animal::Mouse(m4),
+     Animal::Cat(c4),
+     Animal::Dog(d4),
+     Animal::Mouse(m5),
+     Animal::Dog(d5),
+     Animal::Cat(c5),
+     Animal::Mouse(m6),
+     Animal::Dog(d6),
+     Animal::Cat(c6),
+     Animal::Mouse(m7),
+     Animal::Cat(c7),
+     Animal::Dog(d7)
     ];
 
-    // using an unsafe block so that it's consistent with the cpp
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
-    }
+    std::hint::black_box(zoo);
+
+    writeln!(perf_ctl, "enable")?;
+    perf_ctl.flush()?;
     let start_time = Instant::now();
 
-    let mut ind: usize = 0;
+    process_batch(&zoo, &mut sound_outputs);
 
-    for _ in 0..ITERS {
-        // Loop over dynamic coll
-        for animal in zoo.iter() {
-            sound_outputs[ind] = animal.sound();
-            ind += 1;
-        }
-    }
-    let duration = start_time.elapsed();
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
-    }
+    let end_time = Instant::now();
+    writeln!(perf_ctl, "disable")?;
+    perf_ctl.flush()?;
+
+    let duration = end_time.duration_since(start_time).as_nanos();
+
+    println!("Processed in: [{}] ns", duration);
 
     println!("\n---  VERIFYING OUTPUTS ---");
     for (i, res) in sound_outputs.iter().enumerate() {
         println!("Index {}: {:?}", i, res);
     }
-    println!("Processed in: {} ns", duration.as_nanos());
+
+    Ok(())
 }

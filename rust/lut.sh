@@ -54,26 +54,12 @@ for FILENAME in "${FILES[@]}"; do
       # Explicitly set EXECUTABLE path for the current binary
       EXECUTABLE="./target/release/${BIN_NAME}"
 
-     # echo "cleaning"
-
-      # Clean step
       sudo -u "${TARGET_USER}" "${CARGO_BIN}" +stable clean > /dev/null 2>&1
 
-     # echo "building"
-
       CMD="sudo -u \"${TARGET_USER}\" sh -c 'env INCREMENT_VAL=\"${INC}\" RUSTFLAGS=\"-A warnings\" /usr/bin/time -f \"%e,%U,%S\" taskset -c 0,1 \"${CARGO_BIN}\" +stable build -q --release --bin \"${BIN_NAME}\"'"
-
-    # echo "running: $CMD"  
-
-    # COLD BUILD STEP
-  # COLD BUILD STEP
       COLD_TIME=$(eval "$CMD" 2>&1)
 
-     # echo "$COLD_TIME"
-
       sudo touch "src/${FILENAME}"
-
-     # echo "hot building"
 
       # HOT BUILD STEP
       HOT_TIME=$(sudo -u "${TARGET_USER}" sh -c 'env INCREMENT_VAL="'"${INC}"'" RUSTFLAGS="-A warnings" /usr/bin/time -f "%e,%U,%S" taskset -c 0,1 "'"${CARGO_BIN}"'" +stable build -q --release --bin "'"${BIN_NAME}"'"' 2>&1)

@@ -1,8 +1,9 @@
 use std::time::Instant;
-
-use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
+use std::fs::File;
+use std::io::Write;
 
 #[derive(Debug, Clone, Copy)]
+#[repr(u8)]
 enum SoundEnum {
     Woof,
     Meow,
@@ -69,7 +70,9 @@ impl Animal for Mouse {
     }
 }
 
-fn main() {
+fn main()-> Result<(), Box<dyn std::error::Error>> {
+     let mut perf_ctl = File::create("/tmp/perf.ctl")?;
+
     const SIZE: usize = 21;
     const ITERS: usize = 100;
 
@@ -105,15 +108,33 @@ fn main() {
 
     // 2. Populate array with trait object references (Zero heap!)
     let zoo: [&dyn Animal; SIZE] = [
-        &d1, &c1, &m1, &c2, &d2, &m2, &d3, &m3, &c3, &m4, &c4, &d4, &m5, &d5, &c5, &m6, &d6, &c6,
-        &m7, &c7, &d7,
+        &d1 as &dyn Animal,
+        &c1 as &dyn Animal,
+        &m1 as &dyn Animal,
+        &c2 as &dyn Animal,
+        &d2 as &dyn Animal,
+        &m2 as &dyn Animal,
+        &d3 as &dyn Animal,
+        &m3 as &dyn Animal,
+        &c3 as &dyn Animal,
+        &m4 as &dyn Animal,
+        &c4 as &dyn Animal,
+        &d4 as &dyn Animal,
+        &m5 as &dyn Animal,
+        &d5 as &dyn Animal,
+        &c5 as &dyn Animal,
+        &m6 as &dyn Animal,
+        &d6 as &dyn Animal,
+        &c6 as &dyn Animal,
+        &m7 as &dyn Animal,
+        &c7 as &dyn Animal,
+        &d7 as &dyn Animal,   
     ];
-    let zoo = std::hint::black_box(zoo);
 
-    // using an unsafe block so that it's consistent with the cpp
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
-    }
+    std::hint::black_box(zoo);
+
+    writeln!(perf_ctl, "enable")?;
+    perf_ctl.flush()?;
     let start_time = Instant::now();
 
     let mut ind: usize = 0;
@@ -127,14 +148,19 @@ fn main() {
         }
     }
 
-    let duration = start_time.elapsed();
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
-    }
+    let end_time = Instant::now();
+    writeln!(perf_ctl, "disable")?;
+    perf_ctl.flush()?;
+
+    let duration = end_time.duration_since(start_time).as_nanos();
+
+    println!("Processed in: [{}] ns", duration);
 
     println!("\n---  VERIFYING OUTPUTS ---");
     for (i, res) in sound_outputs.iter().enumerate() {
         println!("Index {}: {:?}", i, res);
     }
-    println!("Processed in: {} ns", duration.as_nanos());
+
+    Ok(())
+
 }
