@@ -13,19 +13,27 @@ pub fn main(init: std.process.Init) !void {
 
     // --------------- setup writer -------------------
     const io = init.io;
+
+    // FILE WRITER
+    var file_buffer: [1024]u8 = undefined;
+    const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
+    var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
+    const file_writer = &stdout_file_writer.interface;
+
+    // IO WRITER
     var stdout_buffer: [1024]u8 = undefined;
-    var stdout_file_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
-    const stdout_writer = &stdout_file_writer.interface;
+    var stdout_io_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
+    const stdout_writer = &stdout_io_writer.interface;
     // ------------------------------------------------
 
     const test_cases: [utils.TEST_SIZE]f64 = try utils.readArrayFromFile(utils.TEST_SIZE, init.io, "lookup.txt");
-
 
     // --- BENCMARK ---
     // Calculate the actual values
     var sum: f64 = 0;
 
-    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
+    _ = try file_writer.print("enable\n", .{});
+    try file_writer.flush();
     const start_time = std.Io.Clock.now(.awake, io);
 
     // dynamic
@@ -35,12 +43,13 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const end_time = std.Io.Clock.now(.awake, io);
-    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
+    _ = try file_writer.print("disable\n", .{});
+    try file_writer.flush();
 
     const duration = start_time.durationTo(end_time);
 
     //---------------------- print and clean ------------------
-    _ = try stdout_writer.print("Processed in: [{}] ns. Sum: {}", .{duration.toNanoseconds(), sum});
+    _ = try stdout_writer.print("Processed in: [{}] ns. Sum: {}", .{ duration.toNanoseconds(), sum });
     try stdout_writer.flush();
     //---------------------------------------------------------
 

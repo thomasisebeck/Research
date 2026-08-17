@@ -59,7 +59,7 @@ pub fn main(init: std.process.Init) !void {
 
     // FILE WRITER
     var file_buffer: [1024]u8 = undefined;
-    const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "perf.ctl", .{ .mode = .write_only });
+    const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
     var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
     const file_writer = &stdout_file_writer.interface;
 
@@ -67,8 +67,6 @@ pub fn main(init: std.process.Init) !void {
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_io_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
     const stdout_writer = &stdout_io_writer.interface;
-    // _ = try stdout_writer.print("HELLO WORLD!", .{});
-    // try stdout_writer.flush();
     // ------------------------------------------------
 
     //      _ = try generateTestCases(init.io, "lookup.txt");
@@ -97,13 +95,10 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const end_time = std.Io.Clock.now(.awake, io);
-    //   _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
     _ = try file_writer.print("disable\n", .{});
     try file_writer.flush();
 
     const duration = start_time.durationTo(end_time);
-
-    _ = start_time.durationTo(end_time);
 
     //---------------------- print and clean ------------------
     _ = try stdout_writer.print("Processed in: [{}] ns. Sum: {}", .{ duration.toNanoseconds(), sum });

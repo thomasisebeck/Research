@@ -55,8 +55,13 @@ for FILENAME in "${FILES[@]}"; do
       fi
 
       # create the perf files
-      [ -e perf.ctl ] || mkfifo perf.ctl
-      [ -e perf.ack ] || mkfifo perf.ack
+      
+      sudo rm -rf /tmp/perf.ctl
+      sudo rm -rf /tmp/perf.ack
+
+      sudo touch /tmp/perf.ctl
+      sudo touch /tmp/perf.ack
+
 
       # PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
       # Ice Lake supported PMU event string
@@ -66,13 +71,13 @@ for FILENAME in "${FILES[@]}"; do
       PERF_RAW_FILE=$(mktemp)
 
       # control with the file 
-      OUT_DATA=$(perf stat -x, --delay=-1 --control=fifo:perf.ctl,perf.ack -e "$PERF_EVENTS" ./zig-out/bin/out 2> "$PERF_RAW_FILE")
-
-      # OUT_DATA=$(perf stat -x, --delay=-1 -e "$PERF_EVENTS" ./zig-out/bin/out 2> "$PERF_RAW_FILE")
-
+      # Capture stdout into RUNTIME_NS while keeping stderr routed through grep
+      OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
+      -e "cycles,instructions,cache-references,cache-misses" \
+      ./zig-out/bin/out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 
       # Extract runtime_ns cleanly from $OUT_DATA
-      RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')
+     RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')
 
       # Parse perf values safely
       PERF_METRICS=$(awk -F',' '{
