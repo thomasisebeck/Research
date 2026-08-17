@@ -15,7 +15,7 @@ FILES=("lut_comptime.rs", "lut_runtime.rs")
 INCREMENTS=("0.5" "0.005")
 ITERATIONS=2
 CSV_FILE="results.csv"
-PERF_EVENTS="instructions,cycles"
+PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 
 # Ensure output directory exists for the CSV file
 mkdir -p "$(dirname "$CSV_FILE")"

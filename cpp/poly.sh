@@ -15,7 +15,6 @@ if [ ! -f "$CSV_FILE" ]; then
   echo "label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns" > "$CSV_FILE"
 fi
 
-
 for FILENAME in "${FILES[@]}"; do
   LABEL="${FILENAME%.*}"
 

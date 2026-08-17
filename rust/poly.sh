@@ -14,7 +14,7 @@ FILES=("poly_dyn.rs" "poly_stat.rs")
 ITERATIONS=${1:-2}  # Defaults to 2 runs per file if not passed as script arg
 CSV_FILE="results.csv"
 SETTING_NAME="N/A"
-PERF_EVENTS="instructions,cycles"
+PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 
 # Ensure output directory exists for the CSV file
 mkdir -p "$(dirname "$CSV_FILE")"

@@ -14,9 +14,7 @@ pub fn build(b: *std.Build) void {
         },
     });
     // NOTE: turn on optimisation
-    const optimize = b.standardOptimizeOption(.{
-        .preferred_optimize_mode = .ReleaseFast,
-    });
+    const optimize = b.standardOptimizeOption(.{});
 
     const increment = b.option(f64, "increment", "LUT increment value") orelse 0.01;
     const target_src = b.option([]const u8, "target_src", "Source file to build") orelse "src/lut_runtime.zig";

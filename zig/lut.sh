@@ -40,13 +40,13 @@ for FILENAME in "${FILES[@]}"; do
 
       # BUILD TIMES (Cold & Hot)
       COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0,1 \
-        zig build -Dtarget_src="src/${FILENAME}" \
+        zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
         -Dincrement="${INC}" > /dev/null; } 2>&1 )
 
       touch "src/${FILENAME}"
 
       HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0,1 \
-        zig build -Dtarget_src="src/${FILENAME}" \
+        zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
         -Dincrement="${INC}" > /dev/null; } 2>&1 )
 
       if [ ! -f "./zig-out/bin/out" ]; then

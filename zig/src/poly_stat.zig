@@ -36,9 +36,9 @@ const Mouse = struct {
 };
 
 const Animal = union(enum) {
-    cat: *Cat,
-    dog: *Dog,
-    mouse: *Mouse,
+    cat: *const Cat,
+    dog: *const Dog,
+    mouse: *const Mouse,
 
     // This method handles the direct, high-performance static branch lookup
     pub fn sound(self: Animal) SoundEnum {
@@ -55,7 +55,20 @@ pub fn makeSoundHelper(comptime myAnimal: anytype) SoundEnum {
 }
 
 pub fn main(init: std.process.Init) !void {
+    // --------------- setup writer -------------------
     const io = init.io;
+
+    // FILE WRITER
+    var file_buffer: [1024]u8 = undefined;
+    const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
+    var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
+    const file_writer = &stdout_file_writer.interface;
+
+    // IO WRITER
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_io_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
+    const stdout_writer = &stdout_io_writer.interface;
+    // ------------------------------------------------
 
     const SIZE = 21;
     const ITERS = 100;
@@ -99,7 +112,8 @@ pub fn main(init: std.process.Init) !void {
 
     var ind: usize = 0;
 
-    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
+    _ = try file_writer.print("enable\n", .{});
+    try file_writer.flush();
     var start_time = std.Io.Clock.now(.awake, io);
 
     for (0..ITERS) |_| {
@@ -110,23 +124,30 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const end_time = std.Io.Clock.now(.awake, io);
-    _ = std.os.linux.prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
-
-    std.mem.doNotOptimizeAway(&sound_outputs);
+    _ = try file_writer.print("disable\n", .{});
+    try file_writer.flush();
 
     const duration = start_time.durationTo(end_time);
 
+    //---------------------- print and clean ------------------
+    _ = try stdout_writer.print("Processed in: [{}] ns.", .{duration.toNanoseconds()});
+    try stdout_writer.flush();
+    //---------------------------------------------------------
 
     _ = try stdout_writer.print("\n---  VERIFYING OUTPUTS ---\n", .{});
     for (sound_outputs, 0..) |res, i| {
         _ = try stdout_writer.print("Index {}: {s}\n", .{ i, @tagName(res) });
     }
+    try stdout_writer.flush();
 
     // must mutate
-    zoo[0] = asDog(&d1);
+    zoo[0] = .{ .dog = &d1 };
 
+    // TODO: remove
     //---------------------- print and clean ------------------
-    _ = try stdout_writer.print("Processed in: {} ns\n", .{duration.toNanoseconds()});
+    _ = try stdout_writer.print("Processed in: [{}] ns.", .{duration.toNanoseconds()});
     try stdout_writer.flush();
     //---------------------------------------------------------
+
+    std.mem.doNotOptimizeAway(&sound_outputs);
 }
