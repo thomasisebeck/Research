@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 echo "REMEMBER TO RUN WITH SUDO!"
 
 set -e # Exit immediately if an unhandled command fails
@@ -8,11 +7,11 @@ set -e # Exit immediately if an unhandled command fails
 # 1. Resolve User & Paths
 TARGET_USER="${SUDO_USER:-$USER}"
 REAL_HOME=$(eval echo "~${TARGET_USER}")
-CARGO_BIN="${REAL_HOME}/.cargo/bin/cargo"
+CARGO_BIN="/usr/bin/cargo"
 
 # 2. Benchmark Configuration
-FILES=("lut_comptime.rs", "lut_runtime.rs")
-INCREMENTS=("0.015625" "0.03125" "0.0625" "0.125" "0.25" "0.5" "1.0" "2.0" "4.0")
+FILES=("lut_comptime.rs" "lut_runtime.rs")
+INCREMENTS=("0.5" "1.0" "2.0")
 ITERATIONS=${1:-10}
 CSV_FILE="results.csv"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
@@ -24,7 +23,6 @@ mkdir -p "$(dirname "$CSV_FILE")"
 if [ -d "${REAL_HOME}/git-repos/Research/rust/target" ]; then
     sudo chown -R "${TARGET_USER}:${TARGET_USER}" "${REAL_HOME}/git-repos/Research/rust/target"
 fi
-
 
 # 3. Add CSV header if it doesn't exist
 if [ ! -f "$CSV_FILE" ]; then
@@ -54,21 +52,32 @@ for FILENAME in "${FILES[@]}"; do
       # Explicitly set EXECUTABLE path for the current binary
       EXECUTABLE="./target/release/${BIN_NAME}"
 
-      sudo -u "${TARGET_USER}" "${CARGO_BIN}" +stable clean > /dev/null 2>&1
+      # Clean build artifacts safely for Cold Build
+      echo "[+] Cleaning target directory..."
+      if [ -d "target" ]; then
+        sudo -u "${TARGET_USER}" sh -c "\"${CARGO_BIN}\" clean" > /dev/null 2>&1
+      fi
 
-      CMD="sudo -u \"${TARGET_USER}\" sh -c 'env INCREMENT_VAL=\"${INC}\" RUSTFLAGS=\"-A warnings\" /usr/bin/time -f \"%e,%U,%S\" taskset -c 0,1 \"${CARGO_BIN}\" +stable build -q --release --bin \"${BIN_NAME}\"'"
+      # COLD BUILD
+      CMD="sudo -u \"${TARGET_USER}\" sh -c 'env INCREMENT_VAL=\"${INC}\" RUSTFLAGS=\"-A warnings\" /usr/bin/time -f \"%e,%U,%S\" taskset -c 0,1 \"${CARGO_BIN}\" build -q --release --bin \"${BIN_NAME}\"'"
       COLD_TIME=$(eval "$CMD" 2>&1)
+      echo "[+] COLD_TIME:       $COLD_TIME"
 
-      sudo touch "src/${FILENAME}"
+      # Touch source file to trigger HOT BUILD
+      if [ -f "src/${FILENAME}" ]; then
+        sudo touch "src/${FILENAME}"
+      else
+        echo "[!] Warning: src/${FILENAME} does not exist!"
+      fi
 
       # HOT BUILD STEP
-      HOT_TIME=$(sudo -u "${TARGET_USER}" sh -c 'env INCREMENT_VAL="'"${INC}"'" RUSTFLAGS="-A warnings" /usr/bin/time -f "%e,%U,%S" taskset -c 0,1 "'"${CARGO_BIN}"'" +stable build -q --release --bin "'"${BIN_NAME}"'"' 2>&1)
+      HOT_TIME=$(eval "$CMD" 2>&1)
+      echo "[+] HOT_TIME:        $HOT_TIME"
 
       if [ ! -f "$EXECUTABLE" ]; then
         echo "Error: Executable $EXECUTABLE not found!"
         exit 1
       fi
-
 
       # Create perf control FIFOs
       sudo rm -f /tmp/perf.ctl /tmp/perf.ack
@@ -78,13 +87,14 @@ for FILENAME in "${FILES[@]}"; do
       # Execute benchmark under perf stat
       PERF_RAW_FILE=$(mktemp)
 
-      OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
-      taskset -c 0,1 \
+      # Note: taskset is placed before perf stat to prevent -e argument parsing errors
+      OUT_DATA=$(sudo taskset -c 0,1 perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
         -e "$PERF_EVENTS" \
         "$EXECUTABLE" 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 
-      # Extract runtime_ns cleanly from $OUT_DATA
+      # Extract runtime_ns from binary output (falls back to 0 if not printed)
       RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')
+      RUN_NS="${RUN_NS:-0}"
 
       # Parse perf values safely
       PERF_METRICS=$(awk -F',' '{
@@ -96,10 +106,12 @@ for FILENAME in "${FILES[@]}"; do
       rm -f "$PERF_RAW_FILE"
 
       # Log single flattened row to CSV
-      echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME},${RUN_NS},${PERF_METRICS}" >> "${CSV_FILE}"
+      FINAL_ROW="${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME},${RUN_NS},${PERF_METRICS}"
+      echo "[+] CSV Row:         $FINAL_ROW"
+      echo "--------------------------------------------------"
+
+      echo "$FINAL_ROW" >> "${CSV_FILE}"
 
     done
   done
 done
-
-echo "Rust LUT Benchmark complete! Data saved to ${CSV_FILE}"

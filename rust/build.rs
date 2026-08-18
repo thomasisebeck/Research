@@ -17,7 +17,7 @@ fn main() {
         format!("{:.1}", val)
     };
 
-    let code = format!("pub const INCREMENT: f64 = {};\n", float_str);
+    let code = format!("pub const INCREMENT: f64 = {:?};\n", val);
 
     // 4. Resolve Cargo's OUT_DIR and write generated config
     let out_dir = env::var("OUT_DIR").expect("OUT_DIR environment variable not set");
