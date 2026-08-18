@@ -3,6 +3,7 @@ const utils = @import("utils.zig");
 
 const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
 const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
+const linux = std.os.linux;
 
 // TODO: this is the experimental change
 // 1 increment -> must still test
@@ -57,20 +58,24 @@ pub fn main(init: std.process.Init) !void {
     // --------------- setup writer -------------------
     const io = init.io;
 
-    // FILE WRITER
+    // Control FIFO (Write "enable\n" / "disable\n")
     var file_buffer: [1024]u8 = undefined;
     const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
     defer file.close(io);
     var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
-    const file_writer = &stdout_file_writer.interface;
+    const file_writer: *std.Io.Writer = &stdout_file_writer.interface;
 
+    // Ack FIFO (Read "ack\n" back from perf)
+    var ack_buffer: [1024]u8 = undefined;
     const ack_file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ack", .{ .mode = .read_only });
     defer ack_file.close(io);
+    var ack_file_reader: std.Io.File.Reader = .init(ack_file, io, &ack_buffer);
+    const ack_reader: *std.Io.Reader = &ack_file_reader.interface;
 
-    // IO WRITER
+    // Stdout Writer
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_io_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
-    const stdout_writer = &stdout_io_writer.interface;
+    const stdout_writer: *std.Io.Writer = &stdout_io_writer.interface;
     // ------------------------------------------------
 
     // _ = try generateTestCases(init.io, "lookup.txt");
@@ -86,11 +91,15 @@ pub fn main(init: std.process.Init) !void {
 
     var sum: f64 = 0;
 
-    _ = try file_writer.print("enable\n", .{});
+    // ---------------- PERF HANDSHAKE START ----------------
+    // 1. Command perf stat to enable counters
+    try file_writer.writeAll("enable\n");
     try file_writer.flush();
 
-    var ack_buf: [16]u8 = undefined;
-    _ = try ack_file.read(io, &ack_buf);
+    // 2. Block until perf replies with "ack\n"
+    const raw_ack = try ack_reader.takeDelimiter('\n') orelse unreachable;
+    _ = std.mem.trim(u8, raw_ack, "\r");
+    // ------------------------------------------------------
 
     var start_time = std.Io.Clock.now(.awake, io);
 
@@ -103,8 +112,12 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const end_time = std.Io.Clock.now(.awake, io);
+
+    // ---------------- PERF HANDSHAKE END ------------------
+    // 3. Command perf stat to disable counters
     _ = try file_writer.print("disable\n", .{});
     try file_writer.flush();
+    // ------------------------------------------------------
 
     const duration = start_time.durationTo(end_time);
 
