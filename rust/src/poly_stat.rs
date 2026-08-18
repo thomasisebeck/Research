@@ -79,14 +79,14 @@ impl Soundable for Mouse {
 }
 
 #[derive(Clone, Copy)]
-enum Animal {
-    Dog(Dog),
-    Cat(Cat),
-    Mouse(Mouse),
+enum Animal<'a> {
+    Dog(&'a Dog),
+    Cat(&'a Cat),
+    Mouse(&'a Mouse),
 }
 
 // Implement Soundable for the Animal enum wrapper
-impl Soundable for Animal {
+impl<'a> Soundable for Animal<'a> {
     #[inline(always)]
     fn sound(&self) -> SoundEnum {
         match self {
@@ -98,16 +98,20 @@ impl Soundable for Animal {
 }
 
 // Generic batch processor constrained by Soundable
-fn process_batch<T: Soundable>(animals: &[T], outputs: &mut [SoundEnum]) {
-    for (i, animal) in animals.iter().enumerate() {
-        outputs[i] = animal.sound(); // Direct monomorphized or static match call
+fn process_batch<T: Soundable>(animals: &[T], outputs: &mut [SoundEnum], iters: usize) {
+    let mut ind = 0;
+    for _ in 0..iters {
+        for animal in animals.iter() {
+            outputs[ind] = animal.sound();
+            ind += 1;
+        }
     }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>>  {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut perf_ctl = File::create("/tmp/perf.ctl")?;
 
-   const SIZE: usize = 21;
+    const SIZE: usize = 21;
     const ITERS: usize = 100;
 
     let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
@@ -140,37 +144,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>>  {
         Mouse::new(),
     );
 
-    let zoo: [Animal; SIZE] = [
-     Animal::Dog(d1),
-     Animal::Cat(c1),
-     Animal::Mouse(m1),
-     Animal::Cat(c2),
-     Animal::Dog(d2),
-     Animal::Mouse(m2),
-     Animal::Dog(d3),
-     Animal::Mouse(m3),
-     Animal::Cat(c3),
-     Animal::Mouse(m4),
-     Animal::Cat(c4),
-     Animal::Dog(d4),
-     Animal::Mouse(m5),
-     Animal::Dog(d5),
-     Animal::Cat(c5),
-     Animal::Mouse(m6),
-     Animal::Dog(d6),
-     Animal::Cat(c6),
-     Animal::Mouse(m7),
-     Animal::Cat(c7),
-     Animal::Dog(d7)
+    let mut zoo: [Animal; SIZE] = [
+        Animal::Dog(&d1),
+        Animal::Cat(&c1),
+        Animal::Mouse(&m1),
+        Animal::Cat(&c2),
+        Animal::Dog(&d2),
+        Animal::Mouse(&m2),
+        Animal::Dog(&d3),
+        Animal::Mouse(&m3),
+        Animal::Cat(&c3),
+        Animal::Mouse(&m4),
+        Animal::Cat(&c4),
+        Animal::Dog(&d4),
+        Animal::Mouse(&m5),
+        Animal::Dog(&d5),
+        Animal::Cat(&c5),
+        Animal::Mouse(&m6),
+        Animal::Dog(&d6),
+        Animal::Cat(&c6),
+        Animal::Mouse(&m7),
+        Animal::Cat(&c7),
+        Animal::Dog(&d7),
     ];
-
-    std::hint::black_box(zoo);
 
     writeln!(perf_ctl, "enable")?;
     perf_ctl.flush()?;
     let start_time = Instant::now();
 
-    process_batch(&zoo, &mut sound_outputs);
+    zoo = std::hint::black_box(zoo);
+
+    process_batch(&zoo, &mut sound_outputs, ITERS);
 
     let end_time = Instant::now();
     writeln!(perf_ctl, "disable")?;
@@ -184,6 +188,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>>  {
     for (i, res) in sound_outputs.iter().enumerate() {
         println!("Index {}: {:?}", i, res);
     }
+
+    std::hint::black_box(sound_outputs);
 
     Ok(())
 }

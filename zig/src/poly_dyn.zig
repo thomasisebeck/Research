@@ -127,8 +127,6 @@ pub fn main(init: std.process.Init) !void {
         asMouse(&m7), asCat(&c7),   asDog(&d7),
     };
 
-    std.mem.doNotOptimizeAway(&zoo);
-
     var ind: usize = 0;
 
     _ = try file_writer.print("enable\n", .{});
@@ -168,5 +166,6 @@ pub fn main(init: std.process.Init) !void {
     try stdout_writer.flush();
     //---------------------------------------------------------
 
+    std.mem.doNotOptimizeAway(&zoo);
     std.mem.doNotOptimizeAway(&sound_outputs);
 }

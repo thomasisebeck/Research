@@ -1,6 +1,6 @@
-use std::time::Instant;
 use std::fs::File;
 use std::io::Write;
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -70,8 +70,8 @@ impl Animal for Mouse {
     }
 }
 
-fn main()-> Result<(), Box<dyn std::error::Error>> {
-     let mut perf_ctl = File::create("/tmp/perf.ctl")?;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut perf_ctl = File::create("/tmp/perf.ctl")?;
 
     const SIZE: usize = 21;
     const ITERS: usize = 100;
@@ -107,7 +107,7 @@ fn main()-> Result<(), Box<dyn std::error::Error>> {
     );
 
     // 2. Populate array with trait object references (Zero heap!)
-    let zoo: [&dyn Animal; SIZE] = [
+    let mut zoo: [&dyn Animal; SIZE] = [
         &d1 as &dyn Animal,
         &c1 as &dyn Animal,
         &m1 as &dyn Animal,
@@ -128,16 +128,16 @@ fn main()-> Result<(), Box<dyn std::error::Error>> {
         &c6 as &dyn Animal,
         &m7 as &dyn Animal,
         &c7 as &dyn Animal,
-        &d7 as &dyn Animal,   
+        &d7 as &dyn Animal,
     ];
-
-    std::hint::black_box(zoo);
 
     writeln!(perf_ctl, "enable")?;
     perf_ctl.flush()?;
     let start_time = Instant::now();
 
     let mut ind: usize = 0;
+
+    zoo = std::hint::black_box(zoo);
 
     //16700
     for _ in 0..ITERS {
@@ -161,6 +161,7 @@ fn main()-> Result<(), Box<dyn std::error::Error>> {
         println!("Index {}: {:?}", i, res);
     }
 
-    Ok(())
+    std::hint::black_box(sound_outputs);
 
+    Ok(())
 }

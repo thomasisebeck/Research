@@ -108,8 +108,6 @@ pub fn main(init: std.process.Init) !void {
         .{ .mouse = &m7 }, .{ .cat = &c7 },   .{ .dog = &d7 },
     };
 
-    std.mem.doNotOptimizeAway(&zoo);
-
     var ind: usize = 0;
 
     _ = try file_writer.print("enable\n", .{});
@@ -149,5 +147,6 @@ pub fn main(init: std.process.Init) !void {
     try stdout_writer.flush();
     //---------------------------------------------------------
 
+    std.mem.doNotOptimizeAway(&zoo);
     std.mem.doNotOptimizeAway(&sound_outputs);
 }

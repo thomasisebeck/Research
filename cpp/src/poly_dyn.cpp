@@ -59,8 +59,6 @@ int main() {
                                              &c3, &m3, &d4, &c4, &m4, &d5, &c5,
                                              &m5, &d6, &c6, &m6, &d7, &c7, &m7};
 
-  benchmark::DoNotOptimize(zoo);
-
   std::size_t ind = 0;
 
   // start perf, then the clock
@@ -76,8 +74,6 @@ int main() {
   auto end_time = std::chrono::steady_clock::now();
   prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-  benchmark::DoNotOptimize(sound_outputs);
-
   std::print("\n---  VERIFYING OUTPUTS ---\n");
   for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
     std::print("Index {}, sound: {}\n", ind, static_cast<int>(sound));
@@ -85,4 +81,7 @@ int main() {
 
   const auto duration = (end_time - start_time).count();
   std::print("Processed in: [{}] ns\n", duration);
+
+  benchmark::DoNotOptimize(sound_outputs);
+  benchmark::DoNotOptimize(zoo);
 }
