@@ -5,15 +5,15 @@ echo "REMEMBER TO RUN WITH SUDO!"
 
 # 1. Define LUT files to benchmark
 FILES=(
-  # "lut_runtime.zig"
-  "lut_comptime.zig"
+  "lut_runtime.zig"
+  # "lut_comptime.zig"
 )
 
 ITERATIONS=${1:-5}
 CSV_FILE="results.csv"
 
 # 2. Target increment values, NB: change with zig if you change this!
-INCREMENTS=("4.0")
+INCREMENTS=("0.5")
 # "0.5"
 
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
