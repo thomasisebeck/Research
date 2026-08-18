@@ -45,6 +45,9 @@ for FILENAME in "${FILES[@]}"; do
         -Dincrement="${INC}" > /dev/null; } 2>&1 )
 
       touch "src/${FILENAME}"
+/usr/bin/time -f "%e,%U,%S" taskset -c 0,1 \
+        zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast
+      echo "done building.."
 
       HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0,1 \
         zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
