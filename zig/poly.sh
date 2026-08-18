@@ -15,7 +15,7 @@ FILES=(
   "poly_dyn.zig"
 )
 
-ITERATIONS=${1:-2}  # Defaults to 2 runs per file if not passed as script arg
+ITERATIONS=${1:-10}
 CSV_FILE="results.csv"
 SETTING_NAME="N/A"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
@@ -76,6 +76,7 @@ for FILENAME in "${FILES[@]}"; do
     PERF_RAW_FILE=$(mktemp)
 
     OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
+      taskset -c 0,1 \
       -e "$PERF_EVENTS" \
       ./zig-out/bin/out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 

@@ -1,9 +1,31 @@
 label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns,cycles,instructions,cache-misses,cache-references,branches,branch-misses
-poly_stat,N/A,1,0.91,0.74,0.31,0.26,0.08,0.10,20600
-20600,189003,203935,178,6981,34995,369
-poly_stat,N/A,2,0.89,0.78,0.27,0.26,0.08,0.11,20600
-20600,174535,186923,168,5781,33792,349
-poly_dyn,N/A,1,0.88,0.76,0.27,0.27,0.07,0.11,30800
-30800,173074,187267,121,5448,31979,323
-poly_dyn,N/A,2,0.88,0.75,0.29,0.27,0.08,0.10,31000
-31000,176384,183247,171,5451,32003,319
+lut_runtime,INC_0.5,1,28.30,26.94,0.72,0.05,0.03,0.02,1131010,2875439,5921731,655,2572,638048,35327
+lut_runtime,INC_0.5,2,27.95,26.87,0.72,0.05,0.03,0.01,1136221,3038289,6212232,711,3176,669300,37136
+lut_runtime,INC_0.5,3,28.03,26.96,0.70,0.05,0.03,0.02,1130907,2880668,5936194,719,4191,640748,35415
+lut_runtime,INC_0.5,4,27.99,26.89,0.73,0.05,0.03,0.01,1130578,3103542,6408788,784,3081,690374,38204
+lut_runtime,INC_0.5,5,27.64,26.60,0.68,0.05,0.02,0.02,1132590,2895786,5961856,1016,3688,643133,35555
+lut_comptime,INC_0.5,1,27.48,26.42,0.70,0.05,0.03,0.01,106408,231.08691861789413,227746,189071,1035,2657,8681,240
+lut_comptime,INC_0.5,2,27.26,26.37,0.70,0.05,0.03,0.01,100641,231.08691861789413,150258,129668,663,1942,6440,188
+lut_comptime,INC_0.5,4,27.44,26.45,0.70,0.05,0.03,0.01,100914,231.08691861789413,150200,127631,663,1787,6411,197
+lut_comptime,INC_0.5,5,27.47,26.49,0.66,0.05,0.03,0.01,106645,231.08691861789413,247180,219052,815,3078,10047,195
+lut_comptime,INC_1.0,1,27.85,26.59,0.72,0.05,0.03,0.01,99452,207400,115031,705,2246,8198,144
+lut_comptime,INC_1.0,5,27.20,26.37,0.65,0.05,0.03,0.02,98719,211162,117018,564,2117,8735,147
+lut_comptime,INC_2.0,4,27.44,26.37,0.73,0.05,0.03,0.01,99620,213730,163523,543,2324,8704,152
+lut_comptime,INC_4.0,2,27.67,26.59,0.70,0.05,0.03,0.02,178067,303142,159038,492,2287,7855,106
+lut_comptime,INC_4.0,3,27.58,26.48,0.70,0.05,0.03,0.01,102842,235178,174047,821,2438,8621,142
+lut_comptime,INC_4.0,5,27.59,26.51,0.68,0.05,0.03,0.01,99201,175915,131381,398,1912,7695,178
+lut_comptime,INC_1.0,1,27.61,26.52,0.73,0.05,0.02,0.02,71879,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_1.0,2,27.28,26.43,0.64,0.05,0.03,0.01,74765,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_1.0,3,27.63,26.52,0.71,0.05,0.03,0.01,72068,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_1.0,4,27.23,26.32,0.69,0.05,0.02,0.02,71667,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_1.0,5,27.47,26.46,0.68,0.05,0.02,0.02,71720,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_2.0,1,27.61,26.50,0.72,0.05,0.03,0.01,72052,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_2.0,2,27.48,26.43,0.69,0.05,0.03,0.02,72725,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_2.0,3,27.60,26.47,0.72,0.05,0.03,0.02,71826,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_2.0,4,27.54,26.49,0.68,0.05,0.03,0.01,72392,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_2.0,5,27.47,26.43,0.68,0.05,0.03,0.01,72837,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_4.0,1,27.63,26.51,0.76,0.05,0.03,0.02,88715,29778,9144,255,561,895,40
+lut_comptime,INC_4.0,2,27.22,26.36,0.64,0.05,0.03,0.01,72641,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_4.0,3,27.31,26.40,0.70,0.05,0.03,0.02,72158,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_4.0,4,27.56,26.51,0.68,0.05,0.03,0.01,72685,2079,<not counted>,<not counted>,<not counted>,<not counted>,<not counted>
+lut_comptime,INC_4.0,5,27.49,26.42,0.71,0.05,0.03,0.01,97674,149218,105372,518,1793,6235,169

@@ -12,8 +12,8 @@ CARGO_BIN="${REAL_HOME}/.cargo/bin/cargo"
 
 # 2. Benchmark Configuration
 FILES=("lut_comptime.rs", "lut_runtime.rs")
-INCREMENTS=("0.5" "0.005")
-ITERATIONS=2
+INCREMENTS=("0.015625" "0.03125" "0.0625" "0.125" "0.25" "0.5" "1.0" "2.0" "4.0")
+ITERATIONS=${1:-10}
 CSV_FILE="results.csv"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 
@@ -79,6 +79,7 @@ for FILENAME in "${FILES[@]}"; do
       PERF_RAW_FILE=$(mktemp)
 
       OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
+      taskset -c 0,1 \
         -e "$PERF_EVENTS" \
         "$EXECUTABLE" 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 

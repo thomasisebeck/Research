@@ -7,7 +7,7 @@ FILES=(
   "lut_comptime.cpp"
 )
 
-ITERATIONS=${1:-2}
+ITERATIONS=${1:-10}
 CSV_FILE="results.csv"
 
 # NB: must regenerate with the zig when you change this
@@ -56,6 +56,7 @@ for FILENAME in "${FILES[@]}"; do
       # Execute benchmark under perf stat (stderr captured for counters)
       PERF_RAW_FILE=$(mktemp)
       OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
+      taskset -c 0,1 \
       -e "$PERF_EVENTS" \
       ./out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 

@@ -69,7 +69,7 @@ pub fn main(init: std.process.Init) !void {
     const stdout_writer = &stdout_io_writer.interface;
     // ------------------------------------------------
 
-    //      _ = try generateTestCases(init.io, "lookup.txt");
+    // _ = try generateTestCases(init.io, "lookup.txt");
     const test_cases: [utils.TEST_SIZE]f64 = try utils.readArrayFromFile(utils.TEST_SIZE, init.io, "lookup.txt");
 
     // needs to be var for the volatile cast

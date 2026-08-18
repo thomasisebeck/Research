@@ -5,15 +5,16 @@ echo "REMEMBER TO RUN WITH SUDO!"
 
 # 1. Define LUT files to benchmark
 FILES=(
-  "lut_runtime.zig"
+  # "lut_runtime.zig"
   "lut_comptime.zig"
 )
 
-ITERATIONS=${1:-10}
+ITERATIONS=${1:-5}
 CSV_FILE="results.csv"
 
 # 2. Target increment values, NB: change with zig if you change this!
-INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
+INCREMENTS=("1.0" "2.0" "4.0")
+# "0.5"
 
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 
@@ -58,6 +59,8 @@ for FILENAME in "${FILES[@]}"; do
       sudo rm -rf /tmp/perf.ctl /tmp/perf.ack
       sudo mkfifo /tmp/perf.ctl /tmp/perf.ack
 
+      sleep 2
+
       # Execute benchmark under perf stat (stderr redirected to temp file, stdout saved to OUT_DATA)
       PERF_RAW_FILE=$(mktemp)
 
@@ -65,6 +68,7 @@ for FILENAME in "${FILES[@]}"; do
       # Capture stdout into RUNTIME_NS while keeping stderr routed through grep
       OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
       -e "$PERF_EVENTS" \
+      taskset -c 0,1 \
       ./zig-out/bin/out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 
       # Extract runtime_ns cleanly from $OUT_DATA
