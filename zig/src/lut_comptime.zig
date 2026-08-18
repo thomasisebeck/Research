@@ -60,8 +60,12 @@ pub fn main(init: std.process.Init) !void {
     // FILE WRITER
     var file_buffer: [1024]u8 = undefined;
     const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
+    defer file.close(io);
     var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
     const file_writer = &stdout_file_writer.interface;
+
+    const ack_file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ack", .{ .mode = .read_only });
+    defer ack_file.close(io);
 
     // IO WRITER
     var stdout_buffer: [1024]u8 = undefined;
@@ -84,6 +88,10 @@ pub fn main(init: std.process.Init) !void {
 
     _ = try file_writer.print("enable\n", .{});
     try file_writer.flush();
+
+    var ack_buf: [16]u8 = undefined;
+    _ = try ack_file.read(io, &ack_buf);
+
     var start_time = std.Io.Clock.now(.awake, io);
 
     // test cases is i64 arr

@@ -13,7 +13,7 @@ ITERATIONS=${1:-5}
 CSV_FILE="results.csv"
 
 # 2. Target increment values, NB: change with zig if you change this!
-INCREMENTS=("1.0" "2.0" "4.0")
+INCREMENTS=("4.0")
 # "0.5"
 
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
