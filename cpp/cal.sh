@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-ITERATIONS=${1:-2}  
-ITERATIONS_BUILD=${1:-2}  
+ITERATIONS=${1:-10}  
+ITERATIONS_BUILD=${1:-10}  
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
 LABEL="calibration"
