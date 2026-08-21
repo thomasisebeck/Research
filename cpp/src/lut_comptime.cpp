@@ -20,10 +20,8 @@ constexpr std::array<double, utils::STEPS> generate_lut() {
 
 int main() {
 
-  // ----- setup writer ---------
-  // Open the perf control FIFO stream
   std::ofstream perf_ctl("/tmp/perf.ctl");
-  // ------------------------------
+  std::ifstream perf_ack("/tmp/perf.ack");
 
   const auto test_cases =
       utils::read_array_from_file<utils::TEST_SIZE>("lookup.txt");
@@ -49,8 +47,7 @@ int main() {
 
   double sum = 0.0;
 
-
-  perf_ctl << "disable\n" << std::flush;
+  utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
   auto start_time = std::chrono::steady_clock::now();
 
   for (const auto &num : test_cases) {
@@ -60,15 +57,13 @@ int main() {
   }
 
   auto end_time = std::chrono::steady_clock::now();
-  perf_ctl << "disable\n" << std::flush;
+  utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
 
-  const auto duration =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time)
-          .count();
+  const auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                            end_time - start_time)
+                            .count();
 
   std::print("Processed in: [{}] ns. Sum: {}\n", duration, sum);
-
-  std::print("Sum: {}\n", sum);
 
   benchmark::DoNotOptimize(sum);
 

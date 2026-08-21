@@ -1,8 +1,8 @@
-
 #include <array>
 #include <fstream>
 #include <iostream>
 #include <print>
+#include <random>
 
 #ifndef INCREMENT_VAL
 #define INCREMENT_VAL 0.00001
@@ -91,7 +91,7 @@ void read_image_from_file(std::string_view path, Colour (&mat)[SIZE][SIZE]) {
 }
 
 template <int Size>
-std::array<int, Size> read_array_from_file(std::string_view path) {
+std::array<int, Size> read_array_from_file(std::string path) {
 
   std::ifstream file(path.data(), std::ios::in);
   if (!file.is_open()) {
@@ -106,6 +106,29 @@ std::array<int, Size> read_array_from_file(std::string_view path) {
   }
 
   return my_arr;
+}
+
+void send_perf_cmd(std::ofstream &ctl, std::ifstream &ack,
+                   const std::string &cmd) {
+  ctl << cmd << "\n" << std::flush;
+  std::string response;
+  std::getline(ack, response);
+}
+
+template <int Size> void write_array_to_file(std::string path) {
+
+  std::ofstream file(path.data(), std::ios::trunc);
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> distrib(0, 100);
+
+  if (!file.is_open()) {
+    throw "Cannot open file";
+  }
+
+  for (int i = 0; i < Size; i++) {
+    file << distrib(gen) << std::endl;
+  }
 }
 
 template <int Size> void print_array(const std::array<int, Size> &arr) {

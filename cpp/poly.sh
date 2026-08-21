@@ -29,7 +29,7 @@ for FILENAME in "${FILES[@]}"; do
       mkdir -p build && cd build || exit 1
 
       # Configure CMake with injected increment parameter
-      cmake .. -DOptimise=ON \
+      CCACHE_DISABLE=1 cmake .. -DOptimise=ON \
                -DTARGET_SRC="${FILENAME}" \
                -DINCREMENT_VAL="${INC}" > /dev/null 2>&1
 

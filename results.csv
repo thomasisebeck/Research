@@ -1,5 +1,0 @@
-label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns,cycles,instructions,cache-misses,cache-references,branches,branch-misses
-poly_stat,N/A,1,0.26,0.09,0.09,0.26,0.08,0.10,149900,223858,194570,658,7505,36414,398
-poly_stat,N/A,2,0.26,0.08,0.10,0.27,0.08,0.10,110500,172489,161941,691,8402,28333,373
-poly_dyn,N/A,1,0.31,0.08,0.12,0.27,0.08,0.11,32100,170600,181361,105,5509,33396,331
-poly_dyn,N/A,2,0.26,0.08,0.11,0.26,0.07,0.12,32000,169565,180061,86,5644,33460,316

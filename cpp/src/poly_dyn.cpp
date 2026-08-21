@@ -1,11 +1,13 @@
+#include "utils.cpp"
 #include <array>
 #include <benchmark/benchmark.h>
 #include <chrono>
 #include <cstddef>
+#include <fstream>
 #include <linux/prctl.h>
 #include <print>
-#include <ranges>
 #include <sys/prctl.h>
+
 enum class SoundEnum { Woof, Meow, Squeek };
 
 struct AnimalInterface {
@@ -47,6 +49,9 @@ int main() {
   const std::size_t SIZE = 21;
   const std::size_t ITERS = 100;
 
+  std::ofstream perf_ctl("/tmp/perf.ctl");
+  std::ifstream perf_ack("/tmp/perf.ack");
+
   std::array<SoundEnum, SIZE * ITERS> sound_outputs;
 
   // allocate on stack, not heap
@@ -62,7 +67,7 @@ int main() {
   std::size_t ind = 0;
 
   // start perf, then the clock
-  prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
   auto start_time = std::chrono::steady_clock::now();
 
   for (int j = 0; j < ITERS; j++)
@@ -72,7 +77,7 @@ int main() {
 
   // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
-  prctl(PR_TASK_PERF_EVENTS_DISABLE);
+  utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
 
   std::print("\n---  VERIFYING OUTPUTS ---\n");
   for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
@@ -81,6 +86,7 @@ int main() {
 
   const auto duration = (end_time - start_time).count();
   std::print("Processed in: [{}] ns\n", duration);
+  utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
 
   benchmark::DoNotOptimize(sound_outputs);
   benchmark::DoNotOptimize(zoo);

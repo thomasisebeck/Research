@@ -40,7 +40,7 @@ for FILENAME in "${FILES[@]}"; do
       sudo rm -rf  /root/.cache/zig
 
       # BUILD TIMES (Cold & Hot)
-      COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0,1 \
+      COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0 \
         zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
         -Dincrement="${INC}" > /dev/null; } 2>&1 )
 
@@ -49,7 +49,7 @@ for FILENAME in "${FILES[@]}"; do
         zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast
       echo "done building.."
 
-      HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0,1 \
+      HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0 \
         zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
         -Dincrement="${INC}" > /dev/null; } 2>&1 )
 
@@ -71,7 +71,7 @@ for FILENAME in "${FILES[@]}"; do
       # Capture stdout into RUNTIME_NS while keeping stderr routed through grep
       OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
       -e "$PERF_EVENTS" \
-      taskset -c 0,1 \
+      taskset -c 0 \
       ./zig-out/bin/out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
 
       # Extract runtime_ns cleanly from $OUT_DATA

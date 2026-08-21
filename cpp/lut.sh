@@ -12,7 +12,7 @@ CSV_FILE="results.csv"
 
 # NB: must regenerate with the zig when you change this
 # INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
-INCREMENTS=("0.0005" "0.005" "0.05" "0.5" "1")
+INCREMENTS=("1" "0.5" "0.05" "0.005" "0.0005")
 
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 

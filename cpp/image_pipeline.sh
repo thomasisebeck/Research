@@ -61,10 +61,33 @@ for FILENAME in "${FILES[@]}"; do
       touch "../src/${FILENAME}"
       HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0,1 make -s -j$(nproc)  > /dev/null; } 2>&1)
 
-      OUT_DATA=$(./out)
+      make -j$(nproc) > /dev/null 2>&1
+
+      # create perf files
+      sudo rm -rf /tmp/perf.ctl /tmp/perf.ack
+      sudo mkfifo /tmp/perf.ctl /tmp/perf.ack
+
+      # Execute benchmark under perf stat (stderr captured for counters)
+      PERF_RAW_FILE=$(mktemp)
+      OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
+      taskset -c 0,1 \
+      -e "$PERF_EVENTS" \
+      ./out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
+
+      # Extract runtime_ns
       RUN_NS=$(echo "$OUT_DATA" | grep "Processed in:" | awk -F'[][]' '{print $2}')
 
-      echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME},${RUN_NS}" >> "../${CSV_FILE}"
+      # Parse values safely (converts unsupported/empty entries into 0)
+      PERF_METRICS=$(awk -F',' '{
+        val = $1;
+        if (val ~ /<not supported>/ || val == "") val = "0";
+        print val;
+      }' "$PERF_RAW_FILE" | tr '\n' ',' | sed 's/,$//')
+
+      rm -f "$PERF_RAW_FILE"
+
+      # Log single flattened row to CSV
+      echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME},${RUN_NS},${PERF_METRICS}" >> "../${CSV_FILE}"
 
       cd ..
       rm -rf build
