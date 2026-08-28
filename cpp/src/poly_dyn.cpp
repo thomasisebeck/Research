@@ -66,6 +66,8 @@ int main() {
 
   std::size_t ind = 0;
 
+  benchmark::DoNotOptimize(zoo);
+
   // start perf, then the clock
   utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
   auto start_time = std::chrono::steady_clock::now();
@@ -77,7 +79,7 @@ int main() {
 
   // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
-  utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
+  utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
 
   std::print("\n---  VERIFYING OUTPUTS ---\n");
   for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
@@ -86,8 +88,7 @@ int main() {
 
   const auto duration = (end_time - start_time).count();
   std::print("Processed in: [{}] ns\n", duration);
-  utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
 
+  // black box sound outputs after
   benchmark::DoNotOptimize(sound_outputs);
-  benchmark::DoNotOptimize(zoo);
 }

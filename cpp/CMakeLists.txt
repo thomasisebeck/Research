@@ -32,7 +32,7 @@ endif()
 option(Optimise "Build with high optimizations and no assertions" OFF)
 
 if(NOT DEFINED TARGET_SRC)
-  set(TARGET_SRC "calibration.cpp")
+  set(TARGET_SRC "poly_stat.cpp")
 endif()
 
 set(SOURCES "src/${TARGET_SRC}")
