@@ -1,5 +1,5 @@
 mod utils;
-use std::time::Instant;
+use std::{fs::OpenOptions, time::Instant};
 
 use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
 
@@ -136,7 +136,10 @@ fn process<CFG: utils::PipelineConfig>(
     }
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
+
     // have to init the array in rust
     let init_pixel = utils::Colour {
         r: 0.0,
@@ -151,20 +154,18 @@ fn main() {
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
-    }
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
     // configs are declared above as traits...
     process::<utils::LowQualityConfig>(&mut my_image);
 
     let end_time = Instant::now();
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
-    }
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
 
-    println!("Processed in: {} ns", duration);
+    println!("Processed in: [{}] ns", duration);
+
+    Ok(())
 }

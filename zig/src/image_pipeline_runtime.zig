@@ -99,36 +99,50 @@ pub fn process(cfg: utils.PipelineConfig, mat: *[utils.IMAGE_SIZE][utils.IMAGE_S
 }
 
 pub fn main(init: std.process.Init) !void {
+    // --------------- setup io -------------------
     const io = init.io;
 
-    // write the image
-    // _ = try utils.writeImageToFile(io, "input_image.txt");
+    // CTL FILE
+    var ctl_file_buffer: [8]u8 = undefined;
+    const ctl_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
+    var ctl_file_writer_struct: std.Io.File.Writer = .init(ctl_file_open, io, &ctl_file_buffer);
+    const ctl_writer = &ctl_file_writer_struct.interface;
 
-    // read the image
+    // ACK FILE
+    var ack_file_buffer: [4]u8 = undefined;
+    const ack_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ack", .{ .mode = .read_only });
+    var ack_file_reader_struct: std.Io.File.Reader = .init(ack_file_open, io, &ack_file_buffer);
+    const ack_reader = &ack_file_reader_struct.interface;
+    var ack_response: [4]u8 = undefined;
+
+    // IO WRITER
+    var stdout_buffer: [1024]u8 = undefined;
+    var stdout_io_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
+    const stdout_writer = &stdout_io_writer.interface;
+    // ------------------------------------------------
+
     var my_image: [utils.IMAGE_SIZE][utils.IMAGE_SIZE]utils.Colour = undefined;
     _ = try utils.readImageFromFile(io, "input_image.txt", &my_image);
 
-    // try printImage(my_image);
-
     // LOW
-//  const config = utils.PipelineConfig{
-//      .blur_mode = .LOW,
-//      .apply_blur = false,
-//      .quantise_mode = .LOW,
-//      .apply_quantisation = false,
-//      .saturation_mode = .LOW,
-//      .apply_saturation = true,
-//  };
+    //  const config = utils.PipelineConfig{
+    //      .blur_mode = .LOW,
+    //      .apply_blur = false,
+    //      .quantise_mode = .LOW,
+    //      .apply_quantisation = false,
+    //      .saturation_mode = .LOW,
+    //      .apply_saturation = true,
+    //  };
 
-      // MED
-//const config = utils.PipelineConfig{
-//    .blur_mode = .MED,
-//    .apply_blur = true,
-//    .quantise_mode = .MED,
-//    .apply_quantisation = true,
-//    .saturation_mode = .MED,
-//    .apply_saturation = false,
-//};
+    // MED
+    //const config = utils.PipelineConfig{
+    //    .blur_mode = .MED,
+    //    .apply_blur = true,
+    //    .quantise_mode = .MED,
+    //    .apply_quantisation = true,
+    //    .saturation_mode = .MED,
+    //    .apply_saturation = false,
+    //};
 
     // HIGH
     const config = utils.PipelineConfig{
@@ -140,13 +154,26 @@ pub fn main(init: std.process.Init) !void {
         .apply_saturation = true,
     };
 
-    var start_time = std.Io.Clock.now(.awake, io);
+    // --------------- start perf, then the clock ---------------- //
+    _ = try ctl_writer.print("enable\n", .{});
+    try ctl_writer.flush();
+    _ = try ack_reader.readSliceAll(&ack_response);
+    const start_time = std.Io.Clock.now(.awake, io);
+    // ----------------------------------------------------------- //
 
     process(config, &my_image);
 
+    // -------------- stop the clock, then end perf -------------- //
     const end_time = std.Io.Clock.now(.awake, io);
+    _ = try ctl_writer.print("disable\n", .{});
+    try ctl_writer.flush();
+    _ = try ack_reader.readSliceAll(&ack_response);
+    // ----------------------------------------------------------- //
 
     const duration = start_time.durationTo(end_time);
 
-    print("Processed in: [{}] ns\n", .{duration.toNanoseconds()});
+    //---------------------- print and clean ------------------
+    _ = try stdout_writer.print("Processed in: [{}] ns.", .{duration.toNanoseconds()});
+    try stdout_writer.flush();
+    //---------------------------------------------------------
 }

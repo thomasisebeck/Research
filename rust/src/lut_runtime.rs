@@ -1,23 +1,26 @@
-use std::time::Instant;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::Write;
+use std::time::Instant;
 mod utils;
 
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
 
-fn main()-> Result<(), Box<dyn std::error::Error>> {
-    let mut perf_ctl = File::create("/tmp/perf.ctl")?;
-
-    let test_cases: [f64; utils::TEST_SIZE] = utils::read_array_from_file::<{ utils::TEST_SIZE }>("lookup.txt");
+    let test_cases: [f64; utils::TEST_SIZE] =
+        utils::read_array_from_file::<{ utils::TEST_SIZE }>("lookup.txt");
 
     println!(
         "increment: {}, testSize: {}, degrees: {}, steps: {}\n",
-        utils::INCREMENT, utils::TEST_SIZE, utils::DEGREES, utils::STEPS,
+        utils::INCREMENT,
+        utils::TEST_SIZE,
+        utils::DEGREES,
+        utils::STEPS,
     );
 
     let mut sum: f64 = 0.0;
 
-    writeln!(perf_ctl, "enable")?;
-    perf_ctl.flush()?;
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
     for num in test_cases {
@@ -25,9 +28,7 @@ fn main()-> Result<(), Box<dyn std::error::Error>> {
     }
 
     let end_time = Instant::now();
-    writeln!(perf_ctl, "disable")?;
-    perf_ctl.flush()?;
-
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
 

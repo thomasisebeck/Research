@@ -14,11 +14,17 @@ pub fn main(init: std.process.Init) !void {
     // --------------- setup writer -------------------
     const io = init.io;
 
-    // FILE WRITER
-    var file_buffer: [1024]u8 = undefined;
-    const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
-    var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
-    const file_writer = &stdout_file_writer.interface;
+    // CTL FILE
+    var ctl_file_buffer: [8]u8 = undefined;
+    const ctl_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
+    var ctl_file_writer_struct: std.Io.File.Writer = .init(ctl_file_open, io, &ctl_file_buffer);
+    const ctl_writer = &ctl_file_writer_struct.interface;
+
+    // ACK FILE
+    var ack_file_buffer: [4]u8 = undefined;
+    const ack_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ack", .{ .mode = .read_only });
+    var ack_file_reader_struct: std.Io.File.Reader = .init(ack_file_open, io, &ack_file_buffer);
+    const ack_reader = &ack_file_reader_struct.interface;
 
     // IO WRITER
     var stdout_buffer: [1024]u8 = undefined;
@@ -26,15 +32,18 @@ pub fn main(init: std.process.Init) !void {
     const stdout_writer = &stdout_io_writer.interface;
     // ------------------------------------------------
 
-    const test_cases: [utils.TEST_SIZE]f64 = try utils.readArrayFromFile(utils.TEST_SIZE, init.io, "lookup.txt");
+    const test_cases: [utils.TEST_SIZE]f64 = try utils.readArrayFromFile(f64, utils.TEST_SIZE, init.io, "lookup.txt");
 
     // --- BENCMARK ---
     // Calculate the actual values
     var sum: f64 = 0;
 
-    _ = try file_writer.print("enable\n", .{});
-    try file_writer.flush();
+    // --------------- start perf, then the clock ---------------- //
+    _ = try ctl_writer.print("enable\n", .{});
+    try ctl_writer.flush();
+    _ = ack_reader.readSliceAll(ack_file_buffer);
     const start_time = std.Io.Clock.now(.awake, io);
+    // ----------------------------------------------------------- //
 
     // dynamic
     for (test_cases) |num| {
@@ -42,9 +51,12 @@ pub fn main(init: std.process.Init) !void {
         sum += @sin(num) + @cos(num);
     }
 
+    // -------------- stop the clock, then end perf -------------- //
     const end_time = std.Io.Clock.now(.awake, io);
-    _ = try file_writer.print("disable\n", .{});
-    try file_writer.flush();
+    _ = try ctl_writer.print("disable\n", .{});
+    try ctl_writer.flush();
+    _ = ack_reader.readSliceAll(ack_file_buffer);
+    // ----------------------------------------------------------- //
 
     const duration = start_time.durationTo(end_time);
 

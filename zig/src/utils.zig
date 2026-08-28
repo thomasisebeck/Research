@@ -54,7 +54,7 @@ pub fn generateRandomArray(comptime array_size: usize, io: anytype, path: []cons
 
     for (0..array_size) |_| {
         // Generates an integer between 1 and 3 inclusive
-        const num = prng.random().intRangeAtMost(u8, 1, 3);
+        const num = prng.random().intRangeAtMost(i32, 1, 3);
 
         try file_writer.interface.print("{}\n", .{num});
     }
@@ -82,30 +82,38 @@ pub fn writeImageToFile(io: anytype, path: []const u8) !void {
     }
 }
 
-pub fn readArrayFromFile(comptime array_size: usize, io: std.Io, path: []const u8) ![array_size]f64 {
-    //var stdout_writer = std.Io.File.stdout().writer(io, &.{});
-    //const stdout = &stdout_writer.interface;
+pub fn readArrayFromFile(
+    comptime T: type, // i32, u64, f64
+    comptime array_size: usize, 
+    io: std.Io, 
+    path: []const u8
+) ![array_size]T {
     var file_buf: [array_size * 32]u8 = undefined;
     const file = try std.Io.Dir.cwd().readFile(io, path, &file_buf);
 
-    // init the array to all 0, len 5
-    var input_array = [_]f64{0} ** array_size;
+    // Initialize the array to all 0 of type T
+    var input_array = [_]T{0} ** array_size;
     var counter: u32 = 0;
 
     var iter = std.mem.tokenizeScalar(u8, file, '\n');
     while (iter.next()) |line| {
         if (counter >= array_size) break;
-
         const clean_line = std.mem.trim(u8, line, "\r");
 
-        // pass the buffer as base 10
-        input_array[counter] = try std.fmt.parseFloat(f64, clean_line);
+        switch (@typeInfo(T)) {
+            .int => {
+                input_array[counter] = try std.fmt.parseInt(T, clean_line, 10);
+            },
+            .float => {
+                input_array[counter] = try std.fmt.parseFloat(T, clean_line);
+            },
+            else => @compileError("readArrayFromFile only supports integer and float types."),
+        }
 
         counter += 1;
     }
 
     assert(counter == array_size);
-
     return input_array;
 }
 

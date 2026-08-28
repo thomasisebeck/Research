@@ -1,5 +1,5 @@
 mod utils;
-use std::time::Instant;
+use std::{fs::OpenOptions, time::Instant};
 
 use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
 
@@ -84,7 +84,7 @@ fn blur(cfg: &PipelineConfig, item: &mut utils::Colour, n: utils::Neighbours) {
 }
 
 /*
- 
+
 // switch expression
 template <utils::PipelineConfig cfg>
 constexpr void saturation(utils::Colour &item) {
@@ -112,11 +112,10 @@ constexpr void saturation(utils::Colour &item) {
   item.b = std::clamp(LUMA + (DELTA * (item.b - LUMA)), 0.0f, 1.0f);
 }
 
- */ 
+ */
 
 // switch expression
 fn saturation(cfg: &PipelineConfig, item: &mut utils::Colour) {
-
     let LUMA: f32 = match cfg.saturation_mode {
         utils::Mode::LOW => (0.3 * item.r) + (0.6 * item.g) + (0.1 * item.b),
         utils::Mode::MED => (0.29 * item.r) + (0.59 * item.g) + (0.14 * item.b),
@@ -182,7 +181,10 @@ fn process(
     }
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
+
     // have to init the array in rust
     let init_pixel = utils::Colour {
         r: 0.0,
@@ -197,49 +199,45 @@ fn main() {
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
+    let config = PipelineConfig {
+        blur_mode: utils::Mode::LOW,
+        apply_blur: false,
+        quantise_mode: utils::Mode::LOW,
+        apply_quantisation: false,
+        saturation_mode: utils::Mode::LOW,
+        apply_saturation: true,
+    };
 
-  let config = PipelineConfig {
-      blur_mode: utils::Mode::LOW,
-      apply_blur: false,
-      quantise_mode: utils::Mode::LOW,
-      apply_quantisation: false,
-      saturation_mode: utils::Mode::LOW,
-      apply_saturation: true,
-  };
+    // let config = PipelineConfig {
+    //     blur_mode: utils::Mode::MED,
+    //     apply_blur: true,
+    //     quantise_mode: utils::Mode::MED,
+    //     apply_quantisation: true,
+    //     saturation_mode: utils::Mode::MED,
+    //     apply_saturation: false,
+    // };
 
- // let config = PipelineConfig {
- //     blur_mode: utils::Mode::MED,
- //     apply_blur: true,
- //     quantise_mode: utils::Mode::MED,
- //     apply_quantisation: true,
- //     saturation_mode: utils::Mode::MED,
- //     apply_saturation: false,
- // };
+    //let config = PipelineConfig {
+    //    blur_mode: utils::Mode::HIGH,
+    //    apply_blur: true,
+    //    quantise_mode: utils::Mode::HIGH,
+    //    apply_quantisation: true,
+    //    saturation_mode: utils::Mode::HIGH,
+    //    apply_saturation: true,
+    //};
 
-
-//let config = PipelineConfig {
-//    blur_mode: utils::Mode::HIGH,
-//    apply_blur: true,
-//    quantise_mode: utils::Mode::HIGH,
-//    apply_quantisation: true,
-//    saturation_mode: utils::Mode::HIGH,
-//    apply_saturation: true,
-//};
-
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
-    }
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
     // configs are declared above as traits...
     process(&config, &mut my_image);
 
     let end_time = Instant::now();
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
-    }
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
 
-    println!("Processed in: {} ns", duration);
+    println!("Processed in: [{}] ns", duration);
+
+    Ok(())
 }

@@ -1,6 +1,6 @@
-use std::time::Instant;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::Write;
+use std::time::Instant;
 use trig_const::{cos, sin};
 mod utils;
 
@@ -24,9 +24,11 @@ const fn generate_lut<const STEPS: usize>() -> [f64; STEPS] {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut perf_ctl = File::create("/tmp/perf.ctl")?;
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
 
-    let test_cases: [f64; utils::TEST_SIZE] = utils::read_array_from_file::<{ utils::TEST_SIZE }>("lookup.txt");
+    let test_cases: [f64; utils::TEST_SIZE] =
+        utils::read_array_from_file::<{ utils::TEST_SIZE }>("lookup.txt");
 
     // force to be placed on the stack, so that it
     // has better cache locality using let
@@ -34,6 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let my_lut = std::hint::black_box(COMPTIME_LUT);
 
+    /*
     println!(
         "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
         my_lut.len(),
@@ -42,9 +45,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         utils::DEGREES,
         utils::STEPS,
     );
+    */
 
-    writeln!(perf_ctl, "enable")?;
-    perf_ctl.flush()?;
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
     let sum: f64 = test_cases
@@ -56,8 +59,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .sum();
 
     let end_time = Instant::now();
-    writeln!(perf_ctl, "disable")?;
-    perf_ctl.flush()?;
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
 

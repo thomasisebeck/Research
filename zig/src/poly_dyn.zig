@@ -1,7 +1,5 @@
 const std = @import("std");
-
-const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
-const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
+const utils = @import("utils.zig");
 
 const SoundEnum = enum(u8) {
     woof,
@@ -16,10 +14,8 @@ const Dog = struct {
         if (self.id == 0) return SoundEnum.meow;
         return SoundEnum.woof;
     }
-    pub fn wrapSound(p: *anyopaque) SoundEnum {
-        // Re-align and cast the typeless pointer back into a Dog
-        const self: *const Dog = @ptrCast(@alignCast(p));
-        return self.sound();
+    pub fn asComponent(self: *Dog) Component {
+        return Component.init(self);
     }
 };
 
@@ -30,10 +26,8 @@ const Cat = struct {
         if (self.id == 0) return SoundEnum.woof;
         return SoundEnum.meow;
     }
-
-    pub fn wrapSound(p: *anyopaque) SoundEnum {
-        const self: *const Cat = @ptrCast(@alignCast(p));
-        return self.sound();
+    pub fn asComponent(self: *Cat) Component {
+        return Component.init(self);
     }
 };
 
@@ -44,43 +38,53 @@ const Mouse = struct {
         if (self.id == 0) return SoundEnum.woof;
         return SoundEnum.squeek;
     }
-
-    pub fn wrapSound(p: *anyopaque) SoundEnum {
-        const self: *const Mouse = @ptrCast(@alignCast(p));
-        return self.sound();
+    pub fn asComponent(self: *Mouse) Component {
+        return Component.init(self);
     }
 };
 
+// this is the polymorphic interface
 const Component = struct {
     ptr: *anyopaque,
     makeSound: *const fn (*anyopaque) SoundEnum,
 
-    pub fn sound(self: Component) SoundEnum {
+    pub fn init(impl: anytype) Component {
+        const Wrapper = struct {
+            fn sound(ptr: *anyopaque) SoundEnum {
+                const self: @TypeOf(impl) = @ptrCast(@alignCast(ptr));
+                return self.sound();
+            }
+        };
+
+        return .{
+            .ptr = @ptrCast(@alignCast(impl)),
+            .makeSound = Wrapper.sound,
+        };
+    }
+
+    pub fn sound(self: *const Component) SoundEnum {
         return self.makeSound(self.ptr);
     }
 };
 
-fn asDog(self: *Dog) Component {
-    return .{ .ptr = self, .makeSound = Dog.wrapSound };
-}
-fn asCat(self: *Cat) Component {
-    return .{ .ptr = self, .makeSound = Cat.wrapSound };
-}
-fn asMouse(self: *Mouse) Component {
-    return .{ .ptr = self, .makeSound = Mouse.wrapSound };
-}
-
 const Type = enum { CAT, MOUSE, DOG };
 
 pub fn main(init: std.process.Init) !void {
-    // --------------- setup writer -------------------
+    // --------------- setup io -------------------
     const io = init.io;
 
-    // FILE WRITER
-    var file_buffer: [1024]u8 = undefined;
-    const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
-    var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
-    const file_writer = &stdout_file_writer.interface;
+    // CTL FILE
+    var ctl_file_buffer: [8]u8 = undefined;
+    const ctl_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
+    var ctl_file_writer_struct: std.Io.File.Writer = .init(ctl_file_open, io, &ctl_file_buffer);
+    const ctl_writer = &ctl_file_writer_struct.interface;
+
+    // ACK FILE
+    var ack_file_buffer: [4]u8 = undefined;
+    const ack_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ack", .{ .mode = .read_only });
+    var ack_file_reader_struct: std.Io.File.Reader = .init(ack_file_open, io, &ack_file_buffer);
+    const ack_reader = &ack_file_reader_struct.interface;
+    var ack_response: [4]u8 = undefined;
 
     // IO WRITER
     var stdout_buffer: [1024]u8 = undefined;
@@ -88,50 +92,42 @@ pub fn main(init: std.process.Init) !void {
     const stdout_writer = &stdout_io_writer.interface;
     // ------------------------------------------------
 
-    _ = try stdout_writer.print("start", .{});
-    try stdout_writer.flush();
-
-    const SIZE = 21;
+    const SIZE = 500;
     const ITERS = 100;
     var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
 
-    var d1: Dog = .{};
-    var d2: Dog = .{};
-    var d3: Dog = .{};
-    var d4: Dog = .{};
-    var d5: Dog = .{};
-    var d6: Dog = .{};
-    var d7: Dog = .{};
-    var c1: Cat = .{};
-    var c2: Cat = .{};
-    var c3: Cat = .{};
-    var c4: Cat = .{};
-    var c5: Cat = .{};
-    var c6: Cat = .{};
-    var c7: Cat = .{};
-    var m1: Mouse = .{};
-    var m2: Mouse = .{};
-    var m3: Mouse = .{};
-    var m4: Mouse = .{};
-    var m5: Mouse = .{};
-    var m6: Mouse = .{};
-    var m7: Mouse = .{};
+    var dog = Dog{};
+    var cat = Cat{};
+    var mouse = Mouse{};
 
-    var zoo = [_]Component{
-        asDog(&d1),   asCat(&c1),   asMouse(&m1),
-        asCat(&c2),   asDog(&d2),   asMouse(&m2),
-        asDog(&d3),   asMouse(&m3), asCat(&c3),
-        asMouse(&m4), asCat(&c4),   asDog(&d4),
-        asMouse(&m5), asDog(&d5),   asCat(&c5),
-        asMouse(&m6), asDog(&d6),   asCat(&c6),
-        asMouse(&m7), asCat(&c7),   asDog(&d7),
-    };
+    var zoo: [SIZE]Component = undefined;
+
+    // read file into array
+    const input_arr: [SIZE]i32 = try utils.readArrayFromFile(i32, SIZE, init.io, "animals.txt");
+
+    // put the animals in the array from the stack local copy
+    for (input_arr, 0..) |choice, index| {
+        zoo[index] = switch (choice) {
+            1 => Component.init(&dog),
+            2 => Component.init(&cat),
+            3 => Component.init(&mouse),
+            else => {
+                std.debug.print("choice {}", .{choice});
+                unreachable;
+            },
+        };
+    }
+
+    std.mem.doNotOptimizeAway(&zoo);
 
     var ind: usize = 0;
 
-    _ = try file_writer.print("enable\n", .{});
-    try file_writer.flush();
-    var start_time = std.Io.Clock.now(.awake, io);
+    // --------------- start perf, then the clock ---------------- //
+    _ = try ctl_writer.print("enable\n", .{});
+    try ctl_writer.flush();
+    _ = try ack_reader.readSliceAll(&ack_response);
+    const start_time = std.Io.Clock.now(.awake, io);
+    // ----------------------------------------------------------- //
 
     for (0..ITERS) |_| {
         for (zoo) |animal| {
@@ -140,9 +136,12 @@ pub fn main(init: std.process.Init) !void {
         }
     }
 
+    // -------------- stop the clock, then end perf -------------- //
     const end_time = std.Io.Clock.now(.awake, io);
-    _ = try file_writer.print("disable\n", .{});
-    try file_writer.flush();
+    _ = try ctl_writer.print("disable\n", .{});
+    try ctl_writer.flush();
+    _ = try ack_reader.readSliceAll(&ack_response);
+    // ----------------------------------------------------------- //
 
     const duration = start_time.durationTo(end_time);
 
@@ -158,14 +157,8 @@ pub fn main(init: std.process.Init) !void {
     try stdout_writer.flush();
 
     // must mutate
-    zoo[0] = asDog(&d1);
+    zoo[0] = Component.init(&dog);
 
-    // TODO: remove
-    //---------------------- print and clean ------------------
-    _ = try stdout_writer.print("Processed in: [{}] ns.", .{duration.toNanoseconds()});
-    try stdout_writer.flush();
-    //---------------------------------------------------------
-
-    std.mem.doNotOptimizeAway(&zoo);
+    // black box sound outputs after
     std.mem.doNotOptimizeAway(&sound_outputs);
 }

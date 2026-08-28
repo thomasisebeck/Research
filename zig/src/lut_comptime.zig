@@ -79,7 +79,7 @@ pub fn main(init: std.process.Init) !void {
     // ------------------------------------------------
 
     // _ = try generateTestCases(init.io, "lookup.txt");
-    const test_cases: [utils.TEST_SIZE]f64 = try utils.readArrayFromFile(utils.TEST_SIZE, init.io, "lookup.txt");
+    const test_cases: [utils.TEST_SIZE]f64 = try utils.readArrayFromFile(f64, utils.TEST_SIZE, init.io, "lookup.txt");
 
     // needs to be var for the volatile cast
     var compLut = comptime generateLUT();

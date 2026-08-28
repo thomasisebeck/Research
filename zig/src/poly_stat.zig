@@ -1,5 +1,6 @@
 const std = @import("std");
 const print = std.debug.print;
+const utils = @import("utils.zig");
 
 const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
 const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
@@ -50,19 +51,26 @@ const Animal = union(enum) {
     }
 };
 
-pub fn makeSoundHelper(comptime myAnimal: anytype) SoundEnum {
-    return myAnimal.sound();
-}
+//      pub fn makeSoundHelper(comptime myAnimal: anytype) SoundEnum {
+//          return myAnimal.sound();
+//      }
 
 pub fn main(init: std.process.Init) !void {
-    // --------------- setup writer -------------------
+    // --------------- setup io -------------------
     const io = init.io;
 
-    // FILE WRITER
-    var file_buffer: [1024]u8 = undefined;
-    const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
-    var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
-    const file_writer = &stdout_file_writer.interface;
+    // CTL FILE
+    var ctl_file_buffer: [8]u8 = undefined;
+    const ctl_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
+    var ctl_file_writer_struct: std.Io.File.Writer = .init(ctl_file_open, io, &ctl_file_buffer);
+    const ctl_writer = &ctl_file_writer_struct.interface;
+
+    // ACK FILE
+    var ack_file_buffer: [4]u8 = undefined;
+    const ack_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ack", .{ .mode = .read_only });
+    var ack_file_reader_struct: std.Io.File.Reader = .init(ack_file_open, io, &ack_file_buffer);
+    const ack_reader = &ack_file_reader_struct.interface;
+    var ack_response: [4]u8 = undefined;
 
     // IO WRITER
     var stdout_buffer: [1024]u8 = undefined;
@@ -70,49 +78,40 @@ pub fn main(init: std.process.Init) !void {
     const stdout_writer = &stdout_io_writer.interface;
     // ------------------------------------------------
 
-    const SIZE = 21;
+    const SIZE = 100;
     const ITERS = 100;
-
     var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
 
-    var d1: Dog = .{};
-    var d2: Dog = .{};
-    var d3: Dog = .{};
-    var d4: Dog = .{};
-    var d5: Dog = .{};
-    var d6: Dog = .{};
-    var d7: Dog = .{};
-    var c1: Cat = .{};
-    var c2: Cat = .{};
-    var c3: Cat = .{};
-    var c4: Cat = .{};
-    var c5: Cat = .{};
-    var c6: Cat = .{};
-    var c7: Cat = .{};
-    var m1: Mouse = .{};
-    var m2: Mouse = .{};
-    var m3: Mouse = .{};
-    var m4: Mouse = .{};
-    var m5: Mouse = .{};
-    var m6: Mouse = .{};
-    var m7: Mouse = .{};
+    var dog = Dog{};
+    var cat = Cat{};
+    var mouse = Mouse{};
 
-    // static = point to static instance
-    var zoo = [SIZE]Animal{
-        .{ .dog = &d1 },   .{ .cat = &c1 },   .{ .mouse = &m1 },
-        .{ .cat = &c2 },   .{ .dog = &d2 },   .{ .mouse = &m2 },
-        .{ .dog = &d3 },   .{ .mouse = &m3 }, .{ .cat = &c3 },
-        .{ .mouse = &m4 }, .{ .cat = &c4 },   .{ .dog = &d4 },
-        .{ .mouse = &m5 }, .{ .dog = &d5 },   .{ .cat = &c5 },
-        .{ .mouse = &m6 }, .{ .dog = &d6 },   .{ .cat = &c6 },
-        .{ .mouse = &m7 }, .{ .cat = &c7 },   .{ .dog = &d7 },
-    };
+    var zoo: [SIZE]Animal = undefined;
 
     var ind: usize = 0;
 
-    _ = try file_writer.print("enable\n", .{});
-    try file_writer.flush();
-    var start_time = std.Io.Clock.now(.awake, io);
+    const input_arr = try utils.readArrayFromFile(i32, SIZE, io, "animals.txt");
+
+    // popluate the zoo array
+    // 0 -> Dog, 1 -> Cat, 2 -> Mouse
+    for (0..SIZE) |i| {
+        zoo[i] = switch (input_arr[i]) {
+            1 => .{ .dog = &dog },
+            2 => .{ .cat = &cat },
+            3 => .{ .mouse = &mouse },
+            else => unreachable,
+        };
+    }
+
+    // prevents entire loop from being eval at comptime
+    std.mem.doNotOptimizeAway(&zoo);
+
+    // --------------- start perf, then the clock ---------------- //
+    _ = try ctl_writer.print("enable\n", .{});
+    try ctl_writer.flush();
+    _ = try ack_reader.readSliceAll(&ack_response);
+    const start_time = std.Io.Clock.now(.awake, io);
+    // ----------------------------------------------------------- //
 
     for (0..ITERS) |_| {
         for (zoo) |animal| {
@@ -121,9 +120,12 @@ pub fn main(init: std.process.Init) !void {
         }
     }
 
+    // -------------- stop the clock, then end perf -------------- //
     const end_time = std.Io.Clock.now(.awake, io);
-    _ = try file_writer.print("disable\n", .{});
-    try file_writer.flush();
+    _ = try ctl_writer.print("disable\n", .{});
+    try ctl_writer.flush();
+    _ = try ack_reader.readSliceAll(&ack_response);
+    // ----------------------------------------------------------- //
 
     const duration = start_time.durationTo(end_time);
 
@@ -139,14 +141,8 @@ pub fn main(init: std.process.Init) !void {
     try stdout_writer.flush();
 
     // must mutate
-    zoo[0] = .{ .dog = &d1 };
+    zoo[0] = .{ .dog = &dog };
 
-    // TODO: remove
-    //---------------------- print and clean ------------------
-    _ = try stdout_writer.print("Processed in: [{}] ns.", .{duration.toNanoseconds()});
-    try stdout_writer.flush();
-    //---------------------------------------------------------
-
-    std.mem.doNotOptimizeAway(&zoo);
+    // black box sound outputs after
     std.mem.doNotOptimizeAway(&sound_outputs);
 }

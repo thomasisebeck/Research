@@ -1,6 +1,6 @@
-use std::fs::File;
-use std::io::Write;
+use std::fs::OpenOptions;
 use std::time::Instant;
+mod utils;
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -71,7 +71,8 @@ impl Animal for Mouse {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut perf_ctl = File::create("/tmp/perf.ctl")?;
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
 
     const SIZE: usize = 21;
     const ITERS: usize = 100;
@@ -131,13 +132,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &d7 as &dyn Animal,
     ];
 
-    writeln!(perf_ctl, "enable")?;
-    perf_ctl.flush()?;
-    let start_time = Instant::now();
+    // prevents entire loop from being eval at comptime
+    zoo = std::hint::black_box(zoo);
 
     let mut ind: usize = 0;
 
-    zoo = std::hint::black_box(zoo);
+    // start perf, then the timer
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
+    let start_time = Instant::now();
 
     //16700
     for _ in 0..ITERS {
@@ -148,9 +150,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    // end the timer, then end perf
     let end_time = Instant::now();
-    writeln!(perf_ctl, "disable")?;
-    perf_ctl.flush()?;
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
 
@@ -161,6 +163,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Index {}: {:?}", i, res);
     }
 
+    // black box sound outputs after
     std::hint::black_box(sound_outputs);
 
     Ok(())

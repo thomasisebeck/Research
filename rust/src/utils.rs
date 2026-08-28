@@ -1,6 +1,7 @@
 use std::fs;
+use std::fs::File;
+use std::io::{Read, Write, Result};
 use std::fs::read_to_string;
-
 
 #[derive(Clone, Copy)]
 pub struct Colour {
@@ -74,6 +75,17 @@ pub struct Neighbours {
     pub middle_right: Colour,
     pub top_right: Colour,
     pub top_middle: Colour,
+}
+
+
+pub fn send_perf_cmd(ctl: &mut File, ack: &mut File, cmd: &str) -> Result<()> {
+    writeln!(ctl, "{}", cmd)?;
+    ctl.flush()?;
+    
+    let mut ack_buf = [0u8; 4]; // "ack\n" is 4 bytes
+    ack.read_exact(&mut ack_buf)?;
+    
+    Ok(())
 }
 
 pub fn read_array_from_file<const STEPS: usize>(path: &str) -> [f64; STEPS] {
