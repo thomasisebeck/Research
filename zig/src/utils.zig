@@ -42,6 +42,16 @@ pub fn printImage(mat: [IMAGE_SIZE][IMAGE_SIZE]Colour) !void {
     print("]\n", .{});
 }
 
+pub fn sendPerfCommand(writer: anytype, reader: anytype, command: []const u8) !void {
+    // 1. Command perf stat to enable/disable counters
+    _ = try writer.print("{s}\n", .{command});
+    try writer.flush();
+
+    // 2. Block until perf replies
+    const raw_ack = (try reader.takeDelimiter('\n')) orelse unreachable;
+    _ = std.mem.trim(u8, raw_ack, "\r");
+}
+
 pub fn generateRandomArray(comptime array_size: usize, io: anytype, path: []const u8) !void {
     var file = try std.Io.Dir.cwd().createFile(io, path, .{ .truncate = true });
     defer file.close(io);

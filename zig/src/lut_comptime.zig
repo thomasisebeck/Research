@@ -11,7 +11,7 @@ const linux = std.os.linux;
 // 0.01 increment -> runtime is faster, does not fit in the L1 cache
 
 fn generateLUT() [utils.steps]f64 {
-    @setEvalBranchQuota(1000000);
+    @setEvalBranchQuota(100_000_000);
     // table empty, but enough to hold all the utils.steps
     var table: [utils.steps]f64 = undefined;
 
@@ -55,76 +55,82 @@ fn generateTestCases(io: anytype, path: []const u8) !void {
 
 pub fn main(init: std.process.Init) !void {
 
-    // --------------- setup writer -------------------
+    // --------------- setup io -------------------
     const io = init.io;
 
-    // Control FIFO (Write "enable\n" / "disable\n")
-    var file_buffer: [1024]u8 = undefined;
-    const file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
-    defer file.close(io);
-    var stdout_file_writer: std.Io.File.Writer = .init(file, io, &file_buffer);
-    const file_writer: *std.Io.Writer = &stdout_file_writer.interface;
+    // CTL FILE
+    var ctl_file_buffer: [1024]u8 = undefined;
+    const ctl_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ctl", .{ .mode = .write_only });
+    var ctl_file_writer_struct: std.Io.File.Writer = .init(ctl_file_open, io, &ctl_file_buffer);
+    const ctl_writer = &ctl_file_writer_struct.interface;
 
-    // Ack FIFO (Read "ack\n" back from perf)
-    var ack_buffer: [1024]u8 = undefined;
-    const ack_file = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ack", .{ .mode = .read_only });
-    defer ack_file.close(io);
-    var ack_file_reader: std.Io.File.Reader = .init(ack_file, io, &ack_buffer);
-    const ack_reader: *std.Io.Reader = &ack_file_reader.interface;
+    // ACK FILE
+    var ack_file_buffer: [1024]u8 = undefined;
+    const ack_file_open = try std.Io.Dir.openFile(std.Io.Dir.cwd(), io, "/tmp/perf.ack", .{ .mode = .read_only });
+    var ack_file_reader_struct: std.Io.File.Reader = .init(ack_file_open, io, &ack_file_buffer);
+    const ack_reader = &ack_file_reader_struct.interface;
 
-    // Stdout Writer
+    // IO WRITER
     var stdout_buffer: [1024]u8 = undefined;
     var stdout_io_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
-    const stdout_writer: *std.Io.Writer = &stdout_io_writer.interface;
+    const stdout_writer = &stdout_io_writer.interface;
     // ------------------------------------------------
 
-    // _ = try generateTestCases(init.io, "lookup.txt");
+   // _ = try generateTestCases(init.io, "lookup.txt");
     const test_cases: [utils.TEST_SIZE]f64 = try utils.readArrayFromFile(f64, utils.TEST_SIZE, init.io, "lookup.txt");
 
     // needs to be var for the volatile cast
-    var compLut = comptime generateLUT();
+    const my_lut = comptime generateLUT();
 
+    // faster, but not fair
     // keep the LUT on the function stack by marking it as volatile
-    const myLut: *volatile [utils.steps]f64 = @volatileCast(&compLut);
+    // const my_lut: *volatile [utils.steps]f64 = @volatileCast(&comp_lut);
 
     const prediv: f64 = 1.0 / utils.increment;
-
+    var warmup_sum: f64 = 0;
     var sum: f64 = 0;
-
-    // ---------------- PERF HANDSHAKE START ----------------
-    // 1. Command perf stat to enable counters
-    try file_writer.writeAll("enable\n");
-    try file_writer.flush();
-
-    // 2. Block until perf replies with "ack\n"
-    const raw_ack = try ack_reader.takeDelimiter('\n') orelse unreachable;
-    _ = std.mem.trim(u8, raw_ack, "\r");
-    // ------------------------------------------------------
-
-    var start_time = std.Io.Clock.now(.awake, io);
+    const ITERS: usize = 100;
 
     // test cases is i64 arr
     // num / increment, making it larger (if inc between 0 and 1)
-    for (test_cases) |num| {
-        const idx: usize = @intFromFloat(num * prediv);
+    for (0..ITERS) |_| {
+        for (test_cases) |num| {
+            const idx: usize = @intFromFloat(num * prediv);
 
-        sum += myLut[idx];
+            warmup_sum += my_lut[idx];
+        }
     }
 
-    const end_time = std.Io.Clock.now(.awake, io);
+    std.mem.doNotOptimizeAway(warmup_sum);
 
-    // ---------------- PERF HANDSHAKE END ------------------
-    // 3. Command perf stat to disable counters
-    _ = try file_writer.print("disable\n", .{});
-    try file_writer.flush();
+    // --------------- start perf, then the clock ---------------- //
+    try utils.sendPerfCommand(ctl_writer, ack_reader, "enable");
+    const start_time = std.Io.Clock.now(.awake, io);
     // ------------------------------------------------------
+    //
+     //++ / Zig Conservative Aliasing: Because raw pointers and standard references in C++ and Zig allow for potential aliasing (where writing to sum might theoretically modify the memory backing the array), LLVM's alias analyzer must take the conservative path and re-read the array from memory on every outer iteration to remain spec-compliant.
+
+    // test cases is i64 arr
+    // num / increment, making it larger (if inc between 0 and 1)
+    for (0..ITERS) |_| {
+        for (test_cases) |num| {
+            const idx: usize = @intFromFloat(num * prediv);
+
+            sum += my_lut[idx];
+        }
+    }
+
+    std.mem.doNotOptimizeAway(sum);
+
+    // -------------- stop the clock, then end perf -------------- //
+    const end_time = std.Io.Clock.now(.awake, io);
+    try utils.sendPerfCommand(ctl_writer, ack_reader, "disable");
+    // ----------------------------------------------------------- //
 
     const duration = start_time.durationTo(end_time);
 
     //---------------------- print and clean ------------------
-    _ = try stdout_writer.print("Processed in: [{}] ns. Sum: {}", .{ duration.toNanoseconds(), sum });
+    _ = try stdout_writer.print("Processed in: [{}] ns. Sum: {}, warmup sum: {}", .{ duration.toNanoseconds(), sum , warmup_sum});
     try stdout_writer.flush();
     //---------------------------------------------------------
-
-    std.mem.doNotOptimizeAway(sum);
 }

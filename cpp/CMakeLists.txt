@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_compile_options(-fconstexpr-loop-limit=10000000)
+add_compile_options(-fconstexpr-ops-limit=100000000)
+add_compile_options(-fconstexpr-loop-limit=100000000)
 
 if(DEFINED INCREMENT_VAL)
   add_compile_definitions(INCREMENT_VAL=${INCREMENT_VAL})

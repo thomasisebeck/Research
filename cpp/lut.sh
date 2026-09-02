@@ -9,14 +9,14 @@ PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
 
 FILES=(
- "lut_runtime"
-  # "lut_comptime"
+  "lut_runtime"
+  #"lut_comptime"
 )
 
-# "1" 
 # Target increment settings
-INCREMENTS=("0.5")
-# "0.05" "0.005")
+INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
+#INCREMENTS=("0.01" "0.05" "0.1" "0.5" "1" "5")
+
 
 # 1. Initialize CSV headers if files don't exist yet
 if [ ! -f "$BUILD_CSV" ]; then

@@ -1,7 +1,7 @@
 use std::fs;
 use std::fs::File;
-use std::io::{Read, Write, Result};
 use std::fs::read_to_string;
+use std::io::{Read, Result, Write};
 
 #[derive(Clone, Copy)]
 pub struct Colour {
@@ -19,7 +19,7 @@ pub enum Mode {
 include!(concat!(env!("OUT_DIR"), "/increment_config.rs"));
 
 pub const IMAGE_SIZE: usize = 500;
-pub const TEST_SIZE: usize = 500;
+pub const TEST_SIZE: usize = 5000;
 pub const DEGREES: f64 = 360.0;
 pub const STEPS: usize = (DEGREES / INCREMENT) as usize;
 
@@ -60,7 +60,7 @@ impl PipelineConfig for LowQualityConfig {
     const BLUR_MODE: Mode = Mode::LOW;
     const APPLY_BLUR: bool = false;
     const QUANTISE_MODE: Mode = Mode::LOW;
-    const APPLY_QUANTISATION: bool = false; 
+    const APPLY_QUANTISATION: bool = false;
     const SATURATION_MODE: Mode = Mode::LOW;
     const APPLY_SATURATION: bool = true;
 }
@@ -77,14 +77,13 @@ pub struct Neighbours {
     pub top_middle: Colour,
 }
 
-
 pub fn send_perf_cmd(ctl: &mut File, ack: &mut File, cmd: &str) -> Result<()> {
     writeln!(ctl, "{}", cmd)?;
     ctl.flush()?;
-    
+
     let mut ack_buf = [0u8; 4]; // "ack\n" is 4 bytes
     ack.read_exact(&mut ack_buf)?;
-    
+
     Ok(())
 }
 
@@ -94,7 +93,6 @@ pub fn read_array_from_file<const STEPS: usize>(path: &str) -> [f64; STEPS] {
     let mut counter = 0;
 
     for line in read_to_string(path).unwrap().lines() {
-
         if counter >= STEPS {
             break;
         }
