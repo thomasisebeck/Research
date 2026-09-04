@@ -6,7 +6,7 @@ const assert = std.debug.assert;
 const config = @import("config");
 
 pub const increment: f64 = config.increment; 
-pub const TEST_SIZE: usize = 50000;
+pub const TEST_SIZE: usize = 10000;
 pub const degrees: comptime_float = 360;
 pub const steps: comptime_int = @intFromFloat(degrees / increment);
 
@@ -158,4 +158,25 @@ pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[IMAGE_SIZE][IMAGE
     }
 
     return 0;
+}
+
+pub fn writeFloatArrayToFile(io: anytype, path: []const u8, size: usize) !void {
+    var file = try std.Io.Dir.cwd().createFile(io, path, .{ .truncate = true });
+    defer file.close(io);
+
+    var file_writer = file.writer(io, &.{});
+
+    var prng = std.Random.DefaultPrng.init(12345);
+
+    for (0..size) |_| {
+        // utils.steps is the max index that you can access in the LUT
+        // just store a random index to look up
+        // utils.degrees = 360
+
+        // we need anything between 0 and steps (0 - 3600)
+        // then the test case becomes 0.1 0.2 0.3 ...
+        const random_num = prng.random().float(f64);
+
+        try file_writer.interface.print("{d}\n", .{random_num});
+    }
 }

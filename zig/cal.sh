@@ -9,12 +9,8 @@ PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
 
 FILES=(
-  "lut_comptime.zig"
-  "lut_runtime.zig"
+  "calibration.zig"
 )
-
-# Target increment settings (space-separated array in bash - no commas)
-INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
 
 # 1. Initialize CSV headers if files don't exist yet
 if [ ! -f "$BUILD_CSV" ]; then
@@ -35,12 +31,14 @@ if [ -f /sys/devices/system/cpu/intel_pstate/no_turbo ]; then
   echo 1 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 fi
 
+# increase stack limit
+ulimit -s
+
 # Outer loops iterate over target files and increment settings
 for FILENAME in "${FILES[@]}"; do
   LABEL="${FILENAME%.*}"
 
-  for INC in "${INCREMENTS[@]}"; do
-    SETTING_NAME="INC_${INC}"
+    SETTING_NAME="N/A"
 
     echo "=================================================="
     echo " Target: ${LABEL} | Setting: ${SETTING_NAME}"
@@ -60,13 +58,13 @@ for FILENAME in "${FILES[@]}"; do
       # Measure Cold Build
       COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
         zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
-        -Dincrement="${INC}" > /dev/null; } 2>&1 )
+        > /dev/null; } 2>&1 )
 
       # Measure Hot Build
       touch "src/${FILENAME}"
       HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
         zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
-        -Dincrement="${INC}" > /dev/null; } 2>&1 )
+        > /dev/null; } 2>&1 )
 
       # Log build row
       echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME}" >> "$BUILD_CSV"
@@ -80,7 +78,7 @@ for FILENAME in "${FILES[@]}"; do
     # Ensure executable exists before execution runs
     rm -rf .zig-cache zig-out
     zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
-      -Dincrement="${INC}" > /dev/null 2>&1
+       > /dev/null 2>&1
 
     sleep 10
 
@@ -117,7 +115,6 @@ for FILENAME in "${FILES[@]}"; do
 
       # Log runtime row
       echo "${LABEL},${SETTING_NAME},${i},${RUN_NS},${PERF_METRICS}" >> "$RUNTIME_CSV"
-    done
 
   done
 done

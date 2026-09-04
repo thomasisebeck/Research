@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+message(STATUS "Default C++ Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler Path: ${CMAKE_CXX_COMPILER}")
+message(STATUS "Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
+
 add_compile_options(-fconstexpr-ops-limit=100000000)
 add_compile_options(-fconstexpr-loop-limit=100000000)
 

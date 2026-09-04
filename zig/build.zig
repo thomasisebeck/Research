@@ -20,15 +20,13 @@ pub fn build(b: *std.Build) void {
     // lut
     const increment = b.option(f64, "increment", "LUT increment value") orelse 0.01;
 
-    // image processor 
+// 1. Capture build CLI options
     const blur_mode = b.option(utils.Mode, "blur_mode", "Blur mode quality setting") orelse .LOW;
     const apply_blur = b.option(bool, "apply_blur", "Enable blur stage") orelse false;
     const quantise_mode = b.option(utils.Mode, "quantise_mode", "Quantisation quality setting") orelse .LOW;
     const apply_quantisation = b.option(bool, "apply_quantisation", "Enable quantisation stage") orelse false;
     const saturation_mode = b.option(utils.Mode, "saturation_mode", "Saturation quality setting") orelse .LOW;
     const apply_saturation = b.option(bool, "apply_saturation", "Enable saturation stage") orelse true;
-
-
 
 
     const target_src = b.option([]const u8, "target_src", "Source file to build") orelse "src/image_pipeline_comptime.zig";

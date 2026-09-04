@@ -10,8 +10,8 @@ REAL_HOME=$(eval echo "~${TARGET_USER}")
 CARGO_BIN="/usr/bin/cargo"
 
 # 2. Benchmark Configuration
-ITERATIONS=${1:-10}
-ITERATIONS_BUILD=${1:-10}
+ITERATIONS=${1:-15}
+ITERATIONS_BUILD=${1:-15}
 
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
@@ -20,7 +20,7 @@ PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
 
 FILES=("lut_comptime.rs" "lut_runtime.rs")
-INCREMENTS=("0.001" "0.005" "0.01" "0.05" "0.1" "0.5" "5")
+INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
 
 # done
 # "1" 

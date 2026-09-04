@@ -1,16 +1,27 @@
 #!/usr/bin/env bash
 
-# NBBBBBBBBBBB: must run with sudo
-echo "REMEMBER TO RUN WITH SUDO!"
+# REMEMBER TO RUN WITH SUDO!
+if [ "$EUID" -ne 0 ]; then
+  echo "Error: Please run with sudo!"
+  exit 1
+fi
+
+set -e
 
 # 1. Define source files to benchmark
 FILES=(
-  "image_pipeline_runtime.zig"
   "image_pipeline_comptime.zig"
+  "image_pipeline_runtime.zig"
 )
 
-ITERATIONS=${1:-5}
-CSV_FILE="results.csv"
+ITERATIONS=${1:-15}
+ITERATIONS_BUILD=${1:-15}
+BUILD_CSV="build_times.csv"
+RUNTIME_CSV="runtime.csv"
+
+PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
+PERF_CTL="/tmp/perf.ctl"
+PERF_ACK="/tmp/perf.ack"
 
 # 2. Quality and Toggle Configurations
 QUALITIES=("LOW" "MED" "HIGH")
@@ -20,17 +31,26 @@ TOGGLE_SETS=(
   "true,true,true"
 )
 
-PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
-
-# 3. Add CSV header if it doesn't exist
-if [ ! -f "$CSV_FILE" ]; then
-  echo "label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys,runtime_ns,$PERF_EVENTS" > "$CSV_FILE"
+# 3. Initialize CSV headers if files don't exist yet
+if [ ! -f "$BUILD_CSV" ]; then
+  echo "label,setting,run_number,cold_real,cold_user,cold_sys,hot_real,hot_user,hot_sys" > "$BUILD_CSV"
 fi
 
+if [ ! -f "$RUNTIME_CSV" ]; then
+  echo "label,setting,run_number,runtime_ns,$PERF_EVENTS" > "$RUNTIME_CSV"
+fi
+
+# Phase 0: System Isolation & Environment Preparation
 echo "=================================================="
-echo " Phase 0: Address Space Randomisation"
+echo " Phase 0: Address Space Rand, Freq scaling, Turbo"
 echo "=================================================="
-echo 0 | sudo tee /proc/sys/kernel/randomize_va_space > /dev/null
+echo 0 | tee /proc/sys/kernel/randomize_va_space
+echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+if [ -f /sys/devices/system/cpu/intel_pstate/no_turbo ]; then
+  echo 1 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
+fi
+
+ulimit -s unlimited
 
 NUM_CONFIGS=${#QUALITIES[@]}
 
@@ -45,10 +65,10 @@ for FILENAME in "${FILES[@]}"; do
     SETTING_NAME="${QUAL}_${A1}_${A2}_${A3}"
 
     echo "=================================================="
-    echo " Target: ${FILENAME} | Config [${c}]: ${SETTING_NAME}"
+    echo " Target: ${LABEL} | Config [${c}]: ${SETTING_NAME}"
     echo "=================================================="
 
-    # Construct the common build flags
+    # Construct the common build flags array
     BUILD_FLAGS=(
       "-Dtarget_src=src/${FILENAME}"
       "-Doptimize=ReleaseFast"
@@ -60,42 +80,57 @@ for FILENAME in "${FILES[@]}"; do
       "-Dapply_saturation=${A3}"
     )
 
-    for (( i=1; i<=ITERATIONS; i++ )); do
-      echo "  -> Run ${i}/${ITERATIONS}..."
+    # ----------------------------------------------------
+    # Phase 1: Build Phase
+    # ----------------------------------------------------
+    echo " Phase 1: Measuring ${ITERATIONS_BUILD} Builds..."
 
-      # Clean cache for true cold build baseline
+    for (( i=1; i<=ITERATIONS_BUILD; i++ )); do
+      echo "  -> Build ${i}/${ITERATIONS_BUILD}..."
+
       rm -rf .zig-cache zig-out
-      sudo rm -rf /root/.cache/zig
+      rm -rf /root/.cache/zig
 
-      # --- BUILD TIMES (Cold & Hot) ---
-
-      # Cold Build
+      # Measure Cold Build
       COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0 \
         zig build "${BUILD_FLAGS[@]}" > /dev/null; } 2>&1 )
 
-      # Hot Build (touch file to invalidate single compilation unit)
+      # Measure Hot Build
       touch "src/${FILENAME}"
       HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0 \
         zig build "${BUILD_FLAGS[@]}" > /dev/null; } 2>&1 )
 
-      if [ ! -f "./zig-out/bin/out" ]; then
-        echo "Error: Executable not found!"
-        exit 1
-      fi
+      # Log build row
+      echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME}" >> "$BUILD_CSV"
+    done
 
-      # --- BENCHMARK EXECUTION ---
+    # ----------------------------------------------------
+    # Phase 2: CPU Cooling Phase
+    # ----------------------------------------------------
+    echo " Phase 2: Cooling CPU (10s sleep)"
+
+    # Ensure executable exists before execution runs
+    rm -rf .zig-cache zig-out
+    zig build "${BUILD_FLAGS[@]}" > /dev/null 2>&1
+
+    sleep 10
+
+    # ----------------------------------------------------
+    # Phase 3: Benchmark Execution Phase
+    # ----------------------------------------------------
+    echo " Phase 3: Executing ${ITERATIONS} Benchmarks on Core 0"
+
+    for (( i=1; i<=ITERATIONS; i++ )); do
+      echo "  -> Run ${i}/${ITERATIONS}..."
 
       # Create perf FIFOs
-      sudo rm -rf /tmp/perf.ctl /tmp/perf.ack
-      sudo mkfifo /tmp/perf.ctl /tmp/perf.ack
-      sudo chmod 666 /tmp/perf.ctl /tmp/perf.ack
-
-      sleep 2
+      rm -f ${PERF_CTL} ${PERF_ACK}
+      mkfifo ${PERF_CTL} ${PERF_ACK}
+      chmod 666 ${PERF_CTL} ${PERF_ACK}
 
       PERF_RAW_FILE=$(mktemp)
 
-      # Execute benchmark under perf stat
-      OUT_DATA=$(sudo perf stat -x, --delay=-1 --control=fifo:/tmp/perf.ctl,/tmp/perf.ack \
+      OUT_DATA=$(perf stat -x, --delay=-1 --control="fifo:${PERF_CTL},${PERF_ACK}" \
         -e "$PERF_EVENTS" \
         taskset -c 0 \
         ./zig-out/bin/out 2> >(grep -vE "^Events (enabled|disabled)" > "$PERF_RAW_FILE"))
@@ -112,11 +147,11 @@ for FILENAME in "${FILES[@]}"; do
 
       rm -f "$PERF_RAW_FILE"
 
-      # Log single flattened row to CSV
-      echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME},${RUN_NS},${PERF_METRICS}" >> "${CSV_FILE}"
+      # Log runtime row
+      echo "${LABEL},${SETTING_NAME},${i},${RUN_NS},${PERF_METRICS}" >> "$RUNTIME_CSV"
 
     done
   done
 done
 
-echo "Image Pipeline Benchmark complete! Data saved to ${CSV_FILE}"
+echo "Image Pipeline Benchmark complete! Data saved to ${BUILD_CSV} and ${RUNTIME_CSV}"

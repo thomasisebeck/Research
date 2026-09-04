@@ -1,8 +1,6 @@
 mod utils;
 use std::{fs::OpenOptions, time::Instant};
 
-use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
-
 // if statement
 fn quantise<CFG: utils::PipelineConfig>(colour: f32) -> f32 {
     let res;
@@ -136,6 +134,15 @@ fn process<CFG: utils::PipelineConfig>(
     }
 }
 
+#[cfg(feature = "low")]
+pub type ActiveConfig = utils::LowQualityConfig;
+
+#[cfg(feature = "med")]
+pub type ActiveConfig = utils::MediumQualityConfig;
+
+#[cfg(feature = "high")]
+pub type ActiveConfig = utils::HighQualityConfig;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
     let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
@@ -158,7 +165,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let start_time = Instant::now();
 
     // configs are declared above as traits...
-    process::<utils::LowQualityConfig>(&mut my_image);
+    process::<ActiveConfig>(&mut my_image);
 
     let end_time = Instant::now();
     utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;

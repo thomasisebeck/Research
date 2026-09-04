@@ -10,8 +10,8 @@ REAL_HOME=$(eval echo "~${TARGET_USER}")
 CARGO_BIN="/usr/bin/cargo"
 
 # 2. Benchmark Configuration
-ITERATIONS=${1:-10}
-ITERATIONS_BUILD=${1:-10}
+ITERATIONS=${1:-15}
+ITERATIONS_BUILD=${1:-15}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
 SETTING_NAME="N/A"

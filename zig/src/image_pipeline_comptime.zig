@@ -127,7 +127,6 @@ pub fn main(init: std.process.Init) !void {
     var my_image: [utils.IMAGE_SIZE][utils.IMAGE_SIZE]utils.Colour = undefined;
     _ = try utils.readImageFromFile(io, "input_image.txt", &my_image);
 
-    // LOW
     const config = utils.PipelineConfig{
         .blur_mode = @enumFromInt(@intFromEnum(conf.blur_mode)),
         .apply_blur = conf.apply_blur,
@@ -167,6 +166,9 @@ pub fn main(init: std.process.Init) !void {
     //      .saturation_mode = .HIGH,
     //      .apply_saturation = true,
     //  };
+
+    // preprocc image
+    process(config, &my_image);
 
     // --------------- start perf, then the clock ---------------- //
     try utils.sendPerfCommand(ctl_writer, ack_reader, "enable");

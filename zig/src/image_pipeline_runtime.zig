@@ -153,6 +153,10 @@ pub fn main(init: std.process.Init) !void {
         .apply_saturation = true,
     };
 
+
+    // preprocc image
+    process(config, &my_image);
+
     // --------------- start perf, then the clock ---------------- //
     try utils.sendPerfCommand(ctl_writer, ack_reader, "enable");
     const start_time = std.Io.Clock.now(.awake, io);

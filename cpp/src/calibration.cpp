@@ -1,44 +1,60 @@
 #include "utils.cpp"
+#include <benchmark/benchmark.h>
 #include <chrono>
-using namespace std;
+#include <cstdint>
+
+__attribute__((noinline)) uint64_t benchmark_loop(uint64_t x,
+                                                  uint64_t iterations) {
+  for (uint64_t i = 0; i < iterations; ++i) {
+    x = x * 6364136223846793005ULL + 1;
+    asm volatile("" : "+r"(x));
+  }
+  return x;
+}
 
 int main() {
-
   std::ofstream perf_ctl("/tmp/perf.ctl");
   std::ifstream perf_ack("/tmp/perf.ack");
 
-  const auto FILE = "calibration.txt";
+  const int ITERS = 100;
+  uint64_t warmup_res = 0;
+  uint64_t res = 0;
 
-  const int ITERATIONS = 100;
-  utils::write_array_to_file<10000>(FILE);
+  uint64_t init_val = 200;
+  uint64_t iters = 200;
+  benchmark::DoNotOptimize(init_val);
+  benchmark::DoNotOptimize(iters);
 
-  // get the array to add
-  const auto arr = utils::read_array_from_file<10000>(FILE);
+  for (auto i = 0; i < ITERS; i++) {
+    warmup_res += benchmark_loop(init_val, iters);
+  }
 
-  long warmup_sum = 0;
+  benchmark::DoNotOptimize(warmup_res);
 
-  for (int i = 0; i < ITERATIONS; i++)
-    for (const auto &el : arr) {
-      warmup_sum += el;
-    }
-
-  long sum = 0;
-
+  // --------------- start perf, then the clock ---------------- //
   utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
   const auto start_time = std::chrono::steady_clock::now();
+  // ----------------------------------------------------------- //
 
-  for (int i = 0; i < ITERATIONS; i++)
-    for (const auto &el : arr) {
-      sum += el;
-    }
+  for (auto i = 0; i < ITERS; i++) {
+    res += benchmark_loop(init_val, iters);
+  }
 
+  benchmark::DoNotOptimize(res);
+
+  // -------------- stop the clock, then end perf -------------- //
   const auto end_time = std::chrono::steady_clock::now();
   utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
+  // ----------------------------------------------------------- //
 
-  const auto duration = (end_time - start_time).count();
+  const auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                            end_time - start_time)
+                            .count();
 
-  std::print("Processed in: [{}] ns, sum: {}, warmup: {}\n", duration, sum,
-             warmup_sum);
+  //---------------------- print and clean ------------------
+  std::cout << "Processed in: [" << duration << "] ns, warmup res "
+            << warmup_res << " res " << res << std::endl;
+  //---------------------------------------------------------
 
   return 0;
 }

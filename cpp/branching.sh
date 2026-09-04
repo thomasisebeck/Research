@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-ITERATIONS=${1:-10}
-ITERATIONS_BUILD=${1:-10}
+ITERATIONS=${1:-15}
+ITERATIONS_BUILD=${1:-15}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
@@ -9,9 +9,15 @@ PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
 
 FILES=(
-  "image_pipeline_runtime.cpp"
   "image_pipeline_comptime.cpp"
+  "image_pipeline_runtime.cpp"
 )
+
+QUALITIES=("utils::Mode::LOW")
+TOGGLE_SETS=(
+  "false,false,false"
+)
+
 
 QUALITIES=("utils::Mode::LOW" "utils::Mode::MED" "utils::Mode::HIGH")
 TOGGLE_SETS=(

@@ -53,10 +53,10 @@ int main() {
   auto start_time = std::chrono::steady_clock::now();
 
   //++ / Zig Conservative Aliasing: Because raw pointers and standard references
-  //in C++ and Zig allow for potential aliasing (where writing to sum might
-  //theoretically modify the memory backing the array), LLVM's alias analyzer
-  //must take the conservative path and re-read the array from memory on every
-  //outer iteration to remain spec-compliant.
+  // in C++ and Zig allow for potential aliasing (where writing to sum might
+  // theoretically modify the memory backing the array), LLVM's alias analyzer
+  // must take the conservative path and re-read the array from memory on every
+  // outer iteration to remain spec-compliant.
 
   for (auto i = 0; i < ITERS; i++)
     for (const auto &num : test_cases) {

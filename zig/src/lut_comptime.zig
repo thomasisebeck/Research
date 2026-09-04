@@ -28,28 +28,6 @@ pub fn roundToIncrement(value: f64, inc: f64) f64 {
     return std.math.round(value * multiplier) / multiplier;
 }
 
-fn generateTestCases(io: anytype, path: []const u8) !void {
-    var file = try std.Io.Dir.cwd().createFile(io, path, .{ .truncate = true });
-    defer file.close(io);
-
-    var file_writer = file.writer(io, &.{});
-
-    var prng = std.Random.DefaultPrng.init(12345);
-
-    for (0..utils.TEST_SIZE) |_| {
-        // utils.steps is the max index that you can access in the LUT
-        // just store a random index to look up
-        // utils.degrees = 360
-
-        // we need anything between 0 and steps (0 - 3600)
-        // then the test case becomes 0.1 0.2 0.3 ...
-        const val_deg = prng.random().float(f64) * @as(f64, utils.degrees);
-
-        try file_writer.interface.print("{d}\n", .{val_deg});
-
-        std.debug.print("{d},", .{val_deg});
-    }
-}
 
 // zig build -Dtarget_src=./src/lut_comptime.zig -Dincrement=0.5
 

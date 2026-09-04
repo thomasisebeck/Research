@@ -19,7 +19,7 @@ pub enum Mode {
 include!(concat!(env!("OUT_DIR"), "/increment_config.rs"));
 
 pub const IMAGE_SIZE: usize = 500;
-pub const TEST_SIZE: usize = 5000;
+pub const TEST_SIZE: usize = 10000;
 pub const DEGREES: f64 = 360.0;
 pub const STEPS: usize = (DEGREES / INCREMENT) as usize;
 
