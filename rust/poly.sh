@@ -104,6 +104,11 @@ for FILENAME in "${FILES[@]}"; do
       exit 1
   fi
 
+  if [ ! -f "animals.txt" ]; then
+      echo "Error: animals.txt not found in current directory ($(pwd))!"
+      exit 1
+  fi
+
   for (( i=1; i<=ITERATIONS; i++ )); do
     echo "  -> Run ${i}/${ITERATIONS}..."
 

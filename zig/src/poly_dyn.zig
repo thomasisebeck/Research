@@ -92,8 +92,9 @@ pub fn main(init: std.process.Init) !void {
     // ------------------------------------------------
 
     const SIZE = 500;
-    const ITERS = 100;
+    const ITERS = 1000;
     var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
+    var sound_outputs_warmup: [SIZE * ITERS]SoundEnum = undefined;
 
     var dog = Dog{};
     var cat = Cat{};
@@ -121,6 +122,14 @@ pub fn main(init: std.process.Init) !void {
 
     var ind: usize = 0;
 
+    for (0..ITERS) |_| {
+        for (zoo) |animal| {
+            sound_outputs_warmup[ind] = animal.sound();
+            ind += 1;
+        }
+    }
+
+    ind = 0;
 
     // --------------- start perf, then the clock ---------------- //
     try utils.sendPerfCommand(ctl_writer, ack_reader, "enable");

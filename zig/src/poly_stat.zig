@@ -77,17 +77,17 @@ pub fn main(init: std.process.Init) !void {
     const stdout_writer = &stdout_io_writer.interface;
     // ------------------------------------------------
 
-    const SIZE = 100;
-    const ITERS = 100;
+    const SIZE = 500;
+    const ITERS = 1000;
     var sound_outputs: [SIZE * ITERS]SoundEnum = undefined;
+    var sound_outputs_warmup: [SIZE * ITERS]SoundEnum = undefined;
 
     var dog = Dog{};
     var cat = Cat{};
     var mouse = Mouse{};
 
+    // stack allocated array
     var zoo: [SIZE]Animal = undefined;
-
-    var ind: usize = 0;
 
     const input_arr = try utils.readArrayFromFile(i32, SIZE, io, "animals.txt");
 
@@ -105,6 +105,16 @@ pub fn main(init: std.process.Init) !void {
     // prevents entire loop from being eval at comptime
     std.mem.doNotOptimizeAway(&zoo);
 
+    var ind: usize = 0;
+
+    for (0..ITERS) |_| {
+        for (zoo) |animal| {
+            sound_outputs_warmup[ind] = animal.sound();
+            ind += 1;
+        }
+    }
+
+    ind = 0;
 
     // --------------- start perf, then the clock ---------------- //
     try utils.sendPerfCommand(ctl_writer, ack_reader, "enable");

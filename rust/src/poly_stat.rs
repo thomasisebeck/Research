@@ -98,62 +98,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
     let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
 
-    const SIZE: usize = 21;
-    const ITERS: usize = 100;
+    const SIZE: usize = 500;
+    const ITERS: usize = 1000;
 
     let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
 
-    let (d1, d2, d3, d4, d5, d6, d7) = (
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-    );
-    let (c1, c2, c3, c4, c5, c6, c7) = (
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-    );
-    let (m1, m2, m3, m4, m5, m6, m7) = (
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-    );
+    // Read from file and reference single stack instances
+    let dog = Dog::new();
+    let cat = Cat::new();
+    let mouse = Mouse::new();
 
-    let mut zoo: [Animal; SIZE] = [
-        Animal::Dog(&d1),
-        Animal::Cat(&c1),
-        Animal::Mouse(&m1),
-        Animal::Cat(&c2),
-        Animal::Dog(&d2),
-        Animal::Mouse(&m2),
-        Animal::Dog(&d3),
-        Animal::Mouse(&m3),
-        Animal::Cat(&c3),
-        Animal::Mouse(&m4),
-        Animal::Cat(&c4),
-        Animal::Dog(&d4),
-        Animal::Mouse(&m5),
-        Animal::Dog(&d5),
-        Animal::Cat(&c5),
-        Animal::Mouse(&m6),
-        Animal::Dog(&d6),
-        Animal::Cat(&c6),
-        Animal::Mouse(&m7),
-        Animal::Cat(&c7),
-        Animal::Dog(&d7),
-    ];
+    let mut zoo: [Animal; SIZE] = [Animal::Dog(&dog); SIZE];
+    let input_arr: [i32; SIZE] = utils::read_array_from_file::<i32, SIZE>("animals.txt")?;
+
+    for i in 0..SIZE {
+        zoo[i] = match input_arr[i] {
+            1 => Animal::Dog(&dog),
+            2 => Animal::Cat(&cat),
+            3 => Animal::Mouse(&mouse),
+            _ => unreachable!(),
+        };
+    }
 
     // prevents entire loop from being eval at comptime
     zoo = std::hint::black_box(zoo);

@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_CXX_COMPILER g++)
+
 message(STATUS "Default C++ Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Compiler Path: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
@@ -44,6 +47,9 @@ set(SOURCES "src/${TARGET_SRC}")
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/input_image.txt"
                "${CMAKE_CURRENT_BINARY_DIR}/input_image.txt" COPYONLY)
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/animals.txt"
+               "${CMAKE_CURRENT_BINARY_DIR}/animals.txt" COPYONLY)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/calibration.txt"
                "${CMAKE_CURRENT_BINARY_DIR}/calibration.txt" COPYONLY)

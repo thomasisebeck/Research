@@ -1,7 +1,9 @@
+use std::fmt::Debug;
 use std::fs;
 use std::fs::File;
 use std::fs::read_to_string;
 use std::io::{Read, Result, Write};
+use std::str::FromStr;
 
 #[derive(Clone, Copy)]
 pub struct Colour {
@@ -87,23 +89,38 @@ pub fn send_perf_cmd(ctl: &mut File, ack: &mut File, cmd: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn read_array_from_file<const STEPS: usize>(path: &str) -> [f64; STEPS] {
-    let mut my_arr: [f64; STEPS] = [0.0; STEPS];
-
+pub fn read_array_from_file<T, const STEPS: usize>(
+    path: &str,
+) -> std::result::Result<[T; STEPS], std::io::Error>
+where
+    T: FromStr + Default + Copy,
+{
+    let mut my_arr: [T; STEPS] = [T::default(); STEPS];
     let mut counter = 0;
 
-    for line in read_to_string(path).unwrap().lines() {
+    let content = read_to_string(path)?;
+    for line in content.lines() {
         if counter >= STEPS {
             break;
         }
 
-        my_arr[counter] = line.parse::<f64>().unwrap();
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        my_arr[counter] = trimmed.parse::<T>().map_err(|_| {
+            std::io::Error::new(std::io::ErrorKind::InvalidData, "Failed to parse value")
+        })?;
         counter += 1;
     }
 
-    assert!(counter == my_arr.len());
+    assert_eq!(
+        counter, STEPS,
+        "File contains fewer elements than expected array size"
+    );
 
-    my_arr
+    Ok(my_arr)
 }
 
 pub fn print_array<const Size: usize>(arr: &[i32; Size]) {

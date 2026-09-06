@@ -90,17 +90,17 @@ void read_image_from_file(std::string_view path, Colour (&mat)[SIZE][SIZE]) {
   file.close();
 }
 
-template <int Size>
-std::array<double, Size> read_array_from_file(const std::string &path) {
+template <typename T, std::size_t Size>
+std::array<T, Size> read_array_from_file(const std::string &path) {
   std::ifstream file(path, std::ios::in);
   if (!file.is_open()) {
     throw std::runtime_error("Cannot open file: " + path);
   }
 
-  auto my_arr = std::array<double, Size>();
-  int counter = 0;
+  std::array<T, Size> my_arr{};
+  std::size_t counter = 0;
 
-  double val = 0.0;
+  T val{};
   while (counter < Size && file >> val) {
     my_arr[counter++] = val;
   }
