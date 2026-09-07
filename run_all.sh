@@ -12,11 +12,12 @@ fi
 ROOT_DIR=$(pwd)
 
 # Language directories
-LANG_DIRS=("cpp" "rust" "zig")
+# LANG_DIRS=("cpp" "rust" "zig")
+LANG_DIRS=("zig")
 
 # Benchmark scripts to run in sequence
 # SCRIPTS=("cal.sh" "branching.sh" "lut.sh" "poly.sh")
-SCRIPTS=("poly.sh")
+SCRIPTS=("cal.sh")
 
 TOTAL_RUNS=$(( ${#LANG_DIRS[@]} * ${#SCRIPTS[@]} ))
 CURRENT_RUN=0

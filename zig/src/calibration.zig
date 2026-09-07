@@ -4,11 +4,17 @@ const utils = @import("utils.zig");
 pub noinline fn benchmarkLoop(init_x: u64, iterations: u64) u64 {
     var x = init_x;
     var i: u64 = 0;
+    
+    // Prevent compile-time evaluation of iteration count
+    asm volatile (""
+        : [i] "+r" (i),
+    );
+    
     while (i < iterations) : (i += 1) {
         x = x *% 6364136223846793005 +% 1;
         asm volatile (""
-    : [x] "+{rax}" (x),
-);
+            : [x] "+r" (x),
+        );
     }
     return x;
 }
