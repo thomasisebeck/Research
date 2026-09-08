@@ -136,36 +136,6 @@ pub fn main(init: std.process.Init) !void {
         .apply_saturation = conf.apply_saturation
     };
 
-    // std.debug.print("config: {}\n", .{config});
-
-    //const config = utils.PipelineConfig{
-    //    .blur_mode = .LOW,
-    //    .apply_blur = false,
-    //    .quantise_mode = .LOW,
-    //    .apply_quantisation = false,
-    //    .saturation_mode = .LOW,
-    //    .apply_saturation = true,
-    //};
-
-    // MED
-    //const config = utils.PipelineConfig{
-    //    .blur_mode = .MED,
-    //    .apply_blur = true,
-    //    .quantise_mode = .MED,
-    //    .apply_quantisation = true,
-    //    .saturation_mode = .MED,
-    //    .apply_saturation = false,
-    //};
-
-    // HIGH
-    //  const config = utils.PipelineConfig{
-    //      .blur_mode = .HIGH,
-    //      .apply_blur = true,
-    //      .quantise_mode = .HIGH,
-    //      .apply_quantisation = true,
-    //      .saturation_mode = .HIGH,
-    //      .apply_saturation = true,
-    //  };
 
     // preprocc image
     process(config, &my_image);

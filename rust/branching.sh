@@ -20,7 +20,7 @@ PERF_ACK="/tmp/perf.ack"
 
 FILES=(
   "image_pipeline_runtime.rs"
-  "image_pipeline_comptime.rs"
+  # "image_pipeline_comptime.rs"
 )
 
 QUALITIES=("low" "med" "high")

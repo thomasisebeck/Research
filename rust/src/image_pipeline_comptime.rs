@@ -158,6 +158,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // type is derived
     let mut my_image = [[init_pixel; utils::IMAGE_SIZE]; utils::IMAGE_SIZE];
 
+    let dummy_time = Instant::now();
+
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
@@ -171,8 +173,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
+    let dummy_time_ns = end_time.duration_since(dummy_time).as_nanos();
 
-    println!("Processed in: [{}] ns", duration);
+    println!("Processed in: [{}] ns, {}", duration, dummy_time_ns);
 
     Ok(())
 }

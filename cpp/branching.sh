@@ -13,12 +13,6 @@ FILES=(
   "image_pipeline_runtime.cpp"
 )
 
-QUALITIES=("utils::Mode::LOW")
-TOGGLE_SETS=(
-  "false,false,false"
-)
-
-
 QUALITIES=("utils::Mode::LOW" "utils::Mode::MED" "utils::Mode::HIGH")
 TOGGLE_SETS=(
   "false,false,false"

@@ -64,7 +64,7 @@ impl PipelineConfig for LowQualityConfig {
     const QUANTISE_MODE: Mode = Mode::LOW;
     const APPLY_QUANTISATION: bool = false;
     const SATURATION_MODE: Mode = Mode::LOW;
-    const APPLY_SATURATION: bool = true;
+    const APPLY_SATURATION: bool = false;
 }
 
 #[derive(Clone, Copy)] // to copy out of the node

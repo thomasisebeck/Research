@@ -9,8 +9,9 @@ fi
 set -e
 
 # 1. Define source files to benchmark
+# TODO: runtime measurements!!!!
 FILES=(
-  "image_pipeline_comptime.zig"
+# "image_pipeline_comptime.zig"
   "image_pipeline_runtime.zig"
 )
 

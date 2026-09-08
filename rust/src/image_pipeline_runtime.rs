@@ -181,6 +181,36 @@ fn process(
     }
 }
 
+#[cfg(feature = "low")]
+const CONFIG: PipelineConfig = PipelineConfig {
+    blur_mode: utils::Mode::LOW,
+    apply_blur: false,
+    quantise_mode: utils::Mode::LOW,
+    apply_quantisation: false,
+    saturation_mode: utils::Mode::LOW,
+    apply_saturation: true,
+};
+
+#[cfg(feature = "med")]
+const CONFIG: PipelineConfig = PipelineConfig {
+    blur_mode: utils::Mode::MED,
+    apply_blur: true,
+    quantise_mode: utils::Mode::MED,
+    apply_quantisation: true,
+    saturation_mode: utils::Mode::MED,
+    apply_saturation: false,
+};
+
+#[cfg(feature = "high")]
+const CONFIG: PipelineConfig = PipelineConfig {
+    blur_mode: utils::Mode::HIGH,
+    apply_blur: true,
+    quantise_mode: utils::Mode::HIGH,
+    apply_quantisation: true,
+    saturation_mode: utils::Mode::HIGH,
+    apply_saturation: true,
+};
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
     let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
@@ -199,38 +229,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
-    let config = PipelineConfig {
-        blur_mode: utils::Mode::LOW,
-        apply_blur: false,
-        quantise_mode: utils::Mode::LOW,
-        apply_quantisation: false,
-        saturation_mode: utils::Mode::LOW,
-        apply_saturation: true,
-    };
-
-    // let config = PipelineConfig {
-    //     blur_mode: utils::Mode::MED,
-    //     apply_blur: true,
-    //     quantise_mode: utils::Mode::MED,
-    //     apply_quantisation: true,
-    //     saturation_mode: utils::Mode::MED,
-    //     apply_saturation: false,
-    // };
-
-    //let config = PipelineConfig {
-    //    blur_mode: utils::Mode::HIGH,
-    //    apply_blur: true,
-    //    quantise_mode: utils::Mode::HIGH,
-    //    apply_quantisation: true,
-    //    saturation_mode: utils::Mode::HIGH,
-    //    apply_saturation: true,
-    //};
-
     utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
     // configs are declared above as traits...
-    process(&config, &mut my_image);
+    process(&CONFIG, &mut my_image);
 
     let end_time = Instant::now();
     utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;

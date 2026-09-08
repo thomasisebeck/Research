@@ -1,5 +1,6 @@
 const std = @import("std");
 const utils = @import("utils.zig");
+const conf = @import("config");
 
 const PR_TASK_PERF_EVENTS_ENABLE: usize = 32;
 const PR_TASK_PERF_EVENTS_DISABLE: usize = 33;
@@ -123,36 +124,14 @@ pub fn main(init: std.process.Init) !void {
     var my_image: [utils.IMAGE_SIZE][utils.IMAGE_SIZE]utils.Colour = undefined;
     _ = try utils.readImageFromFile(io, "input_image.txt", &my_image);
 
-    // LOW
-    //  const config = utils.PipelineConfig{
-    //      .blur_mode = .LOW,
-    //      .apply_blur = false,
-    //      .quantise_mode = .LOW,
-    //      .apply_quantisation = false,
-    //      .saturation_mode = .LOW,
-    //      .apply_saturation = true,
-    //  };
-
-    // MED
-    //const config = utils.PipelineConfig{
-    //    .blur_mode = .MED,
-    //    .apply_blur = true,
-    //    .quantise_mode = .MED,
-    //    .apply_quantisation = true,
-    //    .saturation_mode = .MED,
-    //    .apply_saturation = false,
-    //};
-
-    // HIGH
     const config = utils.PipelineConfig{
-        .blur_mode = .HIGH,
-        .apply_blur = true,
-        .quantise_mode = .HIGH,
-        .apply_quantisation = true,
-        .saturation_mode = .HIGH,
-        .apply_saturation = true,
+        .blur_mode = @enumFromInt(@intFromEnum(conf.blur_mode)),
+        .apply_blur = conf.apply_blur,
+        .quantise_mode = @enumFromInt(@intFromEnum(conf.quantise_mode)),
+        .apply_quantisation = conf.apply_quantisation,
+        .saturation_mode = @enumFromInt(@intFromEnum(conf.saturation_mode)),
+        .apply_saturation = conf.apply_saturation
     };
-
 
     // preprocc image
     process(config, &my_image);
