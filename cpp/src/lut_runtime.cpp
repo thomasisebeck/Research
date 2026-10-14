@@ -1,15 +1,13 @@
 #include "utils.cpp"
-#include <cmath>
 #include <benchmark/benchmark.h>
 #include <chrono>
+#include <cmath>
 #include <fstream>
-#include <print>
 
 int main() {
-  // ----- setup writer ---------
-  // Open the perf control FIFO stream
+
   std::ofstream perf_ctl("/tmp/perf.ctl");
-  // ------------------------------
+  std::ifstream perf_ack("/tmp/perf.ack");
 
   const auto test_cases =
       utils::read_array_from_file<utils::TEST_SIZE>("lookup.txt");
@@ -20,34 +18,38 @@ int main() {
 
   // 1 ------ WARMUP LOOP ------
   double warmup_sum = 0.0;
-  for (const auto &num : test_cases) {
-    double float_num = static_cast<double>(num);
-    warmup_sum += std::sin(float_num) + std::cos(float_num);
-  }
+  double sum = 0.0;
+  size_t ITERS = 100;
+
+  for (auto i = 0; i < ITERS; i++)
+    for (const auto &num : test_cases) {
+      double float_num = static_cast<double>(num);
+      warmup_sum += std::sin(float_num) + std::cos(float_num);
+    }
+
   benchmark::DoNotOptimize(warmup_sum);
 
   // 2 ---- BENCHMARK LOOP -----
-  double sum = 0.0;
 
   // start perf, then the clock
-  perf_ctl << "enable\n" << std::flush;
+  utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
   auto start_time = std::chrono::steady_clock::now();
 
-  for (const auto &num : test_cases) {
-    double float_num = static_cast<double>(num);
-    sum += std::sin(float_num) + std::cos(float_num);
-  }
+  for (auto i = 0; i < ITERS; i++)
+    for (const auto &num : test_cases) {
+      double float_num = static_cast<double>(num);
+      sum += std::sin(float_num) + std::cos(float_num);
+    }
+
+  benchmark::DoNotOptimize(sum);
 
   // end the clock, then stop perf
   auto end_time = std::chrono::steady_clock::now();
-  perf_ctl << "disable\n" << std::flush;
+  utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
 
   const auto duration = (end_time - start_time).count();
-  std::print("Processed in: [{}] ns\n", duration);
-
-  std::print("Sum: {}\n", sum);
-
-  benchmark::DoNotOptimize(sum);
+  std::print("Processed in: [{}] ns. Sum: {}, Warmup Sum: {}\n", duration, sum,
+             warmup_sum);
 
   return 0;
 }

@@ -1,11 +1,13 @@
+#include "utils.cpp"
 #include <array>
 #include <benchmark/benchmark.h>
 #include <chrono>
 #include <cstddef>
+#include <fstream>
 #include <linux/prctl.h>
 #include <print>
-#include <ranges>
 #include <sys/prctl.h>
+
 enum class SoundEnum { Woof, Meow, Squeek };
 
 struct AnimalInterface {
@@ -44,25 +46,59 @@ struct Mouse : public AnimalInterface {
 };
 
 int main() {
-  const std::size_t SIZE = 21;
-  const std::size_t ITERS = 100;
+  const std::size_t SIZE = 500;
+  const std::size_t ITERS = 1000;
+
+  std::ofstream perf_ctl("/tmp/perf.ctl");
+  std::ifstream perf_ack("/tmp/perf.ack");
 
   std::array<SoundEnum, SIZE * ITERS> sound_outputs;
+  std::array<SoundEnum, SIZE * ITERS> sound_outputs_warmup;
 
-  // allocate on stack, not heap
-  Dog d1, d2, d3, d4, d5, d6, d7;
-  Cat c1, c2, c3, c4, c5, c6, c7;
-  Mouse m1, m2, m3, m4, m5, m6, m7;
+  // Single stack instances
+  Dog dog;
+  Cat cat;
+  Mouse mouse;
 
-  // populate with the addresses
-  std::array<AnimalInterface *, SIZE> zoo = {&d1, &c1, &m1, &d2, &c2, &m2, &d3,
-                                             &c3, &m3, &d4, &c4, &m4, &d5, &c5,
-                                             &m5, &d6, &c6, &m6, &d7, &c7, &m7};
+  std::array<AnimalInterface *, SIZE> zoo;
+
+  // Load animal array from file
+  std::array<int, SIZE> input_arr =
+      utils::read_array_from_file<int, SIZE>("animals.txt");
+
+  for (std::size_t i = 0; i < SIZE; ++i) {
+    switch (input_arr[i]) {
+    case 1:
+      zoo[i] = &dog;
+      break;
+    case 2:
+      zoo[i] = &cat;
+      break;
+    case 3:
+      zoo[i] = &mouse;
+      break;
+    default:
+      std::unreachable();
+    }
+  }
+
+  benchmark::DoNotOptimize(zoo);
 
   std::size_t ind = 0;
 
+  // 1. ----------- WARMUP -------------
+  for (std::size_t j = 0; j < ITERS; j++) {
+    for (const auto &el : zoo) {
+      sound_outputs_warmup[ind++] = el->sound();
+    }
+  }
+
+  ind = 0;
+
+  benchmark::DoNotOptimize(zoo);
+
   // start perf, then the clock
-  prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
   auto start_time = std::chrono::steady_clock::now();
 
   for (int j = 0; j < ITERS; j++)
@@ -80,21 +116,29 @@ int main() {
         cmp     rax, OFFSET FLAT:"Dog::sound() const"       # pretmp_142,
         jne     .L16      #,
        */
-      sound_outputs[ind++] = zoo[i]->sound();
+      // 2. ----------- BENCHMARK -------------
+      for (std::size_t j = 0; j < ITERS; j++) {
+        for (const auto &el : zoo) {
+          sound_outputs[ind++] = el->sound();
+        }
+      }
+
+      // end the clock, then stop perf
+      auto end_time = std::chrono::steady_clock::now();
+      utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
+
+      std::print("\n---  VERIFYING OUTPUTS ---\n");
+      for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
+        std::print("Index {}, sound: {}\n", ind, static_cast<int>(sound));
+      }
+
+      for (auto [ind, sound] : std::views::enumerate(sound_outputs_warmup)) {
+        std::print("Index {}, sound_warmup: {}\n", ind,
+                   static_cast<int>(sound));
+      }
+
+      const auto duration = (end_time - start_time).count();
+      std::print("Processed in: [{}] ns\n", duration);
+
+      benchmark::DoNotOptimize(sound_outputs);
     }
-
-  // end the clock, then stop perf
-  auto end_time = std::chrono::steady_clock::now();
-  prctl(PR_TASK_PERF_EVENTS_DISABLE);
-
-  std::print("\n---  VERIFYING OUTPUTS ---\n");
-  for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
-    std::print("Index {}, sound: {}\n", ind, static_cast<int>(sound));
-  }
-
-  const auto duration = (end_time - start_time).count();
-  std::print("Processed in: [{}] ns\n", duration);
-
-  benchmark::DoNotOptimize(sound_outputs);
-  benchmark::DoNotOptimize(zoo);
-}

@@ -6,7 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_compile_options(-fconstexpr-loop-limit=10000000)
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_CXX_COMPILER g++)
+
+message(STATUS "Default C++ Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler Path: ${CMAKE_CXX_COMPILER}")
+message(STATUS "Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
+
+add_compile_options(-fconstexpr-ops-limit=100000000)
+add_compile_options(-fconstexpr-loop-limit=100000000)
 
 if(DEFINED INCREMENT_VAL)
   add_compile_definitions(INCREMENT_VAL=${INCREMENT_VAL})
@@ -32,13 +40,19 @@ endif()
 option(Optimise "Build with high optimizations and no assertions" OFF)
 
 if(NOT DEFINED TARGET_SRC)
-  set(TARGET_SRC "lut_comptime.cpp")
+  set(TARGET_SRC "poly_stat.cpp")
 endif()
 
 set(SOURCES "src/${TARGET_SRC}")
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/input_image.txt"
                "${CMAKE_CURRENT_BINARY_DIR}/input_image.txt" COPYONLY)
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/animals.txt"
+               "${CMAKE_CURRENT_BINARY_DIR}/animals.txt" COPYONLY)
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/calibration.txt"
+               "${CMAKE_CURRENT_BINARY_DIR}/calibration.txt" COPYONLY)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lookup.txt"
                "${CMAKE_CURRENT_BINARY_DIR}/lookup.txt" COPYONLY)

@@ -1,7 +1,5 @@
 mod utils;
-use std::time::Instant;
-
-use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
+use std::{fs::OpenOptions, time::Instant};
 
 // if statement
 fn quantise<CFG: utils::PipelineConfig>(colour: f32) -> f32 {
@@ -136,7 +134,19 @@ fn process<CFG: utils::PipelineConfig>(
     }
 }
 
-fn main() {
+#[cfg(feature = "low")]
+pub type ActiveConfig = utils::LowQualityConfig;
+
+#[cfg(feature = "med")]
+pub type ActiveConfig = utils::MediumQualityConfig;
+
+#[cfg(feature = "high")]
+pub type ActiveConfig = utils::HighQualityConfig;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
+
     // have to init the array in rust
     let init_pixel = utils::Colour {
         r: 0.0,
@@ -148,23 +158,24 @@ fn main() {
     // type is derived
     let mut my_image = [[init_pixel; utils::IMAGE_SIZE]; utils::IMAGE_SIZE];
 
+    let dummy_time = Instant::now();
+
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_ENABLE, 0, 0, 0, 0);
-    }
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
     // configs are declared above as traits...
-    process::<utils::LowQualityConfig>(&mut my_image);
+    process::<ActiveConfig>(&mut my_image);
 
     let end_time = Instant::now();
-    unsafe {
-        libc::prctl(PR_TASK_PERF_EVENTS_DISABLE, 0, 0, 0, 0);
-    }
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
+    let dummy_time_ns = end_time.duration_since(dummy_time).as_nanos();
 
-    println!("Processed in: {} ns", duration);
+    println!("Processed in: [{}] ns, {}", duration, dummy_time_ns);
+
+    Ok(())
 }

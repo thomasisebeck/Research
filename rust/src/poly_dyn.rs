@@ -1,6 +1,7 @@
-use std::fs::File;
-use std::io::Write;
+use std::fs::OpenOptions;
+use std::hint::black_box;
 use std::time::Instant;
+mod utils;
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -83,77 +84,56 @@ impl Animal for Mouse {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut perf_ctl = File::create("/tmp/perf.ctl")?;
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
 
-    const SIZE: usize = 21;
-    const ITERS: usize = 100;
+    const SIZE: usize = 500;
+    const ITERS: usize = 1000;
 
     let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
+    let mut sound_outputs_warmup: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
 
-    let (d1, d2, d3, d4, d5, d6, d7) = (
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-    );
-    let (c1, c2, c3, c4, c5, c6, c7) = (
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-    );
-    let (m1, m2, m3, m4, m5, m6, m7) = (
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-    );
+    // Single stack instances
+    let dog = Dog::new();
+    let cat = Cat::new();
+    let mouse = Mouse::new();
 
-    // 2. Populate array with trait object references (Zero heap!)
-    let mut zoo: [&dyn Animal; SIZE] = [
-        &d1 as &dyn Animal,
-        &c1 as &dyn Animal,
-        &m1 as &dyn Animal,
-        &c2 as &dyn Animal,
-        &d2 as &dyn Animal,
-        &m2 as &dyn Animal,
-        &d3 as &dyn Animal,
-        &m3 as &dyn Animal,
-        &c3 as &dyn Animal,
-        &m4 as &dyn Animal,
-        &c4 as &dyn Animal,
-        &d4 as &dyn Animal,
-        &m5 as &dyn Animal,
-        &d5 as &dyn Animal,
-        &c5 as &dyn Animal,
-        &m6 as &dyn Animal,
-        &d6 as &dyn Animal,
-        &c6 as &dyn Animal,
-        &m7 as &dyn Animal,
-        &c7 as &dyn Animal,
-        &d7 as &dyn Animal,
-    ];
+    let mut zoo: [&dyn Animal; SIZE] = [&dog; SIZE];
 
-    writeln!(perf_ctl, "enable")?;
-    perf_ctl.flush()?;
-    let start_time = Instant::now();
+    // Load animal array from file
+    let input_arr: [i32; SIZE] = utils::read_array_from_file::<i32, SIZE>("animals.txt")?;
+
+    for i in 0..SIZE {
+        zoo[i] = match input_arr[i] {
+            1 => &dog as &dyn Animal,
+            2 => &cat as &dyn Animal,
+            3 => &mouse as &dyn Animal,
+            _ => unreachable!(),
+        };
+    }
+
+    zoo = black_box(zoo);
 
     let mut ind: usize = 0;
 
-    zoo = std::hint::black_box(zoo);
-
-    //16700
+    // 1. ----------- WARMUP -------------
     for _ in 0..ITERS {
-        // Loop over dynamic coll
+        for animal in zoo.iter() {
+            sound_outputs_warmup[ind] = animal.sound();
+            ind += 1;
+        }
+    }
+
+    ind = 0;
+
+    zoo = black_box(zoo);
+
+    // start perf, then the clock
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
+    let start_time = Instant::now();
+
+    // 2. ----------- BENCHMARK -------------
+    for _ in 0..ITERS {
         for animal in zoo.iter() {
             /*
                          mov     rdi, qword ptr [rsp + 208]    # Load data pointer (passed as &self in rdi)
@@ -166,20 +146,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    // end the clock, then stop perf
     let end_time = Instant::now();
-    writeln!(perf_ctl, "disable")?;
-    perf_ctl.flush()?;
-
-    let duration = end_time.duration_since(start_time).as_nanos();
-
-    println!("Processed in: [{}] ns", duration);
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     println!("\n---  VERIFYING OUTPUTS ---");
     for (i, res) in sound_outputs.iter().enumerate() {
         println!("Index {}: {:?}", i, res);
     }
 
-    std::hint::black_box(sound_outputs);
+    for (i, res) in sound_outputs_warmup.iter().enumerate() {
+        println!("Index {}, sound_warmup: {:?}", i, res);
+    }
+
+    let duration = end_time.duration_since(start_time).as_nanos();
+    println!("Processed in: [{}] ns", duration);
+
+    black_box(sound_outputs);
 
     Ok(())
 }

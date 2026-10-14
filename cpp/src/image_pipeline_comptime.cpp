@@ -155,32 +155,31 @@ constexpr void process(utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
 
 int main() {
 
-  try {
+  std::ofstream perf_ctl("/tmp/perf.ctl");
+  std::ifstream perf_ack("/tmp/perf.ack");
 
-    utils::Colour my_image[utils::SIZE][utils::SIZE];
+  utils::Colour my_image[utils::SIZE][utils::SIZE];
 
-    utils::read_image_from_file("input_image.txt", my_image);
+  utils::read_image_from_file("input_image.txt", my_image);
 
-    constexpr auto config =
-        utils::PipelineConfig{.blur_mode = QUAL,
-                              .apply_blur = APPLY_ONE,
-                              .quantise_mode = QUAL,
-                              .apply_quantisation = APPLY_TWO,
-                              .saturation_mode = QUAL,
-                              .apply_saturation = APPLY_THREE};
+  constexpr auto config =
+      utils::PipelineConfig{.blur_mode = QUAL,
+                            .apply_blur = APPLY_ONE,
+                            .quantise_mode = QUAL,
+                            .apply_quantisation = APPLY_TWO,
+                            .saturation_mode = QUAL,
+                            .apply_saturation = APPLY_THREE};
 
-    const auto start_time = std::chrono::steady_clock::now();
+  utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
+  const auto start_time = std::chrono::steady_clock::now();
 
-    process<config>(my_image);
+  process<config>(my_image);
 
-    const auto end_time = std::chrono::steady_clock::now();
+  const auto end_time = std::chrono::steady_clock::now();
+  utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
 
-    const auto duration = (end_time - start_time).count();
-    std::print("Processed in: [{}] ns\n", duration);
-
-  } catch (char const *msg) {
-    std::cout << "MSG: " << msg << std::endl;
-  }
+  const auto duration = (end_time - start_time).count();
+  std::print("Processed in: [{}] ns\n", duration);
 
   return 0;
 }

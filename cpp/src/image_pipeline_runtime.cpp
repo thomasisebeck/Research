@@ -154,6 +154,9 @@ int main() {
 
   utils::read_image_from_file("input_image.txt", my_image);
 
+  std::ofstream perf_ctl("/tmp/perf.ctl");
+  std::ifstream perf_ack("/tmp/perf.ack");
+
   constexpr auto config =
       utils::PipelineConfig{.blur_mode = QUAL,
                             .apply_blur = APPLY_ONE,
@@ -163,14 +166,14 @@ int main() {
                             .apply_saturation = APPLY_THREE};
 
   // start perf, then the clock
-  prctl(PR_TASK_PERF_EVENTS_ENABLE);
+  utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
   auto start_time = std::chrono::steady_clock::now();
 
   process(config, my_image);
 
   // end the clock, then stop perf
+  utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
   auto end_time = std::chrono::steady_clock::now();
-  prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
   const auto duration = (end_time - start_time).count();
   std::print("Processed in: [{}] ns\n", duration);

@@ -1,6 +1,8 @@
-use std::time::Instant;
-use std::fs::File;
+#![allow(long_running_const_eval)]
+
+use std::fs::{File, OpenOptions};
 use std::io::Write;
+use std::time::Instant;
 use trig_const::{cos, sin};
 mod utils;
 
@@ -24,44 +26,58 @@ const fn generate_lut<const STEPS: usize>() -> [f64; STEPS] {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut perf_ctl = File::create("/tmp/perf.ctl")?;
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
 
-    let test_cases: [f64; utils::TEST_SIZE] = utils::read_array_from_file::<{ utils::TEST_SIZE }>("lookup.txt");
+    let test_cases: [f64; utils::TEST_SIZE] =
+        utils::read_array_from_file::<{ utils::TEST_SIZE }>("lookup.txt");
 
     // force to be placed on the stack, so that it
     // has better cache locality using let
-    static COMPTIME_LUT: [f64; utils::STEPS] = generate_lut::<{ utils::STEPS }>();
+    static my_lut: [f64; utils::STEPS] = generate_lut::<{ utils::STEPS }>();
 
-    let my_lut = std::hint::black_box(COMPTIME_LUT);
+    // faster but not fair
+    // let my_lut = std::hint::black_box(COMPTIME_LUT);
 
-    println!(
-        "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
-        my_lut.len(),
-        utils::INCREMENT,
-        utils::TEST_SIZE,
-        utils::DEGREES,
-        utils::STEPS,
-    );
+    let prediv = 1.0 / utils::INCREMENT;
+    let mut warmup_sum: f64 = 0.0;
+    let mut sum: f64 = 0.0;
+    const ITERS: usize = 100;
 
-    writeln!(perf_ctl, "enable")?;
-    perf_ctl.flush()?;
+    for _ in 0..ITERS {
+        for &num in test_cases.iter() {
+            let idx = std::hint::black_box((num * prediv) as usize);
+            warmup_sum += my_lut[idx];
+        }
+    }
+
+    std::hint::black_box(warmup_sum);
+
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
-    let sum: f64 = test_cases
-        .iter()
-        .map(|&num| {
-            let float_idx = (num as f64) / utils::INCREMENT;
-            my_lut[float_idx as usize]
-        })
-        .sum();
+    /*
+    Rust's noalias Guarantee: Because Rust's reference type system (& vs &mut) guarantees at compile time that an immutable slice (&[f64]) can never be mutated by anything else in the thread, rustc emits the noalias LLVM attribute automatically. LLVM reads this metadata, proves Loop Invariant Code Motion (LICM) is 100% mathematically safe, and hoists the memory reads out of the outer loop without any manual annotations.
+    */
+
+    for _ in 0..ITERS {
+        for &num in test_cases.iter() {
+            let idx = std::hint::black_box((num * prediv) as usize);
+            sum += my_lut[idx];
+        }
+    }
+
+    std::hint::black_box(sum);
 
     let end_time = Instant::now();
-    writeln!(perf_ctl, "disable")?;
-    perf_ctl.flush()?;
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
 
-    println!("Processed in: [{}] ns, sum: {}", duration, sum);
+    println!(
+        "Processed in: [{}] ns, sum: {}, warmup sum: {}",
+        duration, sum, warmup_sum
+    );
 
     Ok(())
 }

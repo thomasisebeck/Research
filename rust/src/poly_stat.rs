@@ -1,6 +1,7 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::time::Instant;
+mod utils;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -26,7 +27,6 @@ impl Dog {
 }
 // Implement Soundable for Dog
 impl Soundable for Dog {
-    #[inline(always)]
     fn sound(&self) -> SoundEnum {
         if self.id == 0 {
             SoundEnum::Meow
@@ -47,7 +47,6 @@ impl Cat {
 }
 // Implement Soundable for Cat
 impl Soundable for Cat {
-    #[inline(always)]
     fn sound(&self) -> SoundEnum {
         if self.id == 0 {
             SoundEnum::Woof
@@ -68,7 +67,6 @@ impl Mouse {
 }
 // Implement Soundable for Mouse
 impl Soundable for Mouse {
-    #[inline(always)]
     fn sound(&self) -> SoundEnum {
         if self.id == 0 {
             SoundEnum::Woof
@@ -87,7 +85,6 @@ enum Animal<'a> {
 
 // Implement Soundable for the Animal enum wrapper
 impl<'a> Soundable for Animal<'a> {
-    #[inline(always)]
     fn sound(&self) -> SoundEnum {
         match self {
             Animal::Dog(d) => d.sound(),
@@ -143,76 +140,49 @@ fn process_batch<T: Soundable>(animals: &[T], outputs: &mut [SoundEnum], iters: 
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut perf_ctl = File::create("/tmp/perf.ctl")?;
+    let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
+    let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
 
-    const SIZE: usize = 21;
-    const ITERS: usize = 100;
+    const SIZE: usize = 500;
+    const ITERS: usize = 1000;
 
     let mut sound_outputs: [SoundEnum; SIZE * ITERS] = [SoundEnum::Woof; SIZE * ITERS];
 
-    let (d1, d2, d3, d4, d5, d6, d7) = (
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-        Dog::new(),
-    );
-    let (c1, c2, c3, c4, c5, c6, c7) = (
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-        Cat::new(),
-    );
-    let (m1, m2, m3, m4, m5, m6, m7) = (
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-        Mouse::new(),
-    );
+    // Read from file and reference single stack instances
+    let dog = Dog::new();
+    let cat = Cat::new();
+    let mouse = Mouse::new();
 
-    let mut zoo: [Animal; SIZE] = [
-        Animal::Dog(&d1),
-        Animal::Cat(&c1),
-        Animal::Mouse(&m1),
-        Animal::Cat(&c2),
-        Animal::Dog(&d2),
-        Animal::Mouse(&m2),
-        Animal::Dog(&d3),
-        Animal::Mouse(&m3),
-        Animal::Cat(&c3),
-        Animal::Mouse(&m4),
-        Animal::Cat(&c4),
-        Animal::Dog(&d4),
-        Animal::Mouse(&m5),
-        Animal::Dog(&d5),
-        Animal::Cat(&c5),
-        Animal::Mouse(&m6),
-        Animal::Dog(&d6),
-        Animal::Cat(&c6),
-        Animal::Mouse(&m7),
-        Animal::Cat(&c7),
-        Animal::Dog(&d7),
-    ];
+    let mut zoo: [Animal; SIZE] = [Animal::Dog(&dog); SIZE];
+    let input_arr: [i32; SIZE] = utils::read_array_from_file::<i32, SIZE>("animals.txt")?;
 
-    writeln!(perf_ctl, "enable")?;
-    perf_ctl.flush()?;
-    let start_time = Instant::now();
+    for i in 0..SIZE {
+        zoo[i] = match input_arr[i] {
+            1 => Animal::Dog(&dog),
+            2 => Animal::Cat(&cat),
+            3 => Animal::Mouse(&mouse),
+            _ => unreachable!(),
+        };
+    }
 
+    // prevents entire loop from being eval at comptime
     zoo = std::hint::black_box(zoo);
 
-    process_batch(&zoo, &mut sound_outputs, ITERS);
+    let mut ind: usize = 0;
+
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
+    let start_time = Instant::now();
+
+    for _ in 0..ITERS {
+        // Loop over the fixed-size array directly
+        for animal in zoo.iter() {
+            sound_outputs[ind] = animal.sound();
+            ind += 1;
+        }
+    }
 
     let end_time = Instant::now();
-    writeln!(perf_ctl, "disable")?;
-    perf_ctl.flush()?;
+    utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;
 
     let duration = end_time.duration_since(start_time).as_nanos();
 
@@ -223,6 +193,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Index {}: {:?}", i, res);
     }
 
+    // black box sound outputs after
     std::hint::black_box(sound_outputs);
 
     Ok(())

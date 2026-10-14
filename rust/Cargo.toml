@@ -27,10 +27,20 @@ path = "src/poly_dyn.rs"
 name = "poly_stat"
 path = "src/poly_stat.rs"
 
+[[bin]]
+name = "calibration"
+path = "src/calibration.rs"
+
 [dependencies]
 trig-const = "0"
 rand = "0.10.2"
 libc = "0.2.189"
+
+[features]
+default = ["low"]
+low = []
+med = []
+high = []
 
 [build]
 rustflags = ["-C", "opt-level=3", "target-cpu=native", "-A warnings"]

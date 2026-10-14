@@ -6,7 +6,7 @@ const assert = std.debug.assert;
 const config = @import("config");
 
 pub const increment: f64 = config.increment; 
-pub const TEST_SIZE: usize = 50000;
+pub const TEST_SIZE: usize = 10000;
 pub const degrees: comptime_float = 360;
 pub const steps: comptime_int = @intFromFloat(degrees / increment);
 
@@ -42,6 +42,16 @@ pub fn printImage(mat: [IMAGE_SIZE][IMAGE_SIZE]Colour) !void {
     print("]\n", .{});
 }
 
+pub fn sendPerfCommand(writer: anytype, reader: anytype, command: []const u8) !void {
+    // 1. Command perf stat to enable/disable counters
+    _ = try writer.print("{s}\n", .{command});
+    try writer.flush();
+
+    // 2. Block until perf replies
+    const raw_ack = (try reader.takeDelimiter('\n')) orelse unreachable;
+    _ = std.mem.trim(u8, raw_ack, "\r");
+}
+
 pub fn generateRandomArray(comptime array_size: usize, io: anytype, path: []const u8) !void {
     var file = try std.Io.Dir.cwd().createFile(io, path, .{ .truncate = true });
     defer file.close(io);
@@ -54,7 +64,7 @@ pub fn generateRandomArray(comptime array_size: usize, io: anytype, path: []cons
 
     for (0..array_size) |_| {
         // Generates an integer between 1 and 3 inclusive
-        const num = prng.random().intRangeAtMost(u8, 1, 3);
+        const num = prng.random().intRangeAtMost(i32, 1, 3);
 
         try file_writer.interface.print("{}\n", .{num});
     }
@@ -82,30 +92,38 @@ pub fn writeImageToFile(io: anytype, path: []const u8) !void {
     }
 }
 
-pub fn readArrayFromFile(comptime array_size: usize, io: std.Io, path: []const u8) ![array_size]f64 {
-    //var stdout_writer = std.Io.File.stdout().writer(io, &.{});
-    //const stdout = &stdout_writer.interface;
+pub fn readArrayFromFile(
+    comptime T: type, // i32, u64, f64
+    comptime array_size: usize, 
+    io: std.Io, 
+    path: []const u8
+) ![array_size]T {
     var file_buf: [array_size * 32]u8 = undefined;
     const file = try std.Io.Dir.cwd().readFile(io, path, &file_buf);
 
-    // init the array to all 0, len 5
-    var input_array = [_]f64{0} ** array_size;
+    // Initialize the array to all 0 of type T
+    var input_array = [_]T{0} ** array_size;
     var counter: u32 = 0;
 
     var iter = std.mem.tokenizeScalar(u8, file, '\n');
     while (iter.next()) |line| {
         if (counter >= array_size) break;
-
         const clean_line = std.mem.trim(u8, line, "\r");
 
-        // pass the buffer as base 10
-        input_array[counter] = try std.fmt.parseFloat(f64, clean_line);
+        switch (@typeInfo(T)) {
+            .int => {
+                input_array[counter] = try std.fmt.parseInt(T, clean_line, 10);
+            },
+            .float => {
+                input_array[counter] = try std.fmt.parseFloat(T, clean_line);
+            },
+            else => @compileError("readArrayFromFile only supports integer and float types."),
+        }
 
         counter += 1;
     }
 
     assert(counter == array_size);
-
     return input_array;
 }
 
@@ -140,4 +158,25 @@ pub fn readImageFromFile(io: anytype, path: []const u8, mat: *[IMAGE_SIZE][IMAGE
     }
 
     return 0;
+}
+
+pub fn writeFloatArrayToFile(io: anytype, path: []const u8, size: usize) !void {
+    var file = try std.Io.Dir.cwd().createFile(io, path, .{ .truncate = true });
+    defer file.close(io);
+
+    var file_writer = file.writer(io, &.{});
+
+    var prng = std.Random.DefaultPrng.init(12345);
+
+    for (0..size) |_| {
+        // utils.steps is the max index that you can access in the LUT
+        // just store a random index to look up
+        // utils.degrees = 360
+
+        // we need anything between 0 and steps (0 - 3600)
+        // then the test case becomes 0.1 0.2 0.3 ...
+        const random_num = prng.random().float(f64);
+
+        try file_writer.interface.print("{d}\n", .{random_num});
+    }
 }

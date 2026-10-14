@@ -1,4 +1,14 @@
+# LUT
+
+rust beat the others because of hardware guarantees and aliasing
+c++ and zig need the \_\_restrict stuff to promise to the compiler that the memory aliasing is turned off
+
 # C++ Implementation
+
+DONE:
+
+- cpp:
+  - calibration
 
 update
 

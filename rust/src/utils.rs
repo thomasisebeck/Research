@@ -1,6 +1,9 @@
+use std::fmt::Debug;
 use std::fs;
+use std::fs::File;
 use std::fs::read_to_string;
-
+use std::io::{Read, Result, Write};
+use std::str::FromStr;
 
 #[derive(Clone, Copy)]
 pub struct Colour {
@@ -18,7 +21,7 @@ pub enum Mode {
 include!(concat!(env!("OUT_DIR"), "/increment_config.rs"));
 
 pub const IMAGE_SIZE: usize = 500;
-pub const TEST_SIZE: usize = 500;
+pub const TEST_SIZE: usize = 10000;
 pub const DEGREES: f64 = 360.0;
 pub const STEPS: usize = (DEGREES / INCREMENT) as usize;
 
@@ -59,9 +62,9 @@ impl PipelineConfig for LowQualityConfig {
     const BLUR_MODE: Mode = Mode::LOW;
     const APPLY_BLUR: bool = false;
     const QUANTISE_MODE: Mode = Mode::LOW;
-    const APPLY_QUANTISATION: bool = false; 
+    const APPLY_QUANTISATION: bool = false;
     const SATURATION_MODE: Mode = Mode::LOW;
-    const APPLY_SATURATION: bool = true;
+    const APPLY_SATURATION: bool = false;
 }
 
 #[derive(Clone, Copy)] // to copy out of the node
@@ -76,24 +79,48 @@ pub struct Neighbours {
     pub top_middle: Colour,
 }
 
-pub fn read_array_from_file<const STEPS: usize>(path: &str) -> [f64; STEPS] {
-    let mut my_arr: [f64; STEPS] = [0.0; STEPS];
+pub fn send_perf_cmd(ctl: &mut File, ack: &mut File, cmd: &str) -> Result<()> {
+    writeln!(ctl, "{}", cmd)?;
+    ctl.flush()?;
 
+    let mut ack_buf = [0u8; 4]; // "ack\n" is 4 bytes
+    ack.read_exact(&mut ack_buf)?;
+
+    Ok(())
+}
+
+pub fn read_array_from_file<T, const STEPS: usize>(
+    path: &str,
+) -> std::result::Result<[T; STEPS], std::io::Error>
+where
+    T: FromStr + Default + Copy,
+{
+    let mut my_arr: [T; STEPS] = [T::default(); STEPS];
     let mut counter = 0;
 
-    for line in read_to_string(path).unwrap().lines() {
-
+    let content = read_to_string(path)?;
+    for line in content.lines() {
         if counter >= STEPS {
             break;
         }
 
-        my_arr[counter] = line.parse::<f64>().unwrap();
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        my_arr[counter] = trimmed.parse::<T>().map_err(|_| {
+            std::io::Error::new(std::io::ErrorKind::InvalidData, "Failed to parse value")
+        })?;
         counter += 1;
     }
 
-    assert!(counter == my_arr.len());
+    assert_eq!(
+        counter, STEPS,
+        "File contains fewer elements than expected array size"
+    );
 
-    my_arr
+    Ok(my_arr)
 }
 
 pub fn print_array<const Size: usize>(arr: &[i32; Size]) {
