@@ -100,8 +100,42 @@ impl<'a> Soundable for Animal<'a> {
 // Generic batch processor constrained by Soundable
 fn process_batch<T: Soundable>(animals: &[T], outputs: &mut [SoundEnum], iters: usize) {
     let mut ind = 0;
+
+    // NOTE: 16 byte traversal
     for _ in 0..iters {
+        /*
+                .Ltmp35:
+                mov     byte ptr [rsp + rbx + 504], dl
+                .loc     5 132 13
+                inc     rbx                      ;<--- 1. INCREMENTS OUTPUT INDEX (ind++)
+        .Ltmp36:
+
+                .file   7 "/rustc/..." "library/core/src/ptr/non_null.rs"
+                .loc     7 1714 9
+                add     rcx, 16                  ;<--- 2. INCREMENTS SLICE/COLLECTION POINTER
+        .Ltmp37:
+                cmp     rcx, 344                 ;<--- 3. CHECKS LOOP TERMINATION CONDITION
+
+                */
         for animal in animals.iter() {
+            /*
+                        .Ltmp34:
+            .LBB4_7:
+                    .loc    5 103 13 is_stmt 1
+                    cmp     rbx, 2099
+                    ja      .LBB4_9
+            .Ltmp35:
+                    mov     byte ptr [rsp + rbx + 504], dl
+                    .loc    5 104 13
+                    inc     rbx
+
+                       lea     rdx, [rip + .Lanon.123894f5ed6fe0035d712c40ba974041.1]
+                    mov     esi, 2100
+
+                    mov     rdi, rbx
+                    call    qword ptr [rip + core[940e698046960fd5]::panicking::panic_bounds_check@GOTPCREL]
+                        */
+
             outputs[ind] = animal.sound();
             ind += 1;
         }

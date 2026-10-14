@@ -42,6 +42,18 @@ impl Cat {
         Self { id: 1 }
     }
 }
+
+/*
+        .type   <example[eda1dd25c6e7225a]::Cat as example[eda1dd25c6e7225a]::Animal>::sound,@function
+<example[eda1dd25c6e7225a]::Cat as example[eda1dd25c6e7225a]::Animal>::sound:
+.Lfunc_begin7:
+        .cfi_startproc
+        .loc    14 47 12 prologue_end
+        cmp     qword ptr [rdi], 0
+        setne   al
+        .loc    14 52 6
+        ret
+*/
 impl Animal for Cat {
     fn sound(&self) -> SoundEnum {
         if self.id == 0 {
@@ -143,6 +155,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for _ in 0..ITERS {
         // Loop over dynamic coll
         for animal in zoo.iter() {
+            /*
+                         mov     rdi, qword ptr [rsp + 208]    # Load data pointer (passed as &self in rdi)
+            mov     rax, qword ptr [rsp + 200]    # Load vtable pointer into rax
+            call    qword ptr [rax + 24]          # Indirect call to sound() method (offset 24 in vtable)
+            mov     byte ptr [rsp + rbx + 2626], al # Store returned SoundEnum (u8) into sound_outputs
+                         */
             sound_outputs[ind] = animal.sound();
             ind += 1;
         }
