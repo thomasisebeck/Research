@@ -40,12 +40,31 @@ int main() {
       myLut.size(), utils::INCREMENT, utils::TEST_SIZE, utils::DEGREES,
       utils::STEPS);
 
-  for (auto i = 0; i < ITERS; i++)
+  // vmovsd  xmm3, QWORD PTR .LC76[rip]
+  //   mov     esi, 100
+  //         dec     rcx
+  //   jne     .L4724
+  //
+  for (size_t i = 0; i < ITERS; i++) {
+    //     cmp     r13, rax
+    //     jne     .L4726
     for (const auto &num : test_cases) {
+      // movabs  rcx, -9223372036854775808
+      // vcvttsd2si      rdx, xmm0
+      // vmulsd  xmm0, xmm3, QWORD PTR [rax]
+      // vcomisd xmm0, xmm1
+      // jb      .L4833
+      // vsubsd  xmm0, xmm0, xmm1
+      // vcvttsd2si      rdx, xmm0
+      // xor     rdx, rcx
+      // jmp     .L4723
       const size_t idx = static_cast<size_t>(num * prediv);
 
+      // 81792: where myLut is relative to the local stack frame
+      // vaddsd  xmm2, xmm2, QWORD PTR [rsp+81792+rdx*8]
       warmup_sum += myLut[idx];
     }
+  }
 
   benchmark::DoNotOptimize(warmup_sum);
 

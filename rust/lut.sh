@@ -20,7 +20,8 @@ PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
 
 FILES=("lut_comptime.rs" "lut_runtime.rs")
-INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
+# INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
+INCREMENTS=("0.0001")
 
 # done
 # "1" 
@@ -85,8 +86,9 @@ for FILENAME in "${FILES[@]}"; do
     fi
 
     # 3. Measure Hot Build
-    HOT_TIME=$(sudo -u "${TARGET_USER}" env INCREMENT_VAL="${INC}" RUSTFLAGS="-A warnings" \
-      /usr/bin/time -f "%e,%U,%S" taskset -c 1 "${CARGO_BIN}" build -q --release --bin "${BIN_NAME}" 2>&1)
+HOT_TIME=$(sudo -u "${TARGET_USER}" env INCREMENT_VAL="${INC}" RUSTFLAGS="-A warnings" \
+  /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
+  /home/thomas/.cargo/bin/rustup run nightly cargo build -q --release --bin "${BIN_NAME}" 2>&1)
 
           # Log build row
           echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME}" >> "$BUILD_CSV"

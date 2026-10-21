@@ -12,10 +12,11 @@ pub struct Colour {
     pub b: f32,
 }
 
+#[derive(Copy, Clone)]
 pub enum Mode {
-    HIGH,
-    MED,
     LOW,
+    MED,
+    HIGH,
 }
 
 include!(concat!(env!("OUT_DIR"), "/increment_config.rs"));

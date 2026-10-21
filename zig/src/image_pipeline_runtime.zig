@@ -124,16 +124,37 @@ pub fn main(init: std.process.Init) !void {
     var my_image: [utils.IMAGE_SIZE][utils.IMAGE_SIZE]utils.Colour = undefined;
     _ = try utils.readImageFromFile(io, "input_image.txt", &my_image);
 
-    const config = utils.PipelineConfig{
-        .blur_mode = @enumFromInt(@intFromEnum(conf.blur_mode)),
-        .apply_blur = conf.apply_blur,
-        .quantise_mode = @enumFromInt(@intFromEnum(conf.quantise_mode)),
-        .apply_quantisation = conf.apply_quantisation,
-        .saturation_mode = @enumFromInt(@intFromEnum(conf.saturation_mode)),
-        .apply_saturation = conf.apply_saturation
+    const input_arr = try utils.readArrayFromFile(i32, 1, io, "image_config.txt");
+
+    const config: utils.PipelineConfig = switch (input_arr[0]) {
+        1 => .{
+            .blur_mode = utils.Mode.MED,
+            .apply_blur = true,
+            .quantise_mode = utils.Mode.MED,
+            .apply_quantisation = false,
+            .saturation_mode = utils.Mode.MED,
+            .apply_saturation = true,
+        },
+        2 => .{
+            .blur_mode = utils.Mode.HIGH,
+            .apply_blur = true,
+            .quantise_mode = utils.Mode.HIGH,
+            .apply_quantisation = true,
+            .saturation_mode = utils.Mode.HIGH,
+            .apply_saturation = true,
+        },
+        else => .{
+            .blur_mode = utils.Mode.LOW,
+            .apply_blur = false,
+            .quantise_mode = utils.Mode.LOW,
+            .apply_quantisation = false,
+            .saturation_mode = utils.Mode.LOW,
+            .apply_saturation = false,
+        },
     };
 
-    // preprocc image
+
+    // warmup process
     process(config, &my_image);
 
     // --------------- start perf, then the clock ---------------- //
@@ -141,6 +162,7 @@ pub fn main(init: std.process.Init) !void {
     const start_time = std.Io.Clock.now(.awake, io);
     // ------------------------------------------------------
 
+    //benchmark process
     process(config, &my_image);
 
     // -------------- stop the clock, then end perf -------------- //

@@ -1,27 +1,12 @@
 #include "utils.cpp"
 #include <algorithm>
+#include <benchmark/benchmark.h>
 #include <chrono>
 #include <cmath>
 #include <sys/prctl.h>
 
-#ifndef QUAL
-#define QUAL utils::Mode::HIGH
-#endif
-
-#ifndef APPLY_ONE
-#define APPLY_ONE true
-#endif
-
-#ifndef APPLY_TWO
-#define APPLY_TWO true
-#endif
-
-#ifndef APPLY_THREE
-#define APPLY_THREE true
-#endif
-
 // if statement
-[[nodiscard]] float quantise(const utils::PipelineConfig &cfg, float colour) {
+[[nodiscard]] float quantise(utils::PipelineConfig cfg, float colour) {
   float res = 0;
   if (cfg.quantise_mode == utils::Mode::HIGH) {
     res = std::round(colour * 255.0f) / 255.0f;
@@ -34,7 +19,7 @@
 }
 
 // switch statement
-void blur(const utils::PipelineConfig &cfg, utils::Colour &item,
+void blur(utils::PipelineConfig cfg, utils::Colour &item,
           const utils::Neighbours &n) {
   switch (cfg.blur_mode) {
   case utils::Mode::LOW: {
@@ -75,7 +60,7 @@ void blur(const utils::PipelineConfig &cfg, utils::Colour &item,
 }
 
 // switch expression
-void saturation(const utils::PipelineConfig &cfg, utils::Colour &item) {
+void saturation(utils::PipelineConfig cfg, utils::Colour &item) {
 
   const float LUMA = [item, cfg]() -> float {
     switch (cfg.saturation_mode) {
@@ -111,7 +96,7 @@ void saturation(const utils::PipelineConfig &cfg, utils::Colour &item) {
   item.b = std::clamp(LUMA + (DELTA * (item.b - LUMA)), 0.0f, 1.0f);
 }
 
-void process(const utils::PipelineConfig &cfg,
+void process(utils::PipelineConfig cfg,
              utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
   for (int row_num = 1; row_num < utils::SIZE - 1; row_num++) {
 
@@ -157,13 +142,40 @@ int main() {
   std::ofstream perf_ctl("/tmp/perf.ctl");
   std::ifstream perf_ack("/tmp/perf.ack");
 
-  constexpr auto config =
-      utils::PipelineConfig{.blur_mode = QUAL,
-                            .apply_blur = APPLY_ONE,
-                            .quantise_mode = QUAL,
-                            .apply_quantisation = APPLY_TWO,
-                            .saturation_mode = QUAL,
-                            .apply_saturation = APPLY_THREE};
+  const auto input_arr =
+      utils::read_array_from_file<int, 1>("image_config.txt");
+
+  const auto config = [&]() -> utils::PipelineConfig {
+    switch (input_arr[0]) {
+    case 1:
+      return {
+          .blur_mode = utils::Mode::MED,
+          .apply_blur = true,
+          .quantise_mode = utils::Mode::MED,
+          .apply_quantisation = false,
+          .saturation_mode = utils::Mode::MED,
+          .apply_saturation = true,
+      };
+    case 2:
+      return {
+          .blur_mode = utils::Mode::HIGH,
+          .apply_blur = true,
+          .quantise_mode = utils::Mode::HIGH,
+          .apply_quantisation = true,
+          .saturation_mode = utils::Mode::HIGH,
+          .apply_saturation = true,
+      };
+    default:
+      return {
+          .blur_mode = utils::Mode::LOW,
+          .apply_blur = false,
+          .quantise_mode = utils::Mode::LOW,
+          .apply_quantisation = false,
+          .saturation_mode = utils::Mode::LOW,
+          .apply_saturation = false,
+      };
+    }
+  }();
 
   // start perf, then the clock
   utils::send_perf_cmd(perf_ctl, perf_ack, "enable");

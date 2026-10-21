@@ -163,10 +163,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
 
+    //warmup process
+    process::<ActiveConfig>(&mut my_image);
+
     utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
-    // configs are declared above as traits...
+    //benchmark process
     process::<ActiveConfig>(&mut my_image);
 
     let end_time = Instant::now();

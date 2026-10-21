@@ -8,10 +8,6 @@ fi
 
 set -e # Exit immediately if an unhandled command fails
 
-# 1. Resolve User & Paths
-TARGET_USER="${SUDO_USER:-$USER}"
-REAL_HOME=$(eval echo "~${TARGET_USER}")
-
 # 2. Benchmark Configuration
 FILES=(
   "poly_stat.zig"
@@ -26,6 +22,9 @@ SETTING_NAME="N/A"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
+TARGET_USER="${SUDO_USER:-$USER}"
+REAL_HOME=$(eval echo "~${TARGET_USER}")
+ZIG_GLOBAL_CACHE="${REAL_HOME}/.cache/zig"
 
 # 3. Initialize CSV headers if files don't exist yet
 if [ ! -f "$BUILD_CSV" ]; then
@@ -49,6 +48,7 @@ if [ -f /sys/devices/system/cpu/intel_pstate/no_turbo ]; then
   echo 1 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 fi
 
+
 # Increase stack limit
 ulimit -s unlimited
 
@@ -69,19 +69,20 @@ for FILENAME in "${FILES[@]}"; do
     echo "  -> Build ${i}/${ITERATIONS_BUILD}..."
 
     # Clean cache and build artifacts for a true cold build
-    rm -rf .zig-cache zig-out
-    rm -rf /root/.cache/zig "${REAL_HOME}/.cache/zig"
+      rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}"
 
     # Measure Cold Build on core 1
     COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
       zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
       > /dev/null; } 2>&1 )
 
-    # Measure Hot Build on core 1
-    touch "src/${FILENAME}"
+    echo "// touch" >> "src/${FILENAME}"
+
     HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
       zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
       > /dev/null; } 2>&1 )
+
+      sed -i '$ d' "src/${FILENAME}"
 
     # Log build row
     echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME}" >> "$BUILD_CSV"

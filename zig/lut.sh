@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 
 ITERATIONS=${1:-15}
-ITERATIONS_BUILD=${1:-15}
+ITERATIONS_BUILD=${1:-1}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
+TARGET_USER="${SUDO_USER:-$USER}"
+REAL_HOME=$(eval echo "~${TARGET_USER}")
+ZIG_GLOBAL_CACHE="${REAL_HOME}/.cache/zig"
 
 FILES=(
   "lut_comptime.zig"
-  "lut_runtime.zig"
+# "lut_runtime.zig"
 )
 
 # Target increment settings (space-separated array in bash - no commas)
-INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
+# INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
+INCREMENTS=("0.0001")
 
 # 1. Initialize CSV headers if files don't exist yet
 if [ ! -f "$BUILD_CSV" ]; then
@@ -24,6 +28,8 @@ fi
 if [ ! -f "$RUNTIME_CSV" ]; then
   echo "label,setting,run_number,runtime_ns,$PERF_EVENTS" > "$RUNTIME_CSV"
 fi
+
+ulimit -s
 
 # Phase 0: System Isolation & Environment Preparation
 echo "=================================================="
@@ -54,19 +60,20 @@ for FILENAME in "${FILES[@]}"; do
     for (( i=1; i<=ITERATIONS_BUILD; i++ )); do
       echo "  -> Build ${i}/${ITERATIONS_BUILD}..."
 
-      rm -rf .zig-cache zig-out
-      sudo rm -rf /root/.cache/zig 
+      rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}"
 
       # Measure Cold Build
       COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
         zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
         -Dincrement="${INC}" > /dev/null; } 2>&1 )
 
-      # Measure Hot Build
-      touch "src/${FILENAME}"
+      echo "// touch" >> "src/${FILENAME}"
+
       HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
         zig build -Dtarget_src="src/${FILENAME}" -Doptimize=ReleaseFast \
         -Dincrement="${INC}" > /dev/null; } 2>&1 )
+
+      sed -i '$ d' "src/${FILENAME}"
 
       # Log build row
       echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME}" >> "$BUILD_CSV"

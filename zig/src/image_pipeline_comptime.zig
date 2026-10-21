@@ -136,8 +136,7 @@ pub fn main(init: std.process.Init) !void {
         .apply_saturation = conf.apply_saturation
     };
 
-
-    // preprocc image
+    //warmup process
     process(config, &my_image);
 
     // --------------- start perf, then the clock ---------------- //
@@ -145,6 +144,7 @@ pub fn main(init: std.process.Init) !void {
     const start_time = std.Io.Clock.now(.awake, io);
     // ------------------------------------------------------
 
+    //benchmark process
     process(config, &my_image);
 
     // -------------- stop the clock, then end perf -------------- //

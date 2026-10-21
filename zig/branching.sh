@@ -8,10 +8,8 @@ fi
 
 set -e
 
-# 1. Define source files to benchmark
-# TODO: runtime measurements!!!!
 FILES=(
-# "image_pipeline_comptime.zig"
+#"image_pipeline_comptime.zig"
   "image_pipeline_runtime.zig"
 )
 
@@ -19,10 +17,12 @@ ITERATIONS=${1:-15}
 ITERATIONS_BUILD=${1:-15}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
-
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
 PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
+TARGET_USER="${SUDO_USER:-$USER}"
+REAL_HOME=$(eval echo "~${TARGET_USER}")
+ZIG_GLOBAL_CACHE="${REAL_HOME}/.cache/zig"
 
 # 2. Quality and Toggle Configurations
 QUALITIES=("LOW" "MED" "HIGH")
@@ -51,6 +51,7 @@ if [ -f /sys/devices/system/cpu/intel_pstate/no_turbo ]; then
   echo 1 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
 fi
 
+
 ulimit -s unlimited
 
 NUM_CONFIGS=${#QUALITIES[@]}
@@ -68,6 +69,17 @@ for FILENAME in "${FILES[@]}"; do
     echo "=================================================="
     echo " Target: ${LABEL} | Config [${c}]: ${SETTING_NAME}"
     echo "=================================================="
+
+    # Map loop index 'c' to the config file value (0 -> LOW/0, 1 -> MED/1, 2 -> HIGH/2)
+    CONFIG_VAL=0
+    if [ "$c" -eq 1 ]; then
+      CONFIG_VAL=1
+    elif [ "$c" -eq 2 ]; then
+      CONFIG_VAL=2
+    fi
+
+    # Write the corresponding config value to image_config.txt before compiling/running
+    echo "$CONFIG_VAL" > "image_config.txt"
 
     # Construct the common build flags array
     BUILD_FLAGS=(
@@ -89,17 +101,19 @@ for FILENAME in "${FILES[@]}"; do
     for (( i=1; i<=ITERATIONS_BUILD; i++ )); do
       echo "  -> Build ${i}/${ITERATIONS_BUILD}..."
 
-      rm -rf .zig-cache zig-out
-      rm -rf /root/.cache/zig
+      rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}"
 
       # Measure Cold Build
       COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0 \
         zig build "${BUILD_FLAGS[@]}" > /dev/null; } 2>&1 )
 
-      # Measure Hot Build
-      touch "src/${FILENAME}"
+      # Measure Hot Build (force content hash change)
+      echo "// touch" >> "src/${FILENAME}"
+
       HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0 \
         zig build "${BUILD_FLAGS[@]}" > /dev/null; } 2>&1 )
+
+      sed -i '$ d' "src/${FILENAME}"
 
       # Log build row
       echo "${LABEL},${SETTING_NAME},${i},${COLD_TIME},${HOT_TIME}" >> "$BUILD_CSV"

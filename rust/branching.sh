@@ -11,7 +11,7 @@ CARGO_BIN="/usr/bin/cargo"
 
 # 2. Benchmark Configuration
 ITERATIONS=${1:-15}
-ITERATIONS_BUILD=${1:-15}
+ITERATIONS_BUILD=${1:-1}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
@@ -23,12 +23,18 @@ FILES=(
   # "image_pipeline_comptime.rs"
 )
 
-QUALITIES=("low" "med" "high")
+# QUALITIES=("low" "med" "high")
+QUALITIES=("low")
+
 TOGGLE_SETS=(
   "false,false,false"
-  "true,false,true"
-  "true,true,true"
 )
+
+# TOGGLE_SETS=(
+#   "false,false,false"
+#   "true,false,true"
+#   "true,true,true"
+# )
 
 # Safe ownership adjustment on target dir
 if [ -d "${REAL_HOME}/git-repos/Research/rust/target" ]; then

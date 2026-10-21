@@ -1,9 +1,8 @@
 mod utils;
 use std::{fs::OpenOptions, time::Instant};
 
-use libc::{PR_TASK_PERF_EVENTS_DISABLE, PR_TASK_PERF_EVENTS_ENABLE};
-
 // use a normal struct instead of a trait
+#[derive(Copy, Clone)]
 struct PipelineConfig {
     blur_mode: utils::Mode,
     apply_blur: bool,
@@ -16,7 +15,7 @@ struct PipelineConfig {
 // <> is the lifetime param
 
 // if statement
-fn quantise(cfg: &PipelineConfig, colour: f32) -> f32 {
+fn quantise(cfg: PipelineConfig, colour: f32) -> f32 {
     let res;
     if matches!(cfg.quantise_mode, utils::Mode::HIGH) {
         res = f32::round(colour * 255.0) / 255.0;
@@ -30,7 +29,7 @@ fn quantise(cfg: &PipelineConfig, colour: f32) -> f32 {
 }
 
 // switch statement
-fn blur(cfg: &PipelineConfig, item: &mut utils::Colour, n: utils::Neighbours) {
+fn blur(cfg: PipelineConfig, item: &mut utils::Colour, n: utils::Neighbours) {
     match cfg.blur_mode {
         utils::Mode::LOW => {
             item.r = (n.middle_left.r + item.r + n.middle_right.r) / 3.0;
@@ -115,7 +114,7 @@ constexpr void saturation(utils::Colour &item) {
  */
 
 // switch expression
-fn saturation(cfg: &PipelineConfig, item: &mut utils::Colour) {
+fn saturation(cfg: PipelineConfig, item: &mut utils::Colour) {
     let LUMA: f32 = match cfg.saturation_mode {
         utils::Mode::LOW => (0.3 * item.r) + (0.6 * item.g) + (0.1 * item.b),
         utils::Mode::MED => (0.29 * item.r) + (0.59 * item.g) + (0.14 * item.b),
@@ -134,10 +133,7 @@ fn saturation(cfg: &PipelineConfig, item: &mut utils::Colour) {
 }
 
 // constexpr void process(utils::Colour (&mat)[utils::SIZE][utils::SIZE]) {
-fn process(
-    cfg: &PipelineConfig,
-    mat: &mut [[utils::Colour; utils::IMAGE_SIZE]; utils::IMAGE_SIZE],
-) {
+fn process(cfg: PipelineConfig, mat: &mut [[utils::Colour; utils::IMAGE_SIZE]; utils::IMAGE_SIZE]) {
     // not ..= (we want exclusive loop)
     for row_num in 1..(utils::IMAGE_SIZE - 1) {
         for col_num in 1..(utils::IMAGE_SIZE - 1) {
@@ -226,14 +222,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // type is derived
     let mut my_image = [[init_pixel; utils::IMAGE_SIZE]; utils::IMAGE_SIZE];
 
+    let input_arr: [i32; 1] = utils::read_array_from_file::<i32, 1>("image_config.txt")?;
+
+    let config: PipelineConfig = match input_arr[0] {
+        1 => PipelineConfig {
+            blur_mode: utils::Mode::MED,
+            apply_blur: true,
+            quantise_mode: utils::Mode::MED,
+            apply_quantisation: false,
+            saturation_mode: utils::Mode::MED,
+            apply_saturation: true,
+        },
+        2 => PipelineConfig {
+            blur_mode: utils::Mode::HIGH,
+            apply_blur: true,
+            quantise_mode: utils::Mode::HIGH,
+            apply_quantisation: true,
+            saturation_mode: utils::Mode::HIGH,
+            apply_saturation: true,
+        },
+        _ => PipelineConfig {
+            blur_mode: utils::Mode::LOW,
+            apply_blur: false,
+            quantise_mode: utils::Mode::LOW,
+            apply_quantisation: false,
+            saturation_mode: utils::Mode::LOW,
+            apply_saturation: false,
+        },
+    };
+
     // pass the image in as mutable
     utils::read_image_from_file("input_image.txt", &mut my_image);
+
+    //warmup proccess
+    process(config, &mut my_image);
 
     utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;
     let start_time = Instant::now();
 
-    // configs are declared above as traits...
-    process(&CONFIG, &mut my_image);
+    //benchmark process
+    process(std::hint::black_box(CONFIG), &mut my_image);
 
     let end_time = Instant::now();
     utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "disable")?;

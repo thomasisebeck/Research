@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
+name = "build_offset"
+path = "src/build_offset.rs"
+
+[[bin]]
 name = "image_pipeline_comptime"
 path = "src/image_pipeline_comptime.rs"
 
@@ -42,5 +46,8 @@ low = []
 med = []
 high = []
 
+[lints.cargo]
+non_kebab_case_bins = "allow"
+
 [build]
-rustflags = ["-C", "opt-level=3", "target-cpu=native", "-A warnings"]
+rustflags = ["-C", "opt-level=3", "target-cpu=native", "-A warnings", "-Z const-eval-limit=1000000000"]

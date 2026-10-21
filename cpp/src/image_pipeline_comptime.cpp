@@ -91,6 +91,27 @@ constexpr void saturation(utils::Colour &item) {
       return (0.29f * item.r) + (0.59f * item.g) + (0.14f * item.b);
 
     case utils::Mode::HIGH:
+
+      /*
+        vmovss  xmm1, DWORD PTR [rsp+48]
+        vmulss  xmm2, xmm1, DWORD PTR .LC2[rip]
+        vdivss  xmm0, xmm0, DWORD PTR .LC1[rip]
+        vmovss  xmm11, DWORD PTR [rsp+64]
+        vmovss  xmm6, DWORD PTR .LC5[rip]
+        vxorps  xmm3, xmm3, xmm3
+        vfmadd231ss     xmm2, xmm11, DWORD PTR .LC3[rip]
+        vmovss  xmm5, DWORD PTR .LC7[rip]
+        vfmadd231ss     xmm2, xmm0, DWORD PTR .LC4[rip]
+        vmovss  xmm4, DWORD PTR [rsp+16]
+        vmovss  xmm14, DWORD PTR [rsp+24]
+        vmovss  xmm7, DWORD PTR [rsp+20]
+        vmovss  DWORD PTR [rsp+44], xmm4
+        vmovss  xmm4, DWORD PTR [rsp+12]
+        vmovss  DWORD PTR [rsp+48], xmm14
+        vmovss  xmm14, DWORD PTR [rsp+84]
+        vmovss  DWORD PTR [rsp+40], xmm4
+        vmovss  xmm4, DWORD PTR [rsp+68]
+       */
       return (0.294f * item.r) + (0.587f * item.g) + (0.144f * item.b);
 
     default:
@@ -111,6 +132,45 @@ constexpr void saturation(utils::Colour &item) {
     };
   }();
 
+  /*
+   * all instructions were interleaved together...
+
+    vmovss  xmm6, DWORD PTR .LC5[rip]
+        vxorps  xmm3, xmm3, xmm3
+        vfmadd231ss     xmm2, xmm11, DWORD PTR .LC3[rip]
+        vmovss  xmm5, DWORD PTR .LC7[rip]
+        vfmadd231ss     xmm2, xmm0, DWORD PTR .LC4[rip]
+        vmovss  xmm4, DWORD PTR [rsp+16]
+        vmovss  xmm14, DWORD PTR [rsp+24]
+        vmovss  xmm7, DWORD PTR [rsp+20]
+        vmovss  DWORD PTR [rsp+44], xmm4
+        vmovss  xmm4, DWORD PTR [rsp+12]
+        vmovss  DWORD PTR [rsp+48], xmm14
+        vmovss  xmm14, DWORD PTR [rsp+84]
+        vmovss  DWORD PTR [rsp+40], xmm4
+        vmovss  xmm4, DWORD PTR [rsp+68]
+        vsubss  xmm11, xmm11, xmm2
+        vsubss  xmm1, xmm1, xmm2
+        vmovss  DWORD PTR [rsp+52], xmm7
+        vmovss  xmm7, DWORD PTR [rsp+76]
+        vsubss  xmm0, xmm0, xmm2
+        vfmadd132ss     xmm11, xmm2, xmm6
+        vfmadd132ss     xmm1, xmm2, xmm6
+        vfmadd132ss     xmm0, xmm2, xmm6
+        vcmpnltss       xmm12, xmm11, xmm3
+        vcmpnltss       xmm2, xmm0, xmm3
+        vandps  xmm12, xmm12, xmm11
+        vmovaps xmm11, xmm1
+        vcmpnltss       xmm1, xmm1, xmm3
+        vandps  xmm2, xmm2, xmm0
+        vminss  xmm12, xmm5, xmm12
+        vminss  xmm2, xmm5, xmm2
+        vandps  xmm1, xmm1, xmm11
+        vmovss  DWORD PTR [rbx-12], xmm12
+        vminss  xmm1, xmm5, xmm1
+        vmovss  DWORD PTR [rbx-4], xmm2
+        vmovss  DWORD PTR [rbx-8], xmm1
+   */
   item.r = std::clamp(LUMA + (DELTA * (item.r - LUMA)), 0.0f, 1.0f);
   item.g = std::clamp(LUMA + (DELTA * (item.g - LUMA)), 0.0f, 1.0f);
   item.b = std::clamp(LUMA + (DELTA * (item.b - LUMA)), 0.0f, 1.0f);

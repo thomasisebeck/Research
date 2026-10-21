@@ -6,8 +6,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut perf_ctl = OpenOptions::new().write(true).open("/tmp/perf.ctl")?;
     let mut perf_ack = OpenOptions::new().read(true).open("/tmp/perf.ack")?;
 
-    let test_cases: [f64; utils::TEST_SIZE] =
-        utils::read_array_from_file::<{ utils::TEST_SIZE }>("lookup.txt");
+    let test_cases = utils::read_array_from_file::<f64, { utils::TEST_SIZE }>("lookup.txt")?;
 
     println!(
         "increment: {}, testSize: {}, degrees: {}, steps: {}\n",

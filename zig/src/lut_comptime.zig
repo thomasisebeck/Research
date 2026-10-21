@@ -62,7 +62,7 @@ pub fn main(init: std.process.Init) !void {
 
     // faster, but not fair
     // keep the LUT on the function stack by marking it as volatile
-    // const my_lut: *volatile [utils.steps]f64 = @volatileCast(&comp_lut);
+//    const my_lut: *volatile [utils.steps]f64 = @volatileCast(&comp_lut);
 
     const prediv: f64 = 1.0 / utils.increment;
     var warmup_sum: f64 = 0;
@@ -90,6 +90,93 @@ pub fn main(init: std.process.Init) !void {
 
     // test cases is i64 arr
     // num / increment, making it larger (if inc between 0 and 1)
+    
+    // 8X unrolled nested loop
+  //.LBB1_377:
+  //    test_cases[i + 0]
+  //    vmovsd  xmm0, qword ptr [rcx + __anon_22654+80000]
+  //    vsubsd  xmm1, xmm0, xmm3
+  //    vcvttsd2si      rdx, xmm1
+  //    vcvttsd2si      rsi, xmm0
+  //    mov     rdi, rsi
+  //    sar     rdi, 63
+  //    and     rdi, rdx
+  //    or      rdi, rsi
+  //
+  //
+  //    test_cases[i + 1]
+  //    vaddsd  xmm0, xmm2, qword ptr [8*rdi + __anon_24101]
+  //    vmovsd  xmm1, qword ptr [rcx + __anon_22654+80008]
+  //    vsubsd  xmm2, xmm1, xmm3
+  //    vcvttsd2si      rdx, xmm2
+  //    vcvttsd2si      rsi, xmm1
+  //    mov     rdi, rsi
+  //    sar     rdi, 63
+  //    and     rdi, rdx
+  //    or      rdi, rsi
+  //
+  //    test_cases[i + 2]
+  //    vaddsd  xmm0, xmm0, qword ptr [8*rdi + __anon_24101]
+  //    vmovsd  xmm1, qword ptr [rcx + __anon_22654+80016]
+  //    vsubsd  xmm2, xmm1, xmm3
+  //    vcvttsd2si      rdx, xmm2
+  //    vcvttsd2si      rsi, xmm1
+  //    mov     rdi, rsi
+  //    sar     rdi, 63
+  //    and     rdi, rdx
+  //    or      rdi, rsi
+  //    vaddsd  xmm0, xmm0, qword ptr [8*rdi + __anon_24101]
+  //    vmovsd  xmm1, qword ptr [rcx + __anon_22654+80024]
+  //    vsubsd  xmm2, xmm1, xmm3
+  //    vcvttsd2si      rdx, xmm2
+  //    vcvttsd2si      rsi, xmm1
+  //    mov     rdi, rsi
+  //    sar     rdi, 63
+  //    and     rdi, rdx
+  //    or      rdi, rsi
+  //    vaddsd  xmm0, xmm0, qword ptr [8*rdi + __anon_24101]
+  //    vmovsd  xmm1, qword ptr [rcx + __anon_22654+80032]
+  //    vsubsd  xmm2, xmm1, xmm3
+  //    vcvttsd2si      rdx, xmm2
+  //    vcvttsd2si      rsi, xmm1
+  //    mov     rdi, rsi
+  //    sar     rdi, 63
+  //    and     rdi, rdx
+  //    or      rdi, rsi
+  //    vaddsd  xmm0, xmm0, qword ptr [8*rdi + __anon_24101]
+  //    vmovsd  xmm1, qword ptr [rcx + __anon_22654+80040]
+  //    vsubsd  xmm2, xmm1, xmm3
+  //    vcvttsd2si      rdx, xmm2
+  //    vcvttsd2si      rsi, xmm1
+  //    mov     rdi, rsi
+  //    sar     rdi, 63
+  //    and     rdi, rdx
+  //    or      rdi, rsi
+  //    vaddsd  xmm0, xmm0, qword ptr [8*rdi + __anon_24101]
+  //    vmovsd  xmm1, qword ptr [rcx + __anon_22654+80048]
+  //    vsubsd  xmm2, xmm1, xmm3
+  //    vcvttsd2si      rdx, xmm2
+  //    vcvttsd2si      rsi, xmm1
+  //    mov     rdi, rsi
+  //    sar     rdi, 63
+  //    and     rdi, rdx
+  //    or      rdi, rsi
+  //    vaddsd  xmm0, xmm0, qword ptr [8*rdi + __anon_24101]
+  //    vmovsd  xmm1, qword ptr [rcx + __anon_22654+80056]
+  //    vsubsd  xmm2, xmm1, xmm3
+  //    vcvttsd2si      rdx, xmm2
+  //    vcvttsd2si      rsi, xmm1
+  //    mov     rdi, rsi
+  //    sar     rdi, 63
+  //    and     rdi, rdx
+  //    or      rdi, rsi
+  //    vaddsd  xmm2, xmm0, qword ptr [8*rdi + __anon_24101]
+  //    add     rcx, 64
+  //    jne     .LBB1_377
+  //    inc     rax
+  //    cmp     rax, 100
+  //    jne     .LBB1_376
+
     for (0..ITERS) |_| {
         for (test_cases) |num| {
             const idx: usize = @intFromFloat(num * prediv);
