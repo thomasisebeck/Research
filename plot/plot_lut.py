@@ -15,7 +15,6 @@ OUTPUT_DIR = Path("plots")
 SHOW_PLOTS = True
 PAUSE_DURATION = 0.2
 
-# Metrics to visualize and clean titles
 METRIC_TITLES = {
     "runtime_ns": "Runtime (ns)",
     "cycles": "CPU Cycles",
@@ -26,11 +25,9 @@ METRIC_TITLES = {
     "branch-misses": "Branch Misses",
 }
 
-# Language display ordering
 LANG_ORDER = ["cpp", "rust", "zig"]
 LANG_LABELS = {"cpp": "C++", "rust": "Rust", "zig": "Zig"}
 
-# Color palette per language
 LANG_COLORS = {
     "cpp": "#1F4E79",   # Dark Blue
     "rust": "#D66011",  # Dark Rust Orange
@@ -38,8 +35,6 @@ LANG_COLORS = {
 }
 
 RUNTIME_COLOR = "#708090"  # Slate Gray for lut_runtime
-
-# Hatch patterns assigned across increment steps
 HATCH_PATTERNS = ["", "//", "\\\\", "xx", "..", "++", "OO", "**", "--", "||"]
 
 # -------------------------------------------------------------------------
@@ -71,63 +66,131 @@ def parse_increment_val(setting_str: str) -> float:
     return float(match.group(1)) if match else -1.0
 
 
-def generate_lut_metric_plot(df: pd.DataFrame, metric: str, metric_title: str):
-    """Generates grouped bar charts for LUT benchmark performance across increments."""
+# -------------------------------------------------------------------------
+# Plot 1: LUT Runtime Baseline
+# -------------------------------------------------------------------------
+def generate_lut_runtime_plot(df: pd.DataFrame, metric: str, metric_title: str):
+    """Generates bar charts for LUT Runtime baseline across languages."""
     mean_col = f"{metric}_mean"
     std_col = f"{metric}_std_dev"
 
     if mean_col not in df.columns or std_col not in df.columns:
-        print(f"Skipping {metric}: missing required columns in CSV")
         return
 
-    # Filter for LUT categories
-    lut_df = df[df["label"].isin(["lut_comptime", "lut_runtime"])].copy()
-    if lut_df.empty:
-        print(f"Skipping {metric}: no LUT entries found in CSV")
+    rt_df = df[df["label"] == "lut_runtime"].copy()
+    if rt_df.empty:
+        print(f"Skipping Runtime Plot ({metric}): No 'lut_runtime' label found.")
         return
 
-    # Get sorted list of unique increments
+    fig, ax = plt.subplots(figsize=(7, 5), dpi=300)
+
+    x_indices = np.arange(len(LANG_ORDER))
+    means, stds = [], []
+
+    for lang in LANG_ORDER:
+        row = rt_df[rt_df["lang"] == lang]
+        if not row.empty:
+            means.append(row[mean_col].values[0])
+            stds.append(row[std_col].values[0])
+        else:
+            means.append(0)
+            stds.append(0)
+
+    bars = ax.bar(
+        x_indices,
+        means,
+        width=0.5,
+        yerr=stds,
+        capsize=4,
+        color=[LANG_COLORS[l] for l in LANG_ORDER],
+        edgecolor="#333333",
+        linewidth=0.8,
+        error_kw={"ecolor": "#222222", "capthick": 0.8},
+    )
+
+    for bar, mean_val, std_val in zip(bars, means, stds):
+        if mean_val == 0:
+            continue
+        ax.annotate(
+            f"{mean_val:,.1f}",
+            xy=(bar.get_x() + bar.get_width() / 2, bar.get_height() + std_val),
+            xytext=(0, 3),
+            textcoords="offset points",
+            ha="center",
+            va="bottom",
+            fontsize=8.5,
+            fontweight="bold",
+        )
+
+    ax.set_xticks(x_indices)
+    ax.set_xticklabels([LANG_LABELS[l] for l in LANG_ORDER], fontweight="bold", fontsize=10)
+    ax.set_title(f"LUT Runtime Baseline: {metric_title}", pad=12, fontweight="bold")
+    ax.yaxis.grid(True, linestyle="--", alpha=0.5, zorder=0)
+    ax.set_axisbelow(True)
+
+    if any(means):
+        ax.set_ylim(0, max(m + s for m, s in zip(means, stds)) * 1.25)
+
+    plt.tight_layout()
+
+    filename = f"lut_runtime_{sanitize_filename(metric)}.png"
+    output_path = OUTPUT_DIR / filename
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    print(f"Saved plot: {output_path}")
+
+    if SHOW_PLOTS:
+        plt.show()
+        plt.pause(PAUSE_DURATION)
+
+
+# -------------------------------------------------------------------------
+# Plot 2: LUT Comptime Increments
+# -------------------------------------------------------------------------
+def generate_lut_comptime_plot(df: pd.DataFrame, metric: str, metric_title: str):
+    """Generates grouped bar charts for LUT Comptime increments."""
+    mean_col = f"{metric}_mean"
+    std_col = f"{metric}_std_dev"
+
+    if mean_col not in df.columns or std_col not in df.columns:
+        return
+
+    ct_df = df[df["label"] == "lut_comptime"].copy()
+    if ct_df.empty:
+        print(f"Skipping Comptime Plot ({metric}): No 'lut_comptime' label found.")
+        return
+
     inc_settings = sorted(
-        lut_df[lut_df["label"] == "lut_comptime"]["setting"].unique(),
+        ct_df["setting"].unique(),
         key=parse_increment_val,
         reverse=True,
     )
 
-    # Build bar categories: lut_runtime first, followed by comptime increments
-    bar_categories = [("lut_runtime", "N/A", "Runtime Baseline", "")]
-    for idx, setting in enumerate(inc_settings):
-        hatch = HATCH_PATTERNS[idx % len(HATCH_PATTERNS)]
-        bar_categories.append(("lut_comptime", setting, setting, hatch))
-
-    fig, ax = plt.subplots(figsize=(12, 5.5), dpi=300)
+    fig, ax = plt.subplots(figsize=(10, 5.5), dpi=300)
 
     num_languages = len(LANG_ORDER)
-    num_bars_per_lang = len(bar_categories)
+    num_increments = len(inc_settings)
 
     x_indices = np.arange(num_languages)
-    total_group_width = 0.85
-    bar_width = total_group_width / num_bars_per_lang
+    total_group_width = 0.8
+    bar_width = total_group_width / max(num_increments, 1)
 
     all_heights = []
+    increment_legend_elements = []
 
-    # Render bars for each category
-    for idx, (label, setting, cat_display_name, hatch) in enumerate(bar_categories):
+    for idx, setting in enumerate(inc_settings):
+        hatch = HATCH_PATTERNS[idx % len(HATCH_PATTERNS)]
         offset = x_indices - (total_group_width / 2) + (idx + 0.5) * bar_width
 
         means, stds, colors = [], [], []
 
         for lang in LANG_ORDER:
-            row = lut_df[
-                (lut_df["lang"] == lang)
-                & (lut_df["label"] == label)
-                & (lut_df["setting"] == setting)
-            ]
+            row = ct_df[(ct_df["lang"] == lang) & (ct_df["setting"] == setting)]
             if not row.empty:
                 m = row[mean_col].values[0]
                 s = row[std_col].values[0]
                 means.append(m)
                 stds.append(s)
-                colors.append(RUNTIME_COLOR if label == "lut_runtime" else LANG_COLORS[lang])
+                colors.append(LANG_COLORS[lang])
                 all_heights.append(m + s)
             else:
                 means.append(0)
@@ -147,13 +210,11 @@ def generate_lut_metric_plot(df: pd.DataFrame, metric: str, metric_title: str):
             error_kw={"ecolor": "#222222", "capthick": 0.7},
         )
 
-        # Annotations above bars
         for bar, mean_val, std_val in zip(bars, means, stds):
             if mean_val == 0:
                 continue
-            val_str = f"{mean_val:,.1f}"
             ax.annotate(
-                val_str,
+                f"{mean_val:,.1f}",
                 xy=(bar.get_x() + bar.get_width() / 2, bar.get_height() + std_val),
                 xytext=(0, 2),
                 textcoords="offset points",
@@ -164,51 +225,31 @@ def generate_lut_metric_plot(df: pd.DataFrame, metric: str, metric_title: str):
                 rotation=90,
             )
 
-    # Axes and Formatting
+        increment_legend_elements.append(
+            Patch(facecolor="#888888", edgecolor="#333333", hatch=hatch, label=setting)
+        )
+
     ax.set_xticks(x_indices)
     ax.set_xticklabels([LANG_LABELS[l] for l in LANG_ORDER], fontweight="bold", fontsize=11)
-    ax.set_title(f"LUT Evaluation: {metric_title}", pad=12, fontweight="bold")
+    ax.set_title(f"LUT Comptime Increments: {metric_title}", pad=12, fontweight="bold")
     ax.yaxis.grid(True, linestyle="--", alpha=0.5, zorder=0)
     ax.set_axisbelow(True)
 
     if all_heights:
         ax.set_ylim(0, max(all_heights) * 1.35)
 
-    # Legends: Split into Runtime vs Comptime + Increment Hatch Map
-    phase_legend_elements = [
-        Patch(facecolor=RUNTIME_COLOR, edgecolor="#333333", label="LUT Runtime"),
-        Patch(facecolor="#555555", edgecolor="#333333", label="LUT Comptime"),
-    ]
-
-    increment_legend_elements = [
-        Patch(facecolor="#CCCCCC", edgecolor="#333333", hatch=h, label=s)
-        for _, s, _, h in bar_categories if s != "N/A"
-    ]
-
-    leg1 = ax.legend(
-        handles=phase_legend_elements,
-        title="Execution Mode",
-        loc="upper left",
-        frameon=True,
-        fontsize=8,
-    )
-    ax.add_artist(leg1)
-
     ax.legend(
         handles=increment_legend_elements,
         title="Comptime Increment",
         loc="upper left",
-        bbox_to_anchor=(0.20, 1.0),
         frameon=True,
-        fontsize=7,
-        ncol=2,
+        fontsize=8,
+        ncol=min(num_increments, 4),
     )
 
     plt.tight_layout()
 
-    # Save output
-    clean_metric = sanitize_filename(metric)
-    filename = f"combined_lut_{clean_metric}.png"
+    filename = f"lut_comptime_{sanitize_filename(metric)}.png"
     output_path = OUTPUT_DIR / filename
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"Saved plot: {output_path}")
@@ -218,23 +259,24 @@ def generate_lut_metric_plot(df: pd.DataFrame, metric: str, metric_title: str):
         plt.pause(PAUSE_DURATION)
 
 
+# -------------------------------------------------------------------------
+# Main Execution Loop
+# -------------------------------------------------------------------------
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     if SHOW_PLOTS:
         plt.ion()
 
-    # Verify CSV existence
     if not CSV_PATH.is_file():
         print(f"Error: CSV file not found at {CSV_PATH}")
         return
 
-    # Read data
     df = pd.read_csv(CSV_PATH, na_filter=False)
 
-    # Generate plots for all configured metrics
     for metric, metric_title in METRIC_TITLES.items():
-        generate_lut_metric_plot(df, metric, metric_title)
+        generate_lut_runtime_plot(df, metric, metric_title)
+        generate_lut_comptime_plot(df, metric, metric_title)
 
     if SHOW_PLOTS:
         plt.ioff()
