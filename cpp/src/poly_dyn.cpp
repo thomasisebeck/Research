@@ -101,44 +101,40 @@ int main() {
   utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
   auto start_time = std::chrono::steady_clock::now();
 
-  for (int j = 0; j < ITERS; j++)
-    for (size_t i = 0; i < SIZE; ++i) {
+  // speculative devirtualisation
 
-      // speculative devirtualisation
-
-      /*
-               .loc 1 67 13 is_stmt 1 view .LVU89
+  /*
+           .loc 1 67 13 is_stmt 1 view .LVU89
 # /app/example.cpp:67:             sound_outputs[ind++] = zoo[i]->sound();
-        .loc 1 67 49 is_stmt 0 discriminator 1 view .LVU90
-        mov     rdi, QWORD PTR [rbx]      # _98, MEM[(struct AnimalInterface *
+    .loc 1 67 49 is_stmt 0 discriminator 1 view .LVU90
+    mov     rdi, QWORD PTR [rbx]      # _98, MEM[(struct AnimalInterface *
 *)_70] cmp     rax, OFFSET FLAT:"Mouse::sound() const"     # pretmp_142, je .L22
 #, cmp     rax, OFFSET FLAT:"Cat::sound() const"       # pretmp_142, je .L23 #,
-        cmp     rax, OFFSET FLAT:"Dog::sound() const"       # pretmp_142,
-        jne     .L16      #,
-       */
-      // 2. ----------- BENCHMARK -------------
-      for (std::size_t j = 0; j < ITERS; j++) {
-        for (const auto &el : zoo) {
-          sound_outputs[ind++] = el->sound();
-        }
-      }
-
-      // end the clock, then stop perf
-      auto end_time = std::chrono::steady_clock::now();
-      utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
-
-      std::print("\n---  VERIFYING OUTPUTS ---\n");
-      for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
-        std::print("Index {}, sound: {}\n", ind, static_cast<int>(sound));
-      }
-
-      for (auto [ind, sound] : std::views::enumerate(sound_outputs_warmup)) {
-        std::print("Index {}, sound_warmup: {}\n", ind,
-                   static_cast<int>(sound));
-      }
-
-      const auto duration = (end_time - start_time).count();
-      std::print("Processed in: [{}] ns\n", duration);
-
-      benchmark::DoNotOptimize(sound_outputs);
+    cmp     rax, OFFSET FLAT:"Dog::sound() const"       # pretmp_142,
+    jne     .L16      #,
+   */
+  // 2. ----------- BENCHMARK -------------
+  for (std::size_t j = 0; j < ITERS; j++) {
+    for (const auto &el : zoo) {
+      sound_outputs[ind++] = el->sound();
     }
+  }
+
+  // end the clock, then stop perf
+  auto end_time = std::chrono::steady_clock::now();
+  utils::send_perf_cmd(perf_ctl, perf_ack, "disable");
+
+  std::print("\n---  VERIFYING OUTPUTS ---\n");
+  for (auto [ind, sound] : std::views::enumerate(sound_outputs)) {
+    std::print("Index {}, sound: {}\n", ind, static_cast<int>(sound));
+  }
+
+  for (auto [ind, sound] : std::views::enumerate(sound_outputs_warmup)) {
+    std::print("Index {}, sound_warmup: {}\n", ind, static_cast<int>(sound));
+  }
+
+  const auto duration = (end_time - start_time).count();
+  std::print("Processed in: [{}] ns\n", duration);
+
+  benchmark::DoNotOptimize(sound_outputs);
+}

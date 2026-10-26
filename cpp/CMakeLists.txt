@@ -6,15 +6,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_COMPILER gcc)
-set(CMAKE_CXX_COMPILER g++)
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
 
 message(STATUS "Default C++ Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Compiler Path: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 
-add_compile_options(-fconstexpr-ops-limit=100000000)
-add_compile_options(-fconstexpr-loop-limit=100000000)
+add_compile_options(-fconstexpr-steps=100000000 -fconstexpr-depth=100000)
 
 if(DEFINED INCREMENT_VAL)
   add_compile_definitions(INCREMENT_VAL=${INCREMENT_VAL})

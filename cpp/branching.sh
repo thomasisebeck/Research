@@ -9,7 +9,7 @@ fi
 set -e
 
 ITERATIONS=${1:-15}
-ITERATIONS_BUILD=${1:-1}
+ITERATIONS_BUILD=${1:-15}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"

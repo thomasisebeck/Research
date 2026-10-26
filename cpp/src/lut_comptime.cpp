@@ -6,13 +6,35 @@
 #include <fstream>
 #include <print>
 
+namespace comptime {
+// Pure constexpr Taylor series for compile-time lookup table population
+constexpr double sin(double x) {
+  double sum = x;
+  double term = x;
+  for (int n = 1; n <= 12; ++n) {
+    term *= -x * x / ((2 * n) * (2 * n + 1));
+    sum += term;
+  }
+  return sum;
+}
+
+constexpr double cos(double x) {
+  double sum = 1.0;
+  double term = 1.0;
+  for (int n = 1; n <= 12; ++n) {
+    term *= -x * x / ((2 * n - 1) * (2 * n));
+    sum += term;
+  }
+  return sum;
+}
+} // namespace comptime
+
 constexpr std::array<double, utils::STEPS> generate_lut() {
   std::array<double, utils::STEPS> table;
 
   for (int i = 0; i < utils::STEPS; i++) {
     const double result = i * utils::INCREMENT;
-
-    table[i] = __builtin_sin(result) + __builtin_cos(result);
+    table[i] = comptime::sin(result) + comptime::cos(result);
   }
 
   return table;
@@ -24,7 +46,7 @@ int main() {
   std::ifstream perf_ack("/tmp/perf.ack");
 
   const auto test_cases =
-      utils::read_array_from_file<utils::TEST_SIZE>("lookup.txt");
+      utils::read_array_from_file<double, utils::TEST_SIZE>("lookup.txt");
 
   constexpr auto myLut = generate_lut();
   // faster but not fair

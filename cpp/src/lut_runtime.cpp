@@ -10,7 +10,7 @@ int main() {
   std::ifstream perf_ack("/tmp/perf.ack");
 
   const auto test_cases =
-      utils::read_array_from_file<utils::TEST_SIZE>("lookup.txt");
+      utils::read_array_from_file<double, utils::TEST_SIZE>("lookup.txt");
 
   std::print(
       "LUT size: {}, increment: {}, testSize: {}, degrees: {}, steps: {}\n",
