@@ -112,8 +112,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
     }
 
-    zoo = black_box(zoo);
-
     let mut ind: usize = 0;
 
     // 1. ----------- WARMUP -------------

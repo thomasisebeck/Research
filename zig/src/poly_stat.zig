@@ -102,9 +102,6 @@ pub fn main(init: std.process.Init) !void {
         };
     }
 
-    // prevents entire loop from being eval at comptime
-    std.mem.doNotOptimizeAway(&zoo);
-
     var ind: usize = 0;
 
     for (0..ITERS) |_| {

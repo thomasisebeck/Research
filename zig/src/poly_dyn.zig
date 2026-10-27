@@ -118,8 +118,6 @@ pub fn main(init: std.process.Init) !void {
         };
     }
 
-    std.mem.doNotOptimizeAway(&zoo);
-
     var ind: usize = 0;
 
     for (0..ITERS) |_| {

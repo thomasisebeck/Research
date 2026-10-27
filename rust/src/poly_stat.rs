@@ -165,9 +165,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
     }
 
-    // prevents entire loop from being eval at comptime
-    zoo = std::hint::black_box(zoo);
-
     let mut ind: usize = 0;
 
     utils::send_perf_cmd(&mut perf_ctl, &mut perf_ack, "enable")?;

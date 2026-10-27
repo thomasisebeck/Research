@@ -79,8 +79,6 @@ int main() {
     }
   }
 
-  benchmark::DoNotOptimize(zoo);
-
   std::size_t ind = 0;
 
   // 1. ----------- WARMUP -------------
@@ -95,8 +93,6 @@ int main() {
   }
 
   ind = 0;
-
-  benchmark::DoNotOptimize(zoo);
 
   // start perf, then the clock
   utils::send_perf_cmd(perf_ctl, perf_ack, "enable");
