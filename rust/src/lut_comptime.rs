@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for _ in 0..ITERS {
         for &num in test_cases.iter() {
-            let idx = std::hint::black_box((num * prediv) as usize);
+            let idx = (num * prediv) as usize;
             warmup_sum += my_lut[idx];
         }
     }
