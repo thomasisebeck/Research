@@ -17,7 +17,7 @@ PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
 
 FILES=(
-  # "image_pipeline_comptime.cpp"
+  "image_pipeline_comptime.cpp"
   "image_pipeline_runtime.cpp"
 )
 
