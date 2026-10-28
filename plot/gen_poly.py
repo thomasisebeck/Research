@@ -73,9 +73,15 @@ def format_diff_cell(pct_diff: float, p_val: float) -> str:
 # Table Generators
 # -------------------------------------------------------------------------
 
-def generate_stat_diff_table(df: pd.DataFrame, label: str, setting: str, title: str, tex_label: str) -> str:
-    """Generates 4-column statistical significance comparison LaTeX tables."""
-    sub_df = df[(df["label"] == label) & (df["setting"] == setting)]
+def generate_stat_diff_table(df: pd.DataFrame, label: str, setting: str | None, title: str, tex_label: str) -> str:
+    """
+    Generates 4-column statistical significance comparison LaTeX tables.
+    If setting is None, filters by label only (ignoring the setting column).
+    """
+    if setting is None:
+        sub_df = df[df["label"] == label]
+    else:
+        sub_df = df[(df["label"] == label) & (df["setting"] == setting)]
     
     latex = []
     latex.append(f"% ==================== {title} ====================")
@@ -89,7 +95,6 @@ def generate_stat_diff_table(df: pd.DataFrame, label: str, setting: str, title: 
     latex.append(r"\midrule")
 
     for metric_key, metric_name in METRICS:
-        # Default sample count if not explicitly recorded
         n_obs = 30
         
         def get_stats(lang):
@@ -176,20 +181,23 @@ def generate_workload_detail_table(df: pd.DataFrame, setting: str, setting_name:
 
 def main():
     if not CSV_PATH.is_file():
-        print(f"CSV file not found at {CSV_PATH}. Creating template LaTeX file instead.")
+        print(f"CSV file not found at {CSV_PATH}.")
         return
 
     df = pd.read_csv(CSV_PATH, na_filter=False)
     output_tables = []
 
-    # 1. Calibration
+    # 1. Calibration (Ignores setting)
     output_tables.append(generate_stat_diff_table(
-        df, "calibration", "N/A", "Calibration Phase", "tab:calibration_N/A"
+        df, "calibration", None, "Calibration Phase", "tab:calibration_N/A"
     ))
 
-    # 2. Polymorphism (No setting / NA)
+    # 2. Polymorphism (Static and Dynamic - Both Ignore setting)
     output_tables.append(generate_stat_diff_table(
-        df, "poly_stat", "N/A", "Polymorphism (Static)", "tab:poly_stat_N/A"
+        df, "poly_stat", None, "Polymorphism (Static)", "tab:poly_stat_N/A"
+    ))
+    output_tables.append(generate_stat_diff_table(
+        df, "poly_dyn", None, "Polymorphism (Dynamic)", "tab:poly_dyn_N/A"
     ))
 
     # 3. Image Pipeline Statistical Significance Tables
