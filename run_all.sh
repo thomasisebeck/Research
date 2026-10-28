@@ -16,7 +16,7 @@ LANG_DIRS=("cpp" "rust" "zig")
 
 # Benchmark scripts to run in sequence
 # SCRIPTS=("cal.sh" "branching.sh" "lut.sh" "poly.sh")
-SCRIPTS=("branching.sh")
+SCRIPTS=("poly.sh")
 
 TOTAL_RUNS=$(( ${#LANG_DIRS[@]} * ${#SCRIPTS[@]} ))
 CURRENT_RUN=0
