@@ -34,7 +34,7 @@ constexpr std::array<double, utils::STEPS> generate_lut() {
 
   for (int i = 0; i < utils::STEPS; i++) {
     const double result = i * utils::INCREMENT;
-    table[i] = comptime::sin(result) + comptime::cos(result);
+    table[i] = std::sin(result) + comptime::cos(result);
   }
 
   return table;
