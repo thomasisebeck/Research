@@ -194,7 +194,7 @@ def plot_image_pipeline_grouped(
     ax.set_axisbelow(True)
 
     # Set bottom Y-limit strictly at 0 for a clean baseline
-    ax.set_ylim(0.0, max(global_max_y * 1.25, 2.0))
+    ax.set_ylim(0.0, global_max_y * 1.15)
 
     # Deduplicated legend
     handles, labels = ax.get_legend_handles_labels()
