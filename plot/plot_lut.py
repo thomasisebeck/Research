@@ -177,57 +177,98 @@ def generate_lut_comptime_plot(df: pd.DataFrame, metric: str, metric_title: str)
     all_heights = []
     increment_legend_elements = []
 
+    # First pass: calculate y-axis scale based on valid data points
+    valid_max = 0
+    for lang in LANG_ORDER:
+        for setting in inc_settings:
+            row = ct_df[(ct_df["lang"] == lang) & (ct_df["setting"] == setting)]
+            if not row.empty:
+                m = row[mean_col].values[0]
+                s = row[std_col].values[0]
+                if m > 0:
+                    valid_max = max(valid_max, m + s)
+
+    y_upper_limit = (valid_max * 1.35) if valid_max > 0 else 1.0
+    failed_bar_height = y_upper_limit * 0.05  # Height for indicator bars
+
     for idx, setting in enumerate(inc_settings):
         hatch = HATCH_PATTERNS[idx % len(HATCH_PATTERNS)]
         offset = x_indices - (total_group_width / 2) + (idx + 0.5) * bar_width
 
-        means, stds, colors = [], [], []
+        means, stds, colors, hatches, is_failed = [], [], [], [], []
 
         for lang in LANG_ORDER:
             row = ct_df[(ct_df["lang"] == lang) & (ct_df["setting"] == setting)]
-            if not row.empty:
+            
+            # Check if row is missing or contains 0/empty values (failed compilation)
+            if row.empty or row[mean_col].values[0] == 0 or row[mean_col].values[0] == "":
+                means.append(failed_bar_height)
+                stds.append(0)
+                colors.append("#D3D3D3")  # Light Grey
+                hatches.append("xx")      # 'x' pattern for failed compilation
+                is_failed.append(True)
+            else:
                 m = row[mean_col].values[0]
                 s = row[std_col].values[0]
                 means.append(m)
                 stds.append(s)
                 colors.append(LANG_COLORS[lang])
+                hatches.append(hatch)
+                is_failed.append(False)
                 all_heights.append(m + s)
-            else:
-                means.append(0)
-                stds.append(0)
-                colors.append("#CCCCCC")
 
-        bars = ax.bar(
-            offset,
-            means,
-            width=bar_width * 0.9,
-            yerr=stds,
-            capsize=2,
-            color=colors,
-            edgecolor="#333333",
-            linewidth=0.7,
-            hatch=hatch,
-            error_kw={"ecolor": "#222222", "capthick": 0.7},
-        )
-
-        for bar, mean_val, std_val in zip(bars, means, stds):
-            if mean_val == 0:
-                continue
-            ax.annotate(
-                f"{mean_val:,.1f}",
-                xy=(bar.get_x() + bar.get_width() / 2, bar.get_height() + std_val),
-                xytext=(0, 2),
-                textcoords="offset points",
-                ha="center",
-                va="bottom",
-                fontsize=5.0,
-                fontweight="bold",
-                rotation=90,
+        # Plot individual bars to accommodate per-bar hatch patterns (e.g. 'xx' for failures)
+        for i, (pos, m, s, col, h, failed) in enumerate(
+            zip(offset, means, stds, colors, hatches, is_failed)
+        ):
+            bar = ax.bar(
+                pos,
+                m,
+                width=bar_width * 0.9,
+                yerr=s if not failed else None,
+                capsize=2 if not failed else 0,
+                color=col,
+                edgecolor="#333333",
+                linewidth=0.7,
+                hatch=h,
+                error_kw={"ecolor": "#222222", "capthick": 0.7},
             )
+
+            if failed:
+                # Annotate failed bars with "N/A" or "Failed" above the grey bar
+                ax.annotate(
+                    "N/A",
+                    xy=(pos, m),
+                    xytext=(0, 2),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    fontsize=6.0,
+                    fontweight="bold",
+                    color="#555555",
+                )
+            else:
+                # Normal numeric value annotation
+                ax.annotate(
+                    f"{m:,.1f}",
+                    xy=(pos, m + s),
+                    xytext=(0, 2),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    fontsize=5.0,
+                    fontweight="bold",
+                    rotation=90,
+                )
 
         increment_legend_elements.append(
             Patch(facecolor="#888888", edgecolor="#333333", hatch=hatch, label=setting)
         )
+
+    # Add a custom legend item for failed compilations if any exist
+    increment_legend_elements.append(
+        Patch(facecolor="#D3D3D3", edgecolor="#333333", hatch="xx", label="Failed / N/A")
+    )
 
     ax.set_xticks(x_indices)
     ax.set_xticklabels([LANG_LABELS[l] for l in LANG_ORDER], fontweight="bold", fontsize=11)
@@ -235,8 +276,7 @@ def generate_lut_comptime_plot(df: pd.DataFrame, metric: str, metric_title: str)
     ax.yaxis.grid(True, linestyle="--", alpha=0.5, zorder=0)
     ax.set_axisbelow(True)
 
-    if all_heights:
-        ax.set_ylim(0, max(all_heights) * 1.35)
+    ax.set_ylim(0, y_upper_limit)
 
     ax.legend(
         handles=increment_legend_elements,
@@ -244,7 +284,7 @@ def generate_lut_comptime_plot(df: pd.DataFrame, metric: str, metric_title: str)
         loc="upper left",
         frameon=True,
         fontsize=8,
-        ncol=min(num_increments, 4),
+        ncol=min(len(increment_legend_elements), 5),
     )
 
     plt.tight_layout()
@@ -257,7 +297,6 @@ def generate_lut_comptime_plot(df: pd.DataFrame, metric: str, metric_title: str)
     if SHOW_PLOTS:
         plt.show()
         plt.pause(PAUSE_DURATION)
-
 
 # -------------------------------------------------------------------------
 # Main Execution Loop
