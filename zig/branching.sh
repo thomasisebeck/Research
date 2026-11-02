@@ -9,7 +9,7 @@ fi
 set -e
 
 FILES=(
-#"image_pipeline_comptime.zig"
+  "image_pipeline_comptime.zig"
   "image_pipeline_runtime.zig"
 )
 
