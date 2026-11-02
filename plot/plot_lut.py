@@ -67,10 +67,10 @@ def parse_increment_val(setting_str: str) -> float:
 
 
 # -------------------------------------------------------------------------
-# Plot 1: LUT Runtime Baseline
+# Plot 1: LUT Runtime
 # -------------------------------------------------------------------------
 def generate_lut_runtime_plot(df: pd.DataFrame, metric: str, metric_title: str):
-    """Generates bar charts for LUT Runtime baseline across languages."""
+    """Generates bar charts for LUT Runtime across languages."""
     mean_col = f"{metric}_mean"
     std_col = f"{metric}_std_dev"
 
@@ -124,7 +124,7 @@ def generate_lut_runtime_plot(df: pd.DataFrame, metric: str, metric_title: str):
 
     ax.set_xticks(x_indices)
     ax.set_xticklabels([LANG_LABELS[l] for l in LANG_ORDER], fontweight="bold", fontsize=10)
-    ax.set_title(f"LUT Runtime Baseline: {metric_title}", pad=12, fontweight="bold")
+    ax.set_title(f"Runtime sin and cos addition: {metric_title}", pad=12, fontweight="bold")
     ax.yaxis.grid(True, linestyle="--", alpha=0.5, zorder=0)
     ax.set_axisbelow(True)
 
