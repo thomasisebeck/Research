@@ -8,7 +8,7 @@ import pandas as pd
 # Configuration
 # -------------------------------------------------------------------------
 
-CSV_PATH = Path("runtime_times_all.csv")  # Update to build_times.csv if separate
+CSV_PATH = Path("build_times_all.csv")
 OUTPUT_DIR = Path("plots_build_time")
 
 SHOW_PLOTS = True
@@ -17,25 +17,25 @@ PAUSE_DURATION = 0.2
 LANG_ORDER = ["cpp", "rust", "zig"]
 LANG_LABELS = {"cpp": "C++", "rust": "Rust", "zig": "Zig"}
 
-# Color palette definition per language & state
+# Darker, desaturated palette
 COLOR_MAPS = {
     "cpp": {
-        "cold_user": "#1F4E79",  # Dark Blue
-        "cold_sys": "#A63603",   # Dark Red-Orange
-        "hot_user": "#6BAED6",   # Light Blue
-        "hot_sys": "#FDBE85",    # Soft Gold
+        "cold_user": "#2B4053",  # Desaturated Dark Blue
+        "cold_sys": "#5C6B73",   # Muted Slate
+        "hot_user": "#4A6274",   # Mid Slate Blue
+        "hot_sys": "#8D99AE",    # Soft Grey-Blue
     },
     "rust": {
-        "cold_user": "#D66011",  # Dark Orange
-        "cold_sys": "#A63603",   # Dark Red-Orange
-        "hot_user": "#FDAE6B",  # Light Orange
-        "hot_sys": "#FDBE85",    # Soft Gold
+        "cold_user": "#7A3E21",  # Desaturated Dark Rust
+        "cold_sys": "#8C6A58",   # Muted Warm Grey
+        "hot_user": "#9E5A33",   # Mid Muted Orange
+        "hot_sys": "#B8927C",    # Soft Grey-Orange
     },
     "zig": {
-        "cold_user": "#2E7D32",  # Dark Green
-        "cold_sys": "#A63603",   # Dark Red-Orange
-        "hot_user": "#A1D99B",  # Light Green
-        "hot_sys": "#FDBE85",    # Soft Gold
+        "cold_user": "#274E36",  # Desaturated Dark Forest Green
+        "cold_sys": "#526E5C",   # Muted Sage
+        "hot_user": "#3C6E4D",   # Mid Soft Green
+        "hot_sys": "#8FA89B",    # Soft Grey-Green
     },
 }
 
@@ -61,14 +61,19 @@ def sanitize_filename(text: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_\-]", "_", str(text))
 
 
-def plot_build_time_category(df_subset: pd.DataFrame, title_suffix: str, filename_prefix: str):
-    """Generates a stacked build time plot (Cold vs Hot) for a given scenario subset."""
+def plot_stacked_build_time(
+    df_subset: pd.DataFrame,
+    title_suffix: str,
+    filename_prefix: str,
+    is_overhead: bool = False,
+):
+    """Generates a stacked build time plot (Cold vs Hot) with matched error propagation."""
     fig, ax = plt.subplots(figsize=(9.0, 5.0), dpi=300)
 
     num_languages = len(LANG_ORDER)
     x_indices = np.arange(num_languages)
     group_width = 0.50
-    bar_width = group_width / 2.0  # Cold and Hot bars side-by-side
+    bar_width = group_width / 2.0
 
     all_max_heights = []
 
@@ -79,25 +84,23 @@ def plot_build_time_category(df_subset: pd.DataFrame, title_suffix: str, filenam
 
         row_data = row.iloc[0]
 
-        # Fetch Cold parameters
-        cold_user = float(row_data["cold_user_mean"])
-        cold_sys = float(row_data["cold_sys_mean"])
+        # Extract fully adjusted components (non-negative floor for plotting stability)
+        cold_user = max(0.0, float(row_data["cold_user_mean"]))
+        cold_sys = max(0.0, float(row_data["cold_sys_mean"]))
         cold_real = float(row_data["cold_real_mean"])
         cold_real_std = float(row_data["cold_real_std_dev"])
 
-        # Fetch Hot parameters
-        hot_user = float(row_data["hot_user_mean"])
-        hot_sys = float(row_data["hot_sys_mean"])
+        hot_user = max(0.0, float(row_data["hot_user_mean"]))
+        hot_sys = max(0.0, float(row_data["hot_sys_mean"]))
         hot_real = float(row_data["hot_real_mean"])
         hot_real_std = float(row_data["hot_real_std_dev"])
 
         colors = COLOR_MAPS[lang]
 
-        # X-offsets for Cold (left) and Hot (right) bars
         x_cold = x_indices[lang_idx] - (bar_width / 2.0) - 0.02
         x_hot = x_indices[lang_idx] + (bar_width / 2.0) + 0.02
 
-        # 1. Stacked Bar: Cold Build (User + Sys)
+        # 1. Cold Stacked Bar (Delta User + Delta Sys)
         ax.bar(
             x_cold,
             cold_user,
@@ -120,7 +123,7 @@ def plot_build_time_category(df_subset: pd.DataFrame, title_suffix: str, filenam
             label="Cold $T_{\\mathrm{sys}}$" if lang_idx == 0 else "",
         )
 
-        # 2. Stacked Bar: Hot Build (User + Sys)
+        # 2. Hot Stacked Bar (Delta User + Delta Sys)
         ax.bar(
             x_hot,
             hot_user,
@@ -143,9 +146,8 @@ def plot_build_time_category(df_subset: pd.DataFrame, title_suffix: str, filenam
             label="Hot $T_{\\mathrm{sys}}$" if lang_idx == 0 else "",
         )
 
-        # 3. Real-Time Overlay ($T_{real}$) with Error Line
+        # 3. Real-time Indicators and propagated error bounds
         for x_pos, real_val, real_std in [(x_cold, cold_real, cold_real_std), (x_hot, hot_real, hot_real_std)]:
-            # T_real Horizontal bar cap + error point
             ax.plot(
                 [x_pos - (bar_width * 0.45), x_pos + (bar_width * 0.45)],
                 [real_val, real_val],
@@ -167,11 +169,10 @@ def plot_build_time_category(df_subset: pd.DataFrame, title_suffix: str, filenam
                 zorder=5,
             )
 
-            # Value Annotations (e.g. "10.87s ± 0.04s")
             val_str = f"{real_val:.2f}s ± {real_std:.2f}s"
             ax.annotate(
                 val_str,
-                xy=(x_pos, real_val),
+                xy=(x_pos, max(0.0, real_val)),
                 xytext=(0, 6),
                 textcoords="offset points",
                 ha="center",
@@ -182,29 +183,131 @@ def plot_build_time_category(df_subset: pd.DataFrame, title_suffix: str, filenam
 
         all_max_heights.extend([cold_real + cold_real_std, hot_real + hot_real_std])
 
-    # Styling and Labels
     ax.set_xticks(x_indices)
     ax.set_xticklabels([LANG_LABELS[l] for l in LANG_ORDER], fontweight="bold", fontsize=11)
-    ax.set_ylabel("Time (seconds)", fontweight="bold", fontsize=10)
-    ax.set_title(f"Build Time: {title_suffix}", pad=14, fontweight="bold")
+
+    ylabel = "Overhead Time (seconds)" if is_overhead else "Time (seconds)"
+    title_prefix = "Build Time Overhead (Relative to Baseline)" if is_overhead else "Build Time Baseline"
+
+    ax.set_ylabel(ylabel, fontweight="bold", fontsize=10)
+    ax.set_title(f"{title_prefix}: {title_suffix}", pad=14, fontweight="bold")
     ax.yaxis.grid(True, linestyle="--", alpha=0.5, zorder=0)
     ax.set_axisbelow(True)
 
     if all_max_heights:
-        ax.set_ylim(0, max(all_max_heights) * 1.18)
+        max_h = max(all_max_heights)
+        ax.set_ylim(0, max_h * 1.22 if max_h > 0 else 1.0)
 
     ax.legend(loc="upper left", ncol=2, framealpha=0.9, fontsize=8)
 
     plt.tight_layout()
 
-    filename = f"build_time_{sanitize_filename(filename_prefix)}.png"
+    filename = f"{'overhead' if is_overhead else 'baseline'}_{sanitize_filename(filename_prefix)}.png"
     output_path = OUTPUT_DIR / filename
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    print(f"Saved build time plot: {output_path}")
+    print(f"Saved plot: {output_path}")
 
     if SHOW_PLOTS:
         plt.show()
         plt.pause(PAUSE_DURATION)
+
+
+def calculate_and_plot_overhead(df: pd.DataFrame):
+    # Extract baseline values (`label == 'build_offset'`)
+    df_base = df[df["label"] == "build_offset"].copy()
+
+    if df_base.empty:
+        print("Error: No 'build_offset' baseline entries found in CSV.")
+        return
+
+    print("\n" + "=" * 60)
+    print("CALCULATED BASELINE BUILD TIMES (Control Baseline)")
+    print("=" * 60)
+
+    baseline_dict = {}
+
+    for _, row in df_base.iterrows():
+        lang = row["lang"]
+        baseline_dict[lang] = row.to_dict()
+
+        print(f"\nLanguage: {LANG_LABELS.get(lang, lang)}")
+        print(f"  Cold Real Time : {row['cold_real_mean']:.2f}s ± {row['cold_real_std_dev']:.2f}s (Var: {row['cold_real_variance']:.4f})")
+        print(f"  Cold User Time : {row['cold_user_mean']:.2f}s ± {row['cold_user_std_dev']:.2f}s (Var: {row['cold_user_variance']:.4f})")
+        print(f"  Cold Sys Time  : {row['cold_sys_mean']:.2f}s ± {row['cold_sys_std_dev']:.2f}s (Var: {row['cold_sys_variance']:.4f})")
+        print(f"  Hot Real Time  : {row['hot_real_mean']:.2f}s ± {row['hot_real_std_dev']:.2f}s (Var: {row['hot_real_variance']:.4f})")
+        print(f"  Hot User Time  : {row['hot_user_mean']:.2f}s ± {row['hot_user_std_dev']:.2f}s (Var: {row['hot_user_variance']:.4f})")
+        print(f"  Hot Sys Time   : {row['hot_sys_mean']:.2f}s ± {row['hot_sys_std_dev']:.2f}s (Var: {row['hot_sys_variance']:.4f})")
+
+    print("\n" + "=" * 60)
+
+    # Plot control baseline
+    plot_stacked_build_time(
+        df_subset=df_base,
+        title_suffix="Minimal Executable Control",
+        filename_prefix="build_offset",
+        is_overhead=False,
+    )
+
+    # Compute component-wise differential build overheads + propagated variance
+    time_metrics = ["cold_real", "cold_user", "cold_sys", "hot_real", "hot_user", "hot_sys"]
+
+    df_exp = df[df["label"] != "build_offset"].copy()
+    overhead_rows = []
+
+    for _, row in df_exp.iterrows():
+        lang = row["lang"]
+        if lang not in baseline_dict:
+            continue
+
+        base_row = baseline_dict[lang]
+        overhead_entry = {
+            "lang": lang,
+            "label": row["label"],
+            "setting": row["setting"],
+        }
+
+        # Component-level subtraction + variance addition: std_diff = sqrt(var_exp + var_base)
+        for metric in time_metrics:
+            exp_mean = float(row[f"{metric}_mean"])
+            exp_var = float(row[f"{metric}_variance"])
+
+            base_mean = float(base_row[f"{metric}_mean"])
+            base_var = float(base_row[f"{metric}_variance"])
+
+            # Subtract baseline component mean
+            diff_mean = exp_mean - base_mean
+
+            # Propagate combined variance
+            combined_var = exp_var + base_var
+            combined_std = np.sqrt(combined_var)
+
+            overhead_entry[f"{metric}_mean"] = diff_mean
+            overhead_entry[f"{metric}_variance"] = combined_var
+            overhead_entry[f"{metric}_std_dev"] = combined_std
+
+        overhead_rows.append(overhead_entry)
+
+    df_overhead = pd.DataFrame(overhead_rows)
+
+    # Plot differential overheads
+    labels = df_overhead["label"].unique()
+
+    for label in labels:
+        df_label = df_overhead[df_overhead["label"] == label]
+        settings = df_label["setting"].unique()
+
+        for setting in settings:
+            df_subset = df_label[df_label["setting"] == setting]
+
+            title_suffix = f"{label} ({setting})" if setting != "N/A" else f"{label}"
+            filename_prefix = f"{label}_{setting}" if setting != "N/A" else f"{label}"
+
+            plot_stacked_build_time(
+                df_subset=df_subset,
+                title_suffix=title_suffix,
+                filename_prefix=filename_prefix,
+                is_overhead=True,
+            )
 
 
 def main():
@@ -219,22 +322,7 @@ def main():
         print(f"CSV file not found at {CSV_PATH}.")
         return
 
-    print("Generating Build Time plots grouped by scenario...")
-
-    # Iterate over unique label/setting combinations in the CSV
-    labels = df["label"].unique()
-
-    for label in labels:
-        df_label = df[df["label"] == label]
-        settings = df_label["setting"].unique()
-
-        for setting in settings:
-            df_subset = df_label[df_label["setting"] == setting]
-
-            title_suffix = f"{label} ({setting})" if setting != "N/A" else f"{label}"
-            filename_prefix = f"{label}_{setting}" if setting != "N/A" else f"{label}"
-
-            plot_build_time_category(df_subset, title_suffix, filename_prefix)
+    calculate_and_plot_overhead(df)
 
     if SHOW_PLOTS:
         print("\nAll plots generated. Close windows or press CTRL+C to exit.")

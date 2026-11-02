@@ -10,8 +10,8 @@ REAL_HOME=$(eval echo "~${TARGET_USER}")
 CARGO_BIN="/usr/bin/cargo"
 
 # 2. Benchmark Configuration
-ITERATIONS=${1:-15}
-ITERATIONS_BUILD=${1:-1}
+ITERATIONS=${1:-1}
+ITERATIONS_BUILD=${1:-15}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
@@ -19,22 +19,19 @@ PERF_CTL="/tmp/perf.ctl"
 PERF_ACK="/tmp/perf.ack"
 
 FILES=(
-  "image_pipeline_runtime.rs"
-  # "image_pipeline_comptime.rs"
+  #"image_pipeline_runtime.rs"
+  "image_pipeline_comptime.rs"
 )
 
 # QUALITIES=("low" "med" "high")
-QUALITIES=("low")
+QUALITIES=("high")
 
-TOGGLE_SETS=(
-  "false,false,false"
-)
 
-# TOGGLE_SETS=(
+ TOGGLE_SETS=(
 #   "false,false,false"
 #   "true,false,true"
-#   "true,true,true"
-# )
+   "true,true,true"
+ )
 
 # Safe ownership adjustment on target dir
 if [ -d "${REAL_HOME}/git-repos/Research/rust/target" ]; then

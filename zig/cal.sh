@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ITERATIONS=${1:-15}
+ITERATIONS=${1:-1}
 ITERATIONS_BUILD=${1:-1}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
