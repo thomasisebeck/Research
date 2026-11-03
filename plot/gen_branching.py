@@ -93,7 +93,7 @@ def generate_full_branching_table(df: pd.DataFrame, label: str, raw_setting: str
     """
     sub_df = df[(df["label"] == label) & (df["setting"] == raw_setting)]
     
-    label_type = "Compile-Time Tagged Union" if "comptime" in label else "Runtime Dynamic Dispatch"
+    label_type = "Compile-Time Tagged Union Branching" if "comptime" in label else "Runtime Polymorphic Branching"
     tex_label = f"tab:image_pipeline_{friendly_setting.lower()}_{'cmp' if 'comptime' in label else 'run'}"
     
     latex = []
