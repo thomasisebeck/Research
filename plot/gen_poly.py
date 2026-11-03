@@ -80,31 +80,45 @@ def format_diff_cell(pct_diff: float, p_val: float) -> str:
         return f"{val_str} ({p_str})"
 
 
+# -------------------------------------------------------------------------
+# Table Generators
+# -------------------------------------------------------------------------
+
 def generate_between_language_poly_table(df: pd.DataFrame) -> str:
     """Generates a single combined between-language statistical significance
     table covering both Static (poly_stat) and Dynamic (poly_dyn) dispatch.
     """
     latex = []
-    latex.append("% ==================== Polymorphism Between-Language Comparison ====================")
+    latex.append(
+        "% ==================== Polymorphism Between-Language Comparison"
+        " ===================="
+    )
     latex.append(r"\begin{table}[htbp]")
     latex.append(r"\centering")
-    latex.append(r"\caption{Polymorphism Between-Language Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}")
+    latex.append(
+        r"\caption{Polymorphism Between-Language Statistical Significance and"
+        r" Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}"
+    )
     latex.append(r"\label{tab:poly_between_lang}")
     latex.append(r"\begin{tabular}{l ccc}")
     latex.append(r"\toprule")
-    latex.append(r"\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\")
+    latex.append(
+        r"\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} &"
+        r" \textbf{Rust vs. Zig} \\"
+    )
 
     sections = [
-        ("poly_stat", r"Static Polymorphism (poly\_stat)"),
-        ("poly_dyn", r"Dynamic Polymorphism (poly\_dyn)")
+        ("poly_stat", "Static Polymorphism (poly\\_stat)"),
+        ("poly_dyn", "Dynamic Polymorphism (poly\\_dyn)"),
     ]
 
     for label, sec_title in sections:
         sub_df = df[df["label"] == label]
 
         latex.append(r"\midrule")
-        # FIXED: Using clean raw string concatenation
-        latex.append(r"\multicolumn{4}{c}{\textbf{\textit{" + sec_title + r"}}} \\")
+        latex.append(
+            r"\multicolumn{4}{c}{\textbf{\textit{" + sec_title + r"}}} \\"
+        )
         latex.append(r"\midrule")
 
         for metric_key, metric_name in METRICS:
@@ -122,15 +136,24 @@ def generate_between_language_poly_table(df: pd.DataFrame) -> str:
             rust_m, rust_s, rust_n = get_stats("rust")
             zig_m, zig_s, zig_n = get_stats("zig")
 
-            rust_cpp_pct, rust_cpp_p = compute_pct_and_pvalue(rust_m, rust_s, rust_n, cpp_m, cpp_s, cpp_n)
-            zig_cpp_pct, zig_cpp_p = compute_pct_and_pvalue(zig_m, zig_s, zig_n, cpp_m, cpp_s, cpp_n)
-            rust_zig_pct, rust_zig_p = compute_pct_and_pvalue(rust_m, rust_s, rust_n, zig_m, zig_s, zig_n)
+            rust_cpp_pct, rust_cpp_p = compute_pct_and_pvalue(
+                rust_m, rust_s, rust_n, cpp_m, cpp_s, cpp_n
+            )
+            zig_cpp_pct, zig_cpp_p = compute_pct_and_pvalue(
+                zig_m, zig_s, zig_n, cpp_m, cpp_s, cpp_n
+            )
+            rust_zig_pct, rust_zig_p = compute_pct_and_pvalue(
+                rust_m, rust_s, rust_n, zig_m, zig_s, zig_n
+            )
 
             cell_rust_cpp = format_diff_cell(rust_cpp_pct, rust_cpp_p)
             cell_zig_cpp = format_diff_cell(zig_cpp_pct, zig_cpp_p)
             cell_rust_zig = format_diff_cell(rust_zig_pct, rust_zig_p)
 
-            latex.append(f"{metric_name:18s} & {cell_rust_cpp} & {cell_zig_cpp} & {cell_rust_zig} \\\\")
+            latex.append(
+                f"{metric_name:18s} & {cell_rust_cpp} & {cell_zig_cpp} &"
+                f" {cell_rust_zig} \\\\"
+            )
 
     latex.append(r"\bottomrule")
     latex.append(r"\end{tabular}")
@@ -141,83 +164,61 @@ def generate_between_language_poly_table(df: pd.DataFrame) -> str:
 
 
 def generate_within_language_poly_table(df: pd.DataFrame) -> str:
-    """Generates a within-language dispatch comparison table showing Dynamic vs.
+    """Generates a within-language dispatch comparison table for ALL metrics,
 
-    Static runtimes and resulting speedup percentage per language.
+    comparing Static (poly_stat) against Dynamic (poly_dyn) dispatch per
+    language.
     """
     sub_dyn = df[df["label"] == "poly_dyn"]
     sub_stat = df[df["label"] == "poly_stat"]
 
     latex = []
     latex.append(
-        "% ==================== Polymorphism Within-Language Speedup ===================="
+        "% ==================== Polymorphism Within-Language Comparison ===================="
     )
     latex.append(r"\begin{table}[htbp]")
     latex.append(r"\centering")
-    latex.append(r"\footnotesize")
-    latex.append(r"\setlength{\tabcolsep}{3pt}")
     latex.append(
-        r"\caption{Polymorphism Within-Language Dispatch Speedup: Dynamic (\texttt{poly\_dyn}) vs. Static (\texttt{poly\_stat}) Runtime and Percentage Speedup}"
+        r"\caption{Polymorphism Within-Language Percentage Differences: Static (\texttt{poly\_stat}) vs. Dynamic (\texttt{poly\_dyn}) Dispatch Across All Metrics}"
     )
     latex.append(r"\label{tab:poly_within_lang}")
-    latex.append(
-        r"\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r@{\,$\pm$\,}l r@{\,$\pm$\,}l c @{}}"
-    )
+    latex.append(r"\begin{tabular}{l ccc}")
     latex.append(r"\toprule")
     latex.append(
-        r"\textbf{Language} & \multicolumn{2}{c}{\textbf{\shortstack{Dynamic Dispatch\\Runtime (ns)}}} & \multicolumn{2}{c}{\textbf{\shortstack{Static Dispatch\\Runtime (ns)}}} & \textbf{\shortstack{Speedup\\(\%)}} \\"
+        r"\textbf{Metric} & \textbf{C++} & \textbf{Rust} & \textbf{Zig} \\"
     )
-    latex.append(r"\midrule")
 
     langs = [("cpp", "C++"), ("rust", "Rust"), ("zig", "Zig")]
     n_obs = 30
 
-    for lang_code, lang_disp in langs:
-        row_dyn = sub_dyn[sub_dyn["lang"] == lang_code]
-        row_stat = sub_stat[sub_stat["lang"] == lang_code]
+    latex.append(r"\midrule")
 
-        if not row_dyn.empty and not row_stat.empty:
-            dyn_m = float(row_dyn["runtime_ns_mean"].values[0])
-            dyn_s = float(row_dyn["runtime_ns_std_dev"].values[0])
-            stat_m = float(row_stat["runtime_ns_mean"].values[0])
-            stat_s = float(row_stat["runtime_ns_std_dev"].values[0])
+    for metric_key, metric_name in METRICS:
+        cells = []
+        for lang_code, lang_disp in langs:
+            row_dyn = sub_dyn[sub_dyn["lang"] == lang_code]
+            row_stat = sub_stat[sub_stat["lang"] == lang_code]
 
-            dyn_m_str = format_latex_num(dyn_m)
-            dyn_s_str = format_latex_num(dyn_s)
-            stat_m_str = format_latex_num(stat_m)
-            stat_s_str = format_latex_num(stat_s)
+            if not row_dyn.empty and not row_stat.empty:
+                dyn_m = float(row_dyn[f"{metric_key}_mean"].values[0])
+                dyn_s = float(row_dyn[f"{metric_key}_std_dev"].values[0])
+                stat_m = float(row_stat[f"{metric_key}_mean"].values[0])
+                stat_s = float(row_stat[f"{metric_key}_std_dev"].values[0])
 
-            # Speedup % = ((Dynamic - Static) / Dynamic) * 100
-            speedup_pct = (
-                ((dyn_m - stat_m) / dyn_m) * 100.0 if dyn_m > 0 else 0.0
-            )
-
-            # Welch's t-test p-value between dynamic and static runs within language
-            se_dyn = (dyn_s**2) / n_obs
-            se_stat = (stat_s**2) / n_obs
-            se_diff = np.sqrt(se_dyn + se_stat)
-
-            if se_diff == 0:
-                p_val = 1.0
-            else:
-                t_stat = (dyn_m - stat_m) / se_diff
-                df_num = (se_dyn + se_stat) ** 2
-                df_denom = (se_dyn**2) / (n_obs - 1) + (
-                    se_stat**2
-                ) / (n_obs - 1)
-                df_val = (
-                    df_num / df_denom if df_denom > 0 else (n_obs + n_obs - 2)
+                # Percentage difference = ((Static - Dynamic) / Dynamic) * 100
+                pct_diff, p_val = compute_pct_and_pvalue(
+                    stat_m, stat_s, n_obs, dyn_m, dyn_s, n_obs
                 )
-                p_val = float(stats.t.sf(np.abs(t_stat), df_val) * 2)
+                cells.append(format_diff_cell(pct_diff, p_val))
+            else:
+                cells.append("N/A")
 
-            cell_speedup = format_diff_cell(speedup_pct, p_val)
-
-            latex.append(
-                f"{lang_disp:22s} & {dyn_m_str} & {dyn_s_str} & {stat_m_str} & {stat_s_str} & {cell_speedup} \\\\"
-            )
+        latex.append(
+            f"{metric_name:18s} & {cells[0]} & {cells[1]} & {cells[2]} \\\\"
+        )
 
     latex.append(r"\bottomrule")
-    latex.append(r"\end{tabular*}")
+    latex.append(r"\end{tabular}")
     latex.append(r"\end{table}")
     latex.append("\n")
 
@@ -240,7 +241,7 @@ def main():
     # 1. Between-Language Comparison (Combines poly_stat and poly_dyn)
     output_tables.append(generate_between_language_poly_table(df))
 
-    # 2. Within-Language Comparison (Dynamic vs. Static Speedup)
+    # 2. Within-Language Comparison (All Metrics: Static vs. Dynamic)
     output_tables.append(generate_within_language_poly_table(df))
 
     full_tex_content = "\n".join(output_tables)

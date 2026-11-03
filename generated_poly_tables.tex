@@ -31,21 +31,23 @@ Branch Misses      & \textbf{-45.99\%} ($p < 0.001$) & \textbf{-15.90\%} ($p < 0
 \end{table}
 
 
-% ==================== Polymorphism Within-Language Speedup ====================
+% ==================== Polymorphism Within-Language Comparison ====================
 \begin{table}[htbp]
 \centering
-\footnotesize
-\setlength{\tabcolsep}{3pt}
-\caption{Polymorphism Within-Language Dispatch Speedup: Dynamic (\texttt{poly\_dyn}) vs. Static (\texttt{poly\_stat}) Runtime and Percentage Speedup}
+\caption{Polymorphism Within-Language Percentage Differences: Static (\texttt{poly\_stat}) vs. Dynamic (\texttt{poly\_dyn}) Dispatch Across All Metrics}
 \label{tab:poly_within_lang}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r@{\,$\pm$\,}l r@{\,$\pm$\,}l c @{}}
+\begin{tabular}{l ccc}
 \toprule
-\textbf{Language} & \multicolumn{2}{c}{\textbf{\shortstack{Dynamic Dispatch\\Runtime (ns)}}} & \multicolumn{2}{c}{\textbf{\shortstack{Static Dispatch\\Runtime (ns)}}} & \textbf{\shortstack{Speedup\\(\%)}} \\
+\textbf{Metric} & \textbf{C++} & \textbf{Rust} & \textbf{Zig} \\
 \midrule
-C++                    & 4\,018\,693.20 & 58\,286.01 & 1\,340\,626.47 & 61\,944.17 & \textbf{+66.64\%} ($p < 0.001$) \\
-Rust                   & 2\,190\,989.73 & 68\,648.05 & 843\,645.40 & 10\,131.52 & \textbf{+61.49\%} ($p < 0.001$) \\
-Zig                    & 2\,692\,907.93 & 53\,369.85 & 998\,032.53 & 19\,779.31 & \textbf{+62.94\%} ($p < 0.001$) \\
+Runtime (ns)       & \textbf{-66.64\%} ($p < 0.001$) & \textbf{-61.49\%} ($p < 0.001$) & \textbf{-62.94\%} ($p < 0.001$) \\
+Cycles             & \textbf{-66.69\%} ($p < 0.001$) & \textbf{-61.02\%} ($p < 0.001$) & \textbf{-62.95\%} ($p < 0.001$) \\
+Instructions       & \textbf{+6.10\%} ($p < 0.001$) & \textbf{+22.09\%} ($p < 0.001$) & \textbf{+4.20\%} ($p < 0.001$) \\
+Cache Misses       & +1.38\% ($p = 0.205$) & \textbf{-53.54\%} ($p < 0.001$) & +2.21\% ($p = 0.124$) \\
+Cache References   & +0.60\% ($p = 0.560$) & \textbf{-59.33\%} ($p < 0.001$) & \textbf{+5.68\%} ($p = 0.005$) \\
+Branches           & \textbf{-4.06\%} ($p < 0.001$) & \textbf{+7.55\%} ($p < 0.001$) & \textbf{-4.50\%} ($p < 0.001$) \\
+Branch Misses      & \textbf{-98.15\%} ($p < 0.001$) & \textbf{-98.93\%} ($p < 0.001$) & \textbf{-98.19\%} ($p < 0.001$) \\
 \bottomrule
-\end{tabular*}
+\end{tabular}
 \end{table}
 
