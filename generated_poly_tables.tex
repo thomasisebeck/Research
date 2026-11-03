@@ -34,19 +34,33 @@ Branch Misses      & \textbf{-45.99\%} ($p < 0.001$) & \textbf{-15.90\%} ($p < 0
 % ==================== Polymorphism Within-Language Comparison ====================
 \begin{table}[htbp]
 \centering
-\caption{Polymorphism Within-Language Percentage Differences: Static (\texttt{poly\_stat}) vs. Dynamic (\texttt{poly\_dyn}) Dispatch Across All Metrics}
+\footnotesize
+\caption{Polymorphism Within-Language Comparison: Dynamic (\texttt{poly\_dyn}) vs. Static (\texttt{poly\_stat}) Absolute Values and Percentage Differences Across All Metrics}
 \label{tab:poly_within_lang}
 \begin{tabular}{l ccc}
 \toprule
 \textbf{Metric} & \textbf{C++} & \textbf{Rust} & \textbf{Zig} \\
 \midrule
-Runtime (ns)       & \textbf{-66.64\%} ($p < 0.001$) & \textbf{-61.49\%} ($p < 0.001$) & \textbf{-62.94\%} ($p < 0.001$) \\
-Cycles             & \textbf{-66.69\%} ($p < 0.001$) & \textbf{-61.02\%} ($p < 0.001$) & \textbf{-62.95\%} ($p < 0.001$) \\
-Instructions       & \textbf{+6.10\%} ($p < 0.001$) & \textbf{+22.09\%} ($p < 0.001$) & \textbf{+4.20\%} ($p < 0.001$) \\
-Cache Misses       & +1.38\% ($p = 0.205$) & \textbf{-53.54\%} ($p < 0.001$) & +2.21\% ($p = 0.124$) \\
-Cache References   & +0.60\% ($p = 0.560$) & \textbf{-59.33\%} ($p < 0.001$) & \textbf{+5.68\%} ($p = 0.005$) \\
-Branches           & \textbf{-4.06\%} ($p < 0.001$) & \textbf{+7.55\%} ($p < 0.001$) & \textbf{-4.50\%} ($p < 0.001$) \\
-Branch Misses      & \textbf{-98.15\%} ($p < 0.001$) & \textbf{-98.93\%} ($p < 0.001$) & \textbf{-98.19\%} ($p < 0.001$) \\
+\multirow{2}{*}{Runtime (ns)} & $4\,018\,693.20 \rightarrow 1\,340\,626.47$ & $2\,190\,989.73 \rightarrow 843\,645.40$ & $2\,692\,907.93 \rightarrow 998\,032.53$ \\
+                       & \textbf{-66.64\%} ($p < 0.001$) & \textbf{-61.49\%} ($p < 0.001$) & \textbf{-62.94\%} ($p < 0.001$) \\
+\midrule
+\multirow{2}{*}{Cycles} & $11\,259\,770.07 \rightarrow 3\,750\,922.33$ & $6\,112\,478.33 \rightarrow 2\,382\,690.80$ & $7\,500\,840.73 \rightarrow 2\,779\,220.67$ \\
+                       & \textbf{-66.69\%} ($p < 0.001$) & \textbf{-61.02\%} ($p < 0.001$) & \textbf{-62.95\%} ($p < 0.001$) \\
+\midrule
+\multirow{2}{*}{Instructions} & $7\,932\,180.07 \rightarrow 8\,415\,801.40$ & $6\,740\,923.67 \rightarrow 8\,229\,946.53$ & $7\,826\,383.20 \rightarrow 8\,155\,149.13$ \\
+                       & \textbf{+6.10\%} ($p < 0.001$) & \textbf{+22.09\%} ($p < 0.001$) & \textbf{+4.20\%} ($p < 0.001$) \\
+\midrule
+\multirow{2}{*}{Cache Misses} & $30\,219.80 \rightarrow 30\,635.67$ & $1\,404.00 \rightarrow 652.33$ & $7\,958.33 \rightarrow 8\,134.27$ \\
+                       & +1.38\% ($p = 0.205$) & \textbf{-53.54\%} ($p < 0.001$) & +2.21\% ($p = 0.124$) \\
+\midrule
+\multirow{2}{*}{Cache References} & $38\,187.33 \rightarrow 38\,417.47$ & $8\,098.20 \rightarrow 3\,293.27$ & $10\,516.13 \rightarrow 11\,113.33$ \\
+                       & +0.60\% ($p = 0.560$) & \textbf{-59.33\%} ($p < 0.001$) & \textbf{+5.68\%} ($p = 0.005$) \\
+\midrule
+\multirow{2}{*}{Branches} & $1\,885\,064.80 \rightarrow 1\,808\,478.67$ & $2\,011\,343.67 \rightarrow 2\,163\,143.13$ & $1\,641\,315.27 \rightarrow 1\,567\,497.13$ \\
+                       & \textbf{-4.06\%} ($p < 0.001$) & \textbf{+7.55\%} ($p < 0.001$) & \textbf{-4.50\%} ($p < 0.001$) \\
+\midrule
+\multirow{2}{*}{Branch Misses} & $206\,408.87 \rightarrow 3\,816.40$ & $111\,472.80 \rightarrow 1\,188.47$ & $173\,583.87 \rightarrow 3\,145.53$ \\
+                       & \textbf{-98.15\%} ($p < 0.001$) & \textbf{-98.93\%} ($p < 0.001$) & \textbf{-98.19\%} ($p < 0.001$) \\
 \bottomrule
 \end{tabular}
 \end{table}

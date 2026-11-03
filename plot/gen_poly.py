@@ -166,20 +166,24 @@ def generate_between_language_poly_table(df: pd.DataFrame) -> str:
 def generate_within_language_poly_table(df: pd.DataFrame) -> str:
     """Generates a within-language dispatch comparison table for ALL metrics,
 
-    comparing Static (poly_stat) against Dynamic (poly_dyn) dispatch per
-    language.
+    showing absolute values (dyn -> stat) in the first row and percentage
+    differences with p-values in the second row for each metric.
     """
     sub_dyn = df[df["label"] == "poly_dyn"]
     sub_stat = df[df["label"] == "poly_stat"]
 
     latex = []
     latex.append(
-        "% ==================== Polymorphism Within-Language Comparison ===================="
+        "% ==================== Polymorphism Within-Language Comparison"
+        " ===================="
     )
     latex.append(r"\begin{table}[htbp]")
     latex.append(r"\centering")
+    latex.append(r"\footnotesize")
     latex.append(
-        r"\caption{Polymorphism Within-Language Percentage Differences: Static (\texttt{poly\_stat}) vs. Dynamic (\texttt{poly\_dyn}) Dispatch Across All Metrics}"
+        r"\caption{Polymorphism Within-Language Comparison: Dynamic"
+        r" (\texttt{poly\_dyn}) vs. Static (\texttt{poly\_stat}) Absolute"
+        r" Values and Percentage Differences Across All Metrics}"
     )
     latex.append(r"\label{tab:poly_within_lang}")
     latex.append(r"\begin{tabular}{l ccc}")
@@ -191,10 +195,12 @@ def generate_within_language_poly_table(df: pd.DataFrame) -> str:
     langs = [("cpp", "C++"), ("rust", "Rust"), ("zig", "Zig")]
     n_obs = 30
 
-    latex.append(r"\midrule")
-
     for metric_key, metric_name in METRICS:
-        cells = []
+        latex.append(r"\midrule")
+
+        raw_val_cells = []
+        pct_diff_cells = []
+
         for lang_code, lang_disp in langs:
             row_dyn = sub_dyn[sub_dyn["lang"] == lang_code]
             row_stat = sub_stat[sub_stat["lang"] == lang_code]
@@ -205,16 +211,31 @@ def generate_within_language_poly_table(df: pd.DataFrame) -> str:
                 stat_m = float(row_stat[f"{metric_key}_mean"].values[0])
                 stat_s = float(row_stat[f"{metric_key}_std_dev"].values[0])
 
-                # Percentage difference = ((Static - Dynamic) / Dynamic) * 100
+                # Row 1: Absolute numbers formatted as dyn -> stat
+                dyn_m_str = format_latex_num(dyn_m)
+                stat_m_str = format_latex_num(stat_m)
+                raw_val_cells.append(
+                    f"${dyn_m_str} \\rightarrow {stat_m_str}$"
+                )
+
+                # Row 2: Percentage difference + p-value
                 pct_diff, p_val = compute_pct_and_pvalue(
                     stat_m, stat_s, n_obs, dyn_m, dyn_s, n_obs
                 )
-                cells.append(format_diff_cell(pct_diff, p_val))
+                pct_diff_cells.append(format_diff_cell(pct_diff, p_val))
             else:
-                cells.append("N/A")
+                raw_val_cells.append("N/A")
+                pct_diff_cells.append("N/A")
 
+        # Multipage / Multiline metric label spanning the 2 rows
+        label_cell = f"\\multirow{{2}}{{*}}{{{metric_name}}}"
         latex.append(
-            f"{metric_name:18s} & {cells[0]} & {cells[1]} & {cells[2]} \\\\"
+            f"{label_cell:22s} & {raw_val_cells[0]} & {raw_val_cells[1]} &"
+            f" {raw_val_cells[2]} \\\\"
+        )
+        latex.append(
+            f"{'':22s} & {pct_diff_cells[0]} & {pct_diff_cells[1]} &"
+            f" {pct_diff_cells[2]} \\\\"
         )
 
     latex.append(r"\bottomrule")
