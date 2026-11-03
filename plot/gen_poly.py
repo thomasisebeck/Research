@@ -74,49 +74,37 @@ def format_diff_cell(pct_diff: float, p_val: float) -> str:
     val_str = f"{sign}{pct_diff:.2f}\\%"
 
     if p_val < 0.05:
-        return f"\\textbf{{{val_str}}} ({p_str})"
+        bold_val = f"\\textbf{{{val_str}}}"
+        return f"{bold_val} ({p_str})"
     else:
         return f"{val_str} ({p_str})"
 
 
-# -------------------------------------------------------------------------
-# Table Generators
-# -------------------------------------------------------------------------
-
-
 def generate_between_language_poly_table(df: pd.DataFrame) -> str:
     """Generates a single combined between-language statistical significance
-
     table covering both Static (poly_stat) and Dynamic (poly_dyn) dispatch.
     """
     latex = []
-    latex.append(
-        "% ==================== Polymorphism Between-Language Comparison ===================="
-    )
+    latex.append("% ==================== Polymorphism Between-Language Comparison ====================")
     latex.append(r"\begin{table}[htbp]")
     latex.append(r"\centering")
-    latex.append(
-        r"\caption{Polymorphism Between-Language Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}"
-    )
+    latex.append(r"\caption{Polymorphism Between-Language Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}")
     latex.append(r"\label{tab:poly_between_lang}")
     latex.append(r"\begin{tabular}{l ccc}")
     latex.append(r"\toprule")
-    latex.append(
-        r"\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\"
-    )
+    latex.append(r"\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\")
 
     sections = [
-        ("poly_stat", "Static Polymorphism (poly\\_stat)"),
-        ("poly_dyn", "Dynamic Polymorphism (poly\\_dyn)"),
+        ("poly_stat", r"Static Polymorphism (poly\_stat)"),
+        ("poly_dyn", r"Dynamic Polymorphism (poly\_dyn)")
     ]
 
     for label, sec_title in sections:
         sub_df = df[df["label"] == label]
 
         latex.append(r"\midrule")
-        latex.append(
-            f"\\multicolumn{{4}}{{c}}{{\\textbf{{\\textit{{{sec_title}}}}}} \\\\"
-        )
+        # FIXED: Using clean raw string concatenation
+        latex.append(r"\multicolumn{4}{c}{\textbf{\textit{" + sec_title + r"}}} \\")
         latex.append(r"\midrule")
 
         for metric_key, metric_name in METRICS:
@@ -134,23 +122,15 @@ def generate_between_language_poly_table(df: pd.DataFrame) -> str:
             rust_m, rust_s, rust_n = get_stats("rust")
             zig_m, zig_s, zig_n = get_stats("zig")
 
-            rust_cpp_pct, rust_cpp_p = compute_pct_and_pvalue(
-                rust_m, rust_s, rust_n, cpp_m, cpp_s, cpp_n
-            )
-            zig_cpp_pct, zig_cpp_p = compute_pct_and_pvalue(
-                zig_m, zig_s, zig_n, cpp_m, cpp_s, cpp_n
-            )
-            rust_zig_pct, rust_zig_p = compute_pct_and_pvalue(
-                rust_m, rust_s, rust_n, zig_m, zig_s, zig_n
-            )
+            rust_cpp_pct, rust_cpp_p = compute_pct_and_pvalue(rust_m, rust_s, rust_n, cpp_m, cpp_s, cpp_n)
+            zig_cpp_pct, zig_cpp_p = compute_pct_and_pvalue(zig_m, zig_s, zig_n, cpp_m, cpp_s, cpp_n)
+            rust_zig_pct, rust_zig_p = compute_pct_and_pvalue(rust_m, rust_s, rust_n, zig_m, zig_s, zig_n)
 
             cell_rust_cpp = format_diff_cell(rust_cpp_pct, rust_cpp_p)
             cell_zig_cpp = format_diff_cell(zig_cpp_pct, zig_cpp_p)
             cell_rust_zig = format_diff_cell(rust_zig_pct, rust_zig_p)
 
-            latex.append(
-                f"{metric_name:18s} & {cell_rust_cpp} & {cell_zig_cpp} & {cell_rust_zig} \\\\"
-            )
+            latex.append(f"{metric_name:18s} & {cell_rust_cpp} & {cell_zig_cpp} & {cell_rust_zig} \\\\")
 
     latex.append(r"\bottomrule")
     latex.append(r"\end{tabular}")

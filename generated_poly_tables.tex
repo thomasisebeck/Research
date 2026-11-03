@@ -1,0 +1,51 @@
+% ==================== Polymorphism Between-Language Comparison ====================
+\begin{table}[htbp]
+\centering
+\caption{Polymorphism Between-Language Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:poly_between_lang}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+\multicolumn{4}{c}{\textbf{\textit{Static Polymorphism (poly\_stat)}}} \\
+\midrule
+Runtime (ns)       & \textbf{-37.07\%} ($p < 0.001$) & \textbf{-25.55\%} ($p < 0.001$) & \textbf{-15.47\%} ($p < 0.001$) \\
+Cycles             & \textbf{-36.48\%} ($p < 0.001$) & \textbf{-25.91\%} ($p < 0.001$) & \textbf{-14.27\%} ($p < 0.001$) \\
+Instructions       & \textbf{-2.21\%} ($p < 0.001$) & \textbf{-3.10\%} ($p < 0.001$) & \textbf{+0.92\%} ($p < 0.001$) \\
+Cache Misses       & \textbf{-97.87\%} ($p < 0.001$) & \textbf{-73.45\%} ($p < 0.001$) & \textbf{-91.98\%} ($p < 0.001$) \\
+Cache References   & \textbf{-91.43\%} ($p < 0.001$) & \textbf{-71.07\%} ($p < 0.001$) & \textbf{-70.37\%} ($p < 0.001$) \\
+Branches           & \textbf{+19.61\%} ($p < 0.001$) & \textbf{-13.33\%} ($p < 0.001$) & \textbf{+38.00\%} ($p < 0.001$) \\
+Branch Misses      & \textbf{-68.86\%} ($p < 0.001$) & \textbf{-17.58\%} ($p < 0.001$) & \textbf{-62.22\%} ($p < 0.001$) \\
+\midrule
+\multicolumn{4}{c}{\textbf{\textit{Dynamic Polymorphism (poly\_dyn)}}} \\
+\midrule
+Runtime (ns)       & \textbf{-45.48\%} ($p < 0.001$) & \textbf{-32.99\%} ($p < 0.001$) & \textbf{-18.64\%} ($p < 0.001$) \\
+Cycles             & \textbf{-45.71\%} ($p < 0.001$) & \textbf{-33.38\%} ($p < 0.001$) & \textbf{-18.51\%} ($p < 0.001$) \\
+Instructions       & \textbf{-15.02\%} ($p < 0.001$) & \textbf{-1.33\%} ($p < 0.001$) & \textbf{-13.87\%} ($p < 0.001$) \\
+Cache Misses       & \textbf{-95.35\%} ($p < 0.001$) & \textbf{-73.67\%} ($p < 0.001$) & \textbf{-82.36\%} ($p < 0.001$) \\
+Cache References   & \textbf{-78.79\%} ($p < 0.001$) & \textbf{-72.46\%} ($p < 0.001$) & \textbf{-22.99\%} ($p < 0.001$) \\
+Branches           & \textbf{+6.70\%} ($p < 0.001$) & \textbf{-12.93\%} ($p < 0.001$) & \textbf{+22.54\%} ($p < 0.001$) \\
+Branch Misses      & \textbf{-45.99\%} ($p < 0.001$) & \textbf{-15.90\%} ($p < 0.001$) & \textbf{-35.78\%} ($p < 0.001$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Polymorphism Within-Language Speedup ====================
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Polymorphism Within-Language Dispatch Speedup: Dynamic (\texttt{poly\_dyn}) vs. Static (\texttt{poly\_stat}) Runtime and Percentage Speedup}
+\label{tab:poly_within_lang}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r@{\,$\pm$\,}l r@{\,$\pm$\,}l c @{}}
+\toprule
+\textbf{Language} & \multicolumn{2}{c}{\textbf{\shortstack{Dynamic Dispatch\\Runtime (ns)}}} & \multicolumn{2}{c}{\textbf{\shortstack{Static Dispatch\\Runtime (ns)}}} & \textbf{\shortstack{Speedup\\(\%)}} \\
+\midrule
+C++                    & 4\,018\,693.20 & 58\,286.01 & 1\,340\,626.47 & 61\,944.17 & \textbf{+66.64\%} ($p < 0.001$) \\
+Rust                   & 2\,190\,989.73 & 68\,648.05 & 843\,645.40 & 10\,131.52 & \textbf{+61.49\%} ($p < 0.001$) \\
+Zig                    & 2\,692\,907.93 & 53\,369.85 & 998\,032.53 & 19\,779.31 & \textbf{+62.94\%} ($p < 0.001$) \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
