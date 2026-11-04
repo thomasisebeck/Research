@@ -213,7 +213,7 @@ def plot_tuser_paired_textured_sweep(
                     color="#555555", edgecolor="#111111", linewidth=0.6, zorder=2,
                 )
                 ax.annotate(
-                    "Did Not\nCompile", xy=(x_c, placeholder_height), xytext=(0, 2),
+                    "N\\A", xy=(x_c, placeholder_height), xytext=(0, 2),
                     textcoords="offset points", ha="center", va="bottom",
                     fontsize=5.0 if num_categories <= 5 else 4.6, fontweight="bold",
                     color="#333333", rotation=35 if num_categories <= 5 else 45,
@@ -246,7 +246,7 @@ def plot_tuser_paired_textured_sweep(
                     color="#777777", edgecolor="#111111", hatch="//", linewidth=0.6, zorder=2,
                 )
                 ax.annotate(
-                    "Did Not\nCompile", xy=(x_h, placeholder_height), xytext=(0, 2),
+                    "N\\A", xy=(x_h, placeholder_height), xytext=(0, 2),
                     textcoords="offset points", ha="center", va="bottom",
                     fontsize=5.0 if num_categories <= 5 else 4.6, fontweight="bold",
                     color="#333333", rotation=35 if num_categories <= 5 else 45,
