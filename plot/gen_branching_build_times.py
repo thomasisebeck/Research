@@ -73,9 +73,9 @@ def compute_pct_and_pvalue(mean_a: float, std_a: float, n_a: int,
     return pct_diff, p_val
 
 def format_diff_cell(pct_diff: float, p_val: float) -> str:
-    """Formats percentage change and p-value with bolding if statistically significant (p < 0.05)."""
+    """Formats percentage change and p-value concisely for tight table columns."""
     sign = "+" if pct_diff > 0 else ""
-    p_str = "$p < 0.001$" if p_val < 0.001 else f"$p = {p_val:.3f}$"
+    p_str = "$p<.001$" if p_val < 0.001 else f"$p={p_val:.3f}$"
     val_str = f"{sign}{pct_diff:.2f}\\%"
     
     if p_val < 0.05:
@@ -83,7 +83,7 @@ def format_diff_cell(pct_diff: float, p_val: float) -> str:
     return f"{val_str} ({p_str})"
 
 # -------------------------------------------------------------------------
-# Table 1: Language Build Comparison Across Workload Settings
+# Table 1: Language Build Comparison Across Workload Settings (Resized)
 # -------------------------------------------------------------------------
 
 def generate_language_build_comparison_table(df: pd.DataFrame) -> str:
@@ -91,11 +91,11 @@ def generate_language_build_comparison_table(df: pd.DataFrame) -> str:
     latex.append(r"% ==================== TABLE 1: LANGUAGE BUILD COMPARISON ====================")
     latex.append(r"\begin{table}[htbp]")
     latex.append(r"\centering")
-    latex.append(r"\footnotesize")
-    latex.append(r"\setlength{\tabcolsep}{1.2pt}")
     latex.append(r"\caption{Image Pipeline Branching Build Performance --- Inter-Language Comparison Across Workload Settings}")
     latex.append(r"\label{tab:branching_build_language_comparison}")
-    latex.append(r"\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r@{\,$\pm$\,}l r@{\,$\pm$\,}l r@{\,$\pm$\,}l c c c @{}}")
+    latex.append(r"\resizebox{\textwidth}{!}{%")
+    latex.append(r"\setlength{\tabcolsep}{1.0pt}")
+    latex.append(r"\begin{tabular}{l r@{\,$\pm$\,}l r@{\,$\pm$\,}l r@{\,$\pm$\,}l c c c}")
     latex.append(r"\toprule")
     latex.append(r"\textbf{Metric} & \multicolumn{2}{c}{\textbf{C++ (s)}} & \multicolumn{2}{c}{\textbf{Rust (s)}} & \multicolumn{2}{c}{\textbf{Zig (s)}} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\")
 
@@ -106,12 +106,12 @@ def generate_language_build_comparison_table(df: pd.DataFrame) -> str:
 
     for raw_setting, friendly_setting in SETTING_MAP:
         latex.append(r"\midrule")
-        latex.append(f"\\multicolumn{{10}}{{@{{}}l}}{{\\textbf{{\\large Workload Setting: {friendly_setting}}}}} \\\\")
+        latex.append(f"\\multicolumn{{10}}{{@{{}}l}}{{\\textbf{{\\normalsize Workload Setting: {friendly_setting}}}}} \\\\")
         
         for label_key, label_title in branch_types:
             sub_df = df[(df["label"] == label_key) & (df["setting"] == raw_setting)]
             latex.append(r"\midrule")
-            latex.append(f"\\multicolumn{{10}}{{@{{}}l}}{{\\textbf{{\\textit{{{label_title}}}}}}} \\\\")
+            latex.append(f"\\multicolumn{{10}}{{@{{}}l}}{{\\textbf{{\\small \\textit{{{label_title}}}}}}} \\\\")
             latex.append(r"\midrule")
 
             for metric_prefix, metric_name in BUILD_METRICS:
@@ -138,7 +138,8 @@ def generate_language_build_comparison_table(df: pd.DataFrame) -> str:
                 latex.append(f"{metric_name} & {cpp_str} & {rust_str} & {zig_str} & {r_c_cell} & {z_c_cell} & {r_z_cell} \\\\")
 
     latex.append(r"\bottomrule")
-    latex.append(r"\end{tabular*}")
+    latex.append(r"\end{tabular}")
+    latex.append(r"}")
     latex.append(r"\end{table}")
     latex.append("\n")
 
@@ -153,17 +154,17 @@ def generate_intralanguage_build_speedup_table(df: pd.DataFrame) -> str:
     latex.append(r"% ==================== TABLE 2: INTRA-LANGUAGE BUILD SPEEDUP ====================")
     latex.append(r"\begin{table}[htbp]")
     latex.append(r"\centering")
-    latex.append(r"\footnotesize")
-    latex.append(r"\setlength{\tabcolsep}{4.0pt}")
     latex.append(r"\caption{Image Pipeline Branching Build Performance --- Intra-Language Build Time Gain (\textbf{Compile-Time vs. Runtime Branching})}")
     latex.append(r"\label{tab:branching_build_intralanguage_speedup}")
-    latex.append(r"\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c c c @{}}")
+    latex.append(r"\resizebox{\textwidth}{!}{%")
+    latex.append(r"\setlength{\tabcolsep}{3.0pt}")
+    latex.append(r"\begin{tabular}{l c c c}")
     latex.append(r"\toprule")
     latex.append(r"\textbf{Metric} & \textbf{C++ (Comptime vs. Runtime)} & \textbf{Rust (Comptime vs. Runtime)} & \textbf{Zig (Comptime vs. Runtime)} \\")
 
     for raw_setting, friendly_setting in SETTING_MAP:
         latex.append(r"\midrule")
-        latex.append(f"\\multicolumn{{4}}{{@{{}}l}}{{\\textbf{{\\large Workload Setting: {friendly_setting}}}}} \\\\")
+        latex.append(f"\\multicolumn{{4}}{{@{{}}l}}{{\\textbf{{\\normalsize Workload Setting: {friendly_setting}}}}} \\\\")
         latex.append(r"\midrule")
 
         df_cmp = df[(df["label"] == "image_pipeline_comptime") & (df["setting"] == raw_setting)]
@@ -189,7 +190,8 @@ def generate_intralanguage_build_speedup_table(df: pd.DataFrame) -> str:
             latex.append(f"{metric_name} & {cells[0]} & {cells[1]} & {cells[2]} \\\\")
 
     latex.append(r"\bottomrule")
-    latex.append(r"\end{tabular*}")
+    latex.append(r"\end{tabular}")
+    latex.append(r"}")
     latex.append(r"\end{table}")
     latex.append("\n")
 
