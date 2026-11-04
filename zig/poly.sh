@@ -14,7 +14,7 @@ FILES=(
   "poly_dyn.zig"
 )
 
-ITERATIONS=${1:-15}
+ITERATIONS=${1:-1}
 ITERATIONS_BUILD=${1:-15}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
@@ -69,7 +69,7 @@ for FILENAME in "${FILES[@]}"; do
     echo "  -> Build ${i}/${ITERATIONS_BUILD}..."
 
     # Clean cache and build artifacts for a true cold build
-      rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}"
+     rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}" /root/.cache/zig
 
     # Measure Cold Build on core 1
     COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \

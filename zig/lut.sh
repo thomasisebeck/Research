@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-ITERATIONS=${1:-15}
-ITERATIONS_BUILD=${1:-1}
+ITERATIONS=${1:-1}
+ITERATIONS_BUILD=${1:-15}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
 PERF_EVENTS="cycles,instructions,cache-misses,cache-references,branches,branch-misses"
@@ -17,8 +17,7 @@ FILES=(
 )
 
 # Target increment settings (space-separated array in bash - no commas)
-# INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
-INCREMENTS=("0.0001")
+INCREMENTS=("5" "1" "0.5" "0.1" "0.05" "0.01" "0.005" "0.001" "0.0005" "0.0001")
 
 # 1. Initialize CSV headers if files don't exist yet
 if [ ! -f "$BUILD_CSV" ]; then
@@ -60,7 +59,7 @@ for FILENAME in "${FILES[@]}"; do
     for (( i=1; i<=ITERATIONS_BUILD; i++ )); do
       echo "  -> Build ${i}/${ITERATIONS_BUILD}..."
 
-      rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}"
+     rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}" /root/.cache/zig
 
       # Measure Cold Build
       COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \

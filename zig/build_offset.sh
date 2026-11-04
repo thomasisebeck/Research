@@ -47,7 +47,7 @@ for FILENAME in "${FILES[@]}"; do
     for (( i=1; i<=ITERATIONS_BUILD; i++ )); do
       echo "  -> Build ${i}/${ITERATIONS_BUILD}..."
 
-      rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}" /root/.cache/zig
+     rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}" /root/.cache/zig
 
       # Measure Cold Build
       COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \

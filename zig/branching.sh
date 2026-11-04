@@ -13,7 +13,7 @@ FILES=(
   "image_pipeline_runtime.zig"
 )
 
-ITERATIONS=${1:-15}
+ITERATIONS=${1:-1}
 ITERATIONS_BUILD=${1:-15}
 BUILD_CSV="build_times.csv"
 RUNTIME_CSV="runtime.csv"
@@ -101,16 +101,16 @@ for FILENAME in "${FILES[@]}"; do
     for (( i=1; i<=ITERATIONS_BUILD; i++ )); do
       echo "  -> Build ${i}/${ITERATIONS_BUILD}..."
 
-      rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}"
+     rm -rf .zig-cache zig-out "${ZIG_GLOBAL_CACHE}" /root/.cache/zig
 
       # Measure Cold Build
-      COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0 \
+      COLD_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
         zig build "${BUILD_FLAGS[@]}" > /dev/null; } 2>&1 )
 
       # Measure Hot Build (force content hash change)
       echo "// touch" >> "src/${FILENAME}"
 
-      HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 0 \
+      HOT_TIME=$( { /usr/bin/time -f "%e,%U,%S" taskset -c 1 \
         zig build "${BUILD_FLAGS[@]}" > /dev/null; } 2>&1 )
 
       sed -i '$ d' "src/${FILENAME}"
