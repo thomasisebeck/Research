@@ -12,13 +12,14 @@ REAL_HOME=$(eval echo "~${TARGET_USER}")
 ZIG_GLOBAL_CACHE="${REAL_HOME}/.cache/zig"
 
 FILES=(
-  "lut_comptime.zig"
- #"lut_runtime.zig"
+  #"lut_comptime.zig"
+ "lut_runtime.zig"
 )
 
 # Target increment settings (space-separated array in bash - no commas)
 # "5"
-INCREMENTS=("0.0001" "0.0005" "0.001" "0.005" "0.01" "0.05" "1" "0.1" "0.5")
+# INCREMENTS=("0.0001" "0.0005" "0.001" "0.005" "0.01" "0.05" "1" "0.1" "0.5")
+INCREMENTS=("5")
 
 # 1. Initialize CSV headers if files don't exist yet
 if [ ! -f "$BUILD_CSV" ]; then

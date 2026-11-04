@@ -1,3 +1,7 @@
+
+rm build_times_all.csv
+rm runtime_times_all.csv
+
 python3 amalgamate.py lut_comptime
 python3 amalgamate.py lut_runtime
 python3 amalgamate.py poly_dyn
