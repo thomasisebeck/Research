@@ -1,0 +1,117 @@
+% ==================== TABLE 1: LANGUAGE BUILD COMPARISON ====================
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{1.2pt}
+\caption{Image Pipeline Branching Build Performance --- Inter-Language Comparison Across Workload Settings}
+\label{tab:branching_build_language_comparison}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r@{\,$\pm$\,}l r@{\,$\pm$\,}l r@{\,$\pm$\,}l c c c @{}}
+\toprule
+\textbf{Metric} & \multicolumn{2}{c}{\textbf{C++ (s)}} & \multicolumn{2}{c}{\textbf{Rust (s)}} & \multicolumn{2}{c}{\textbf{Zig (s)}} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\large Workload Setting: LOW}} \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\textit{Compile-Time Branching}}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & 5.19 & 0.01 & 3.23 & 0.01 & 27.52 & 0.05 & \textbf{-37.76\%} ($p < 0.001$) & \textbf{+430.25\%} ($p < 0.001$) & \textbf{-88.26\%} ($p < 0.001$) \\
+Cold User ($T_\mathrm{user}$) & 4.94 & 0.01 & 2.78 & 0.02 & 26.57 & 0.06 & \textbf{-43.72\%} ($p < 0.001$) & \textbf{+437.85\%} ($p < 0.001$) & \textbf{-89.54\%} ($p < 0.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & 0.21 & 0.01 & 0.42 & 0.02 & 0.61 & 0.02 & \textbf{+100.00\%} ($p < 0.001$) & \textbf{+190.48\%} ($p < 0.001$) & \textbf{-31.15\%} ($p < 0.001$) \\
+Hot Real ($T_\mathrm{real}$) & 2.77 & 0.01 & 0.32 & 0.01 & 16.90 & 0.04 & \textbf{-88.45\%} ($p < 0.001$) & \textbf{+510.11\%} ($p < 0.001$) & \textbf{-98.11\%} ($p < 0.001$) \\
+Hot User ($T_\mathrm{user}$) & 2.64 & 0.01 & 0.27 & 0.01 & 16.65 & 0.03 & \textbf{-89.77\%} ($p < 0.001$) & \textbf{+530.68\%} ($p < 0.001$) & \textbf{-98.38\%} ($p < 0.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.10 & 0.01 & 0.04 & 0.01 & 0.14 & 0.01 & \textbf{-60.00\%} ($p < 0.001$) & \textbf{+40.00\%} ($p < 0.001$) & \textbf{-71.43\%} ($p < 0.001$) \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\textit{Runtime Branching}}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & 5.29 & 0.16 & 3.32 & 0.22 & 28.08 & 1.10 & \textbf{-37.24\%} ($p < 0.001$) & \textbf{+430.81\%} ($p < 0.001$) & \textbf{-88.18\%} ($p < 0.001$) \\
+Cold User ($T_\mathrm{user}$) & 4.95 & 0.01 & 2.82 & 0.09 & 26.99 & 0.78 & \textbf{-43.03\%} ($p < 0.001$) & \textbf{+445.25\%} ($p < 0.001$) & \textbf{-89.55\%} ($p < 0.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & 0.22 & 0.01 & 0.44 & 0.06 & 0.61 & 0.02 & \textbf{+100.00\%} ($p < 0.001$) & \textbf{+177.27\%} ($p < 0.001$) & \textbf{-27.87\%} ($p < 0.001$) \\
+Hot Real ($T_\mathrm{real}$) & 2.85 & 0.09 & 0.40 & 0.05 & 17.37 & 0.86 & \textbf{-85.96\%} ($p < 0.001$) & \textbf{+509.47\%} ($p < 0.001$) & \textbf{-97.70\%} ($p < 0.001$) \\
+Hot User ($T_\mathrm{user}$) & 2.68 & 0.01 & 0.35 & 0.06 & 16.99 & 0.57 & \textbf{-86.94\%} ($p < 0.001$) & \textbf{+533.96\%} ($p < 0.001$) & \textbf{-97.94\%} ($p < 0.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.11 & 0.01 & 0.04 & 0.01 & 0.15 & 0.01 & \textbf{-63.64\%} ($p < 0.001$) & \textbf{+36.36\%} ($p < 0.001$) & \textbf{-73.33\%} ($p < 0.001$) \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\large Workload Setting: MED}} \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\textit{Compile-Time Branching}}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & 5.20 & 0.01 & 3.24 & 0.01 & 27.57 & 0.03 & \textbf{-37.69\%} ($p < 0.001$) & \textbf{+430.19\%} ($p < 0.001$) & \textbf{-88.25\%} ($p < 0.001$) \\
+Cold User ($T_\mathrm{user}$) & 4.94 & 0.02 & 2.79 & 0.02 & 26.61 & 0.03 & \textbf{-43.52\%} ($p < 0.001$) & \textbf{+438.66\%} ($p < 0.001$) & \textbf{-89.52\%} ($p < 0.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & 0.21 & 0.01 & 0.42 & 0.02 & 0.62 & 0.02 & \textbf{+100.00\%} ($p < 0.001$) & \textbf{+195.24\%} ($p < 0.001$) & \textbf{-32.26\%} ($p < 0.001$) \\
+Hot Real ($T_\mathrm{real}$) & 2.78 & 0.01 & 0.33 & 0.01 & 16.94 & 0.02 & \textbf{-88.13\%} ($p < 0.001$) & \textbf{+509.35\%} ($p < 0.001$) & \textbf{-98.05\%} ($p < 0.001$) \\
+Hot User ($T_\mathrm{user}$) & 2.65 & 0.01 & 0.28 & 0.01 & 16.69 & 0.02 & \textbf{-89.43\%} ($p < 0.001$) & \textbf{+529.81\%} ($p < 0.001$) & \textbf{-98.32\%} ($p < 0.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.11 & 0.01 & 0.04 & 0.01 & 0.14 & 0.01 & \textbf{-63.64\%} ($p < 0.001$) & \textbf{+27.27\%} ($p < 0.001$) & \textbf{-71.43\%} ($p < 0.001$) \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\textit{Runtime Branching}}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & 5.23 & 0.00 & 3.27 & 0.10 & 27.58 & 0.04 & \textbf{-37.48\%} ($p < 0.001$) & \textbf{+427.34\%} ($p < 0.001$) & \textbf{-88.14\%} ($p < 0.001$) \\
+Cold User ($T_\mathrm{user}$) & 4.97 & 0.01 & 2.82 & 0.05 & 26.63 & 0.04 & \textbf{-43.26\%} ($p < 0.001$) & \textbf{+435.81\%} ($p < 0.001$) & \textbf{-89.41\%} ($p < 0.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & 0.22 & 0.01 & 0.42 & 0.05 & 0.61 & 0.02 & \textbf{+90.91\%} ($p < 0.001$) & \textbf{+177.27\%} ($p < 0.001$) & \textbf{-31.15\%} ($p < 0.001$) \\
+Hot Real ($T_\mathrm{real}$) & 2.82 & 0.01 & 0.40 & 0.06 & 17.02 & 0.06 & \textbf{-85.82\%} ($p < 0.001$) & \textbf{+503.55\%} ($p < 0.001$) & \textbf{-97.65\%} ($p < 0.001$) \\
+Hot User ($T_\mathrm{user}$) & 2.68 & 0.01 & 0.35 & 0.06 & 16.76 & 0.06 & \textbf{-86.94\%} ($p < 0.001$) & \textbf{+525.37\%} ($p < 0.001$) & \textbf{-97.91\%} ($p < 0.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.11 & 0.01 & 0.04 & 0.01 & 0.14 & 0.01 & \textbf{-63.64\%} ($p < 0.001$) & \textbf{+27.27\%} ($p < 0.001$) & \textbf{-71.43\%} ($p < 0.001$) \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\large Workload Setting: HIGH}} \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\textit{Compile-Time Branching}}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & 5.21 & 0.04 & 3.23 & 0.01 & 27.56 & 0.05 & \textbf{-38.00\%} ($p < 0.001$) & \textbf{+428.98\%} ($p < 0.001$) & \textbf{-88.28\%} ($p < 0.001$) \\
+Cold User ($T_\mathrm{user}$) & 4.96 & 0.03 & 2.75 & 0.02 & 26.61 & 0.03 & \textbf{-44.56\%} ($p < 0.001$) & \textbf{+436.49\%} ($p < 0.001$) & \textbf{-89.67\%} ($p < 0.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & 0.21 & 0.01 & 0.45 & 0.01 & 0.61 & 0.01 & \textbf{+114.29\%} ($p < 0.001$) & \textbf{+190.48\%} ($p < 0.001$) & \textbf{-26.23\%} ($p < 0.001$) \\
+Hot Real ($T_\mathrm{real}$) & 2.78 & 0.00 & 0.33 & 0.00 & 17.02 & 0.28 & \textbf{-88.13\%} ($p < 0.001$) & \textbf{+512.23\%} ($p < 0.001$) & \textbf{-98.06\%} ($p < 0.001$) \\
+Hot User ($T_\mathrm{user}$) & 2.65 & 0.01 & 0.28 & 0.01 & 16.75 & 0.18 & \textbf{-89.43\%} ($p < 0.001$) & \textbf{+532.08\%} ($p < 0.001$) & \textbf{-98.33\%} ($p < 0.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.10 & 0.01 & 0.05 & 0.01 & 0.14 & 0.00 & \textbf{-50.00\%} ($p < 0.001$) & \textbf{+40.00\%} ($p < 0.001$) & \textbf{-64.29\%} ($p < 0.001$) \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\textit{Runtime Branching}}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & 5.40 & 0.27 & 3.41 & 0.20 & 27.61 & 0.04 & \textbf{-36.85\%} ($p < 0.001$) & \textbf{+411.30\%} ($p < 0.001$) & \textbf{-87.65\%} ($p < 0.001$) \\
+Cold User ($T_\mathrm{user}$) & 5.13 & 0.24 & 2.89 & 0.07 & 26.66 & 0.03 & \textbf{-43.66\%} ($p < 0.001$) & \textbf{+419.69\%} ($p < 0.001$) & \textbf{-89.16\%} ($p < 0.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & 0.23 & 0.02 & 0.47 & 0.11 & 0.61 & 0.02 & \textbf{+104.35\%} ($p < 0.001$) & \textbf{+165.22\%} ($p < 0.001$) & \textbf{-22.95\%} ($p < 0.001$) \\
+Hot Real ($T_\mathrm{real}$) & 2.93 & 0.17 & 0.42 & 0.09 & 17.00 & 0.02 & \textbf{-85.67\%} ($p < 0.001$) & \textbf{+480.20\%} ($p < 0.001$) & \textbf{-97.53\%} ($p < 0.001$) \\
+Hot User ($T_\mathrm{user}$) & 2.78 & 0.16 & 0.36 & 0.07 & 16.75 & 0.02 & \textbf{-87.05\%} ($p < 0.001$) & \textbf{+502.52\%} ($p < 0.001$) & \textbf{-97.85\%} ($p < 0.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.12 & 0.01 & 0.05 & 0.02 & 0.14 & 0.01 & \textbf{-58.33\%} ($p < 0.001$) & \textbf{+16.67\%} ($p < 0.001$) & \textbf{-64.29\%} ($p < 0.001$) \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+
+
+% ==================== TABLE 2: INTRA-LANGUAGE BUILD SPEEDUP ====================
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4.0pt}
+\caption{Image Pipeline Branching Build Performance --- Intra-Language Build Time Gain (\textbf{Compile-Time vs. Runtime Branching})}
+\label{tab:branching_build_intralanguage_speedup}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c c c @{}}
+\toprule
+\textbf{Metric} & \textbf{C++ (Comptime vs. Runtime)} & \textbf{Rust (Comptime vs. Runtime)} & \textbf{Zig (Comptime vs. Runtime)} \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{\large Workload Setting: LOW}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & \textbf{-1.89\%} ($p = 0.030$) & -2.71\% ($p = 0.136$) & -1.99\% ($p = 0.069$) \\
+Cold User ($T_\mathrm{user}$) & \textbf{-0.20\%} ($p = 0.011$) & -1.42\% ($p = 0.113$) & -1.56\% ($p = 0.056$) \\
+Cold Sys ($T_\mathrm{sys}$) & \textbf{-4.55\%} ($p = 0.011$) & -4.55\% ($p = 0.237$) & 0.00\% ($p = 1.000$) \\
+Hot Real ($T_\mathrm{real}$) & \textbf{-2.81\%} ($p = 0.004$) & \textbf{-20.00\%} ($p < 0.001$) & -2.71\% ($p = 0.053$) \\
+Hot User ($T_\mathrm{user}$) & \textbf{-1.49\%} ($p < 0.001$) & \textbf{-22.86\%} ($p < 0.001$) & \textbf{-2.00\%} ($p = 0.037$) \\
+Hot Sys ($T_\mathrm{sys}$) & \textbf{-9.09\%} ($p = 0.011$) & 0.00\% ($p = 1.000$) & \textbf{-6.67\%} ($p = 0.011$) \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{\large Workload Setting: MED}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & \textbf{-0.57\%} ($p < 0.001$) & -0.92\% ($p = 0.267$) & -0.04\% ($p = 0.446$) \\
+Cold User ($T_\mathrm{user}$) & \textbf{-0.60\%} ($p < 0.001$) & \textbf{-1.06\%} ($p = 0.044$) & -0.08\% ($p = 0.133$) \\
+Cold Sys ($T_\mathrm{sys}$) & \textbf{-4.55\%} ($p = 0.011$) & 0.00\% ($p = 1.000$) & +1.64\% ($p = 0.182$) \\
+Hot Real ($T_\mathrm{real}$) & \textbf{-1.42\%} ($p < 0.001$) & \textbf{-17.50\%} ($p < 0.001$) & \textbf{-0.47\%} ($p < 0.001$) \\
+Hot User ($T_\mathrm{user}$) & \textbf{-1.12\%} ($p < 0.001$) & \textbf{-20.00\%} ($p < 0.001$) & \textbf{-0.42\%} ($p < 0.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.00\% ($p = 1.000$) & 0.00\% ($p = 1.000$) & 0.00\% ($p = 1.000$) \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{\large Workload Setting: HIGH}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & \textbf{-3.52\%} ($p = 0.017$) & \textbf{-5.28\%} ($p = 0.004$) & \textbf{-0.18\%} ($p = 0.005$) \\
+Cold User ($T_\mathrm{user}$) & \textbf{-3.31\%} ($p = 0.016$) & \textbf{-4.84\%} ($p < 0.001$) & \textbf{-0.19\%} ($p < 0.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & \textbf{-8.70\%} ($p = 0.002$) & -4.26\% ($p = 0.494$) & 0.00\% ($p = 1.000$) \\
+Hot Real ($T_\mathrm{real}$) & \textbf{-5.12\%} ($p = 0.004$) & \textbf{-21.43\%} ($p = 0.002$) & +0.12\% ($p = 0.787$) \\
+Hot User ($T_\mathrm{user}$) & \textbf{-4.68\%} ($p = 0.007$) & \textbf{-22.22\%} ($p < 0.001$) & 0.00\% ($p = 1.000$) \\
+Hot Sys ($T_\mathrm{sys}$) & \textbf{-16.67\%} ($p < 0.001$) & 0.00\% ($p = 1.000$) & 0.00\% ($p = 1.000$) \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
