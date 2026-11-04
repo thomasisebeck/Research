@@ -147,8 +147,8 @@ def generate_single_metric_plot(df: pd.DataFrame, metric: str, metric_title: str
         ax.set_ylim(0, max(all_heights) * 1.30)
 
     dispatch_legend_elements = [
-        Patch(facecolor="#999999", edgecolor="#333333", hatch="", label="Static (poly_stat)"),
-        Patch(facecolor="#333333", edgecolor="#333333", hatch="//", label="Dynamic (poly_dyn)"),
+        Patch(facecolor="#999999", edgecolor="#333333", hatch="", label="Static"),
+        Patch(facecolor="#333333", edgecolor="#333333", hatch="//", label="Dynamic"),
     ]
 
     ax.legend(
