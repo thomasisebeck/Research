@@ -1,0 +1,230 @@
+% ==================== Lookup Table (Runtime) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table (Runtime) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_runtime}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+66.83\%} ($p < 0.001$) & \textbf{+39.44\%} ($p < 0.001$) & \textbf{+19.64\%} ($p < 0.001$) \\
+Cycles & \textbf{+73.75\%} ($p < 0.001$) & \textbf{+45.21\%} ($p < 0.001$) & \textbf{+19.66\%} ($p < 0.001$) \\
+Instructions & \textbf{+41.68\%} ($p < 0.001$) & \textbf{+21.27\%} ($p < 0.001$) & \textbf{+16.83\%} ($p < 0.001$) \\
+Cache Misses & +1.59\% ($p = 0.872$) & \textbf{+23.73\%} ($p = 0.026$) & \textbf{-17.90\%} ($p = 0.041$) \\
+Cache References & -0.78\% ($p = 0.880$) & \textbf{+13.37\%} ($p = 0.007$) & \textbf{-12.48\%} ($p = 0.005$) \\
+Branches & \textbf{-5.59\%} ($p < 0.001$) & \textbf{-1.27\%} ($p < 0.001$) & \textbf{-4.37\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+188.22\%} ($p < 0.001$) & \textbf{+68.16\%} ($p < 0.001$) & \textbf{+71.40\%} ($p < 0.001$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_5) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_5) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_5}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+197.78\%} ($p < 0.001$) & \textbf{+102.61\%} ($p < 0.001$) & \textbf{+46.97\%} ($p < 0.001$) \\
+Cycles & \textbf{+185.79\%} ($p < 0.001$) & \textbf{+100.51\%} ($p < 0.001$) & \textbf{+42.54\%} ($p < 0.001$) \\
+Instructions & \textbf{+970.43\%} ($p < 0.001$) & \textbf{+87.23\%} ($p < 0.001$) & \textbf{+471.71\%} ($p < 0.001$) \\
+Cache Misses & \textbf{+262.31\%} ($p < 0.001$) & \textbf{+421.15\%} ($p < 0.001$) & -30.48\% ($p = 0.200$) \\
+Cache References & \textbf{+128.33\%} ($p < 0.001$) & \textbf{+114.22\%} ($p < 0.001$) & +6.59\% ($p = 0.561$) \\
+Branches & \textbf{+1330.71\%} ($p < 0.001$) & \textbf{+26.56\%} ($p < 0.001$) & \textbf{+1030.47\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+37.43\%} ($p < 0.001$) & \textbf{+68.57\%} ($p < 0.001$) & \textbf{-18.47\%} ($p = 0.015$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_1) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_1) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_1}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+197.75\%} ($p < 0.001$) & \textbf{+102.87\%} ($p < 0.001$) & \textbf{+46.77\%} ($p < 0.001$) \\
+Cycles & \textbf{+181.15\%} ($p < 0.001$) & \textbf{+100.09\%} ($p < 0.001$) & \textbf{+40.51\%} ($p < 0.001$) \\
+Instructions & \textbf{+1425.44\%} ($p < 0.001$) & \textbf{+99.15\%} ($p < 0.001$) & \textbf{+665.99\%} ($p < 0.001$) \\
+Cache Misses & \textbf{+181.17\%} ($p < 0.001$) & \textbf{+132.33\%} ($p = 0.011$) & +21.02\% ($p = 0.390$) \\
+Cache References & \textbf{+120.84\%} ($p < 0.001$) & \textbf{+94.26\%} ($p < 0.001$) & +13.69\% ($p = 0.189$) \\
+Branches & \textbf{+2105.24\%} ($p < 0.001$) & \textbf{+96.36\%} ($p < 0.001$) & \textbf{+1023.09\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+40.55\%} ($p < 0.001$) & \textbf{+59.26\%} ($p < 0.001$) & \textbf{-11.75\%} ($p = 0.049$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_0.5) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_0.5) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_0_5}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+196.64\%} ($p < 0.001$) & \textbf{+102.41\%} ($p < 0.001$) & \textbf{+46.55\%} ($p < 0.001$) \\
+Cycles & \textbf{+185.09\%} ($p < 0.001$) & \textbf{+99.79\%} ($p < 0.001$) & \textbf{+42.70\%} ($p < 0.001$) \\
+Instructions & \textbf{+739.06\%} ($p < 0.001$) & \textbf{+89.49\%} ($p < 0.001$) & \textbf{+342.80\%} ($p < 0.001$) \\
+Cache Misses & \textbf{+152.69\%} ($p = 0.002$) & \textbf{+165.78\%} ($p < 0.001$) & -4.93\% ($p = 0.824$) \\
+Cache References & \textbf{+132.03\%} ($p < 0.001$) & \textbf{+70.34\%} ($p < 0.001$) & \textbf{+36.22\%} ($p = 0.007$) \\
+Branches & \textbf{+1320.91\%} ($p < 0.001$) & \textbf{+25.40\%} ($p < 0.001$) & \textbf{+1033.12\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+29.18\%} ($p < 0.001$) & \textbf{+56.13\%} ($p < 0.001$) & \textbf{-17.26\%} ($p = 0.003$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_0.1) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_0.1) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_0_1}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+194.02\%} ($p < 0.001$) & \textbf{+119.10\%} ($p < 0.001$) & \textbf{+34.19\%} ($p < 0.001$) \\
+Cycles & \textbf{+185.26\%} ($p < 0.001$) & \textbf{+117.16\%} ($p < 0.001$) & \textbf{+31.36\%} ($p < 0.001$) \\
+Instructions & \textbf{+969.61\%} ($p < 0.001$) & \textbf{+88.54\%} ($p < 0.001$) & \textbf{+467.32\%} ($p < 0.001$) \\
+Cache Misses & \textbf{+131.23\%} ($p < 0.001$) & \textbf{+230.88\%} ($p < 0.001$) & \textbf{-30.12\%} ($p = 0.005$) \\
+Cache References & \textbf{+123.03\%} ($p < 0.001$) & \textbf{+136.61\%} ($p < 0.001$) & -5.74\% ($p = 0.515$) \\
+Branches & \textbf{+1327.69\%} ($p < 0.001$) & \textbf{+32.79\%} ($p < 0.001$) & \textbf{+975.16\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+24.23\%} ($p < 0.001$) & \textbf{+54.96\%} ($p < 0.001$) & \textbf{-19.83\%} ($p < 0.001$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_0.05) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_0.05) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_0_05}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+155.65\%} ($p < 0.001$) & \textbf{+78.25\%} ($p < 0.001$) & \textbf{+43.42\%} ($p < 0.001$) \\
+Cycles & \textbf{+186.28\%} ($p < 0.001$) & \textbf{+112.40\%} ($p < 0.001$) & \textbf{+34.78\%} ($p < 0.001$) \\
+Instructions & \textbf{+968.30\%} ($p < 0.001$) & \textbf{+87.15\%} ($p < 0.001$) & \textbf{+470.83\%} ($p < 0.001$) \\
+Cache Misses & +13.21\% ($p = 0.648$) & \textbf{+96.04\%} ($p = 0.005$) & \textbf{-42.25\%} ($p = 0.002$) \\
+Cache References & +32.98\% ($p = 0.162$) & +38.79\% ($p = 0.136$) & -4.19\% ($p = 0.709$) \\
+Branches & \textbf{+1320.81\%} ($p < 0.001$) & \textbf{+27.82\%} ($p < 0.001$) & \textbf{+1011.61\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+19.01\%} ($p = 0.020$) & \textbf{+29.91\%} ($p < 0.001$) & -8.40\% ($p = 0.063$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_0.01) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_0.01) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_0_01}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+203.65\%} ($p < 0.001$) & \textbf{+102.76\%} ($p < 0.001$) & \textbf{+49.76\%} ($p < 0.001$) \\
+Cycles & \textbf{+188.99\%} ($p < 0.001$) & \textbf{+100.71\%} ($p < 0.001$) & \textbf{+43.98\%} ($p < 0.001$) \\
+Instructions & \textbf{+968.17\%} ($p < 0.001$) & \textbf{+86.86\%} ($p < 0.001$) & \textbf{+471.63\%} ($p < 0.001$) \\
+Cache Misses & \textbf{+76.59\%} ($p = 0.001$) & \textbf{+171.10\%} ($p < 0.001$) & \textbf{-34.86\%} ($p = 0.006$) \\
+Cache References & \textbf{+66.17\%} ($p < 0.001$) & \textbf{+76.44\%} ($p < 0.001$) & -5.82\% ($p = 0.483$) \\
+Branches & \textbf{+1319.82\%} ($p < 0.001$) & \textbf{+26.23\%} ($p < 0.001$) & \textbf{+1024.76\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+32.83\%} ($p < 0.001$) & \textbf{+49.89\%} ($p < 0.001$) & \textbf{-11.38\%} ($p = 0.024$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_0.005) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_0.005) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_0_005}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+191.17\%} ($p < 0.001$) & \textbf{+89.98\%} ($p < 0.001$) & \textbf{+53.26\%} ($p < 0.001$) \\
+Cycles & \textbf{+178.33\%} ($p < 0.001$) & \textbf{+90.51\%} ($p < 0.001$) & \textbf{+46.09\%} ($p < 0.001$) \\
+Instructions & \textbf{+962.92\%} ($p < 0.001$) & \textbf{+85.44\%} ($p < 0.001$) & \textbf{+473.20\%} ($p < 0.001$) \\
+Cache Misses & \textbf{+110.36\%} ($p < 0.001$) & +41.99\% ($p = 0.164$) & \textbf{+48.15\%} ($p = 0.018$) \\
+Cache References & \textbf{+60.46\%} ($p < 0.001$) & \textbf{+40.25\%} ($p = 0.002$) & \textbf{+14.41\%} ($p = 0.050$) \\
+Branches & \textbf{+1296.65\%} ($p < 0.001$) & \textbf{+22.50\%} ($p < 0.001$) & \textbf{+1040.15\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+30.70\%} ($p < 0.001$) & \textbf{+33.13\%} ($p < 0.001$) & -1.82\% ($p = 0.543$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_0.001) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_0.001) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_0_001}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+221.80\%} ($p < 0.001$) & \textbf{+100.37\%} ($p < 0.001$) & \textbf{+60.60\%} ($p < 0.001$) \\
+Cycles & \textbf{+196.28\%} ($p < 0.001$) & \textbf{+99.27\%} ($p < 0.001$) & \textbf{+48.68\%} ($p < 0.001$) \\
+Instructions & \textbf{+966.15\%} ($p < 0.001$) & \textbf{+85.64\%} ($p < 0.001$) & \textbf{+474.32\%} ($p < 0.001$) \\
+Cache Misses & \textbf{+1864.59\%} ($p < 0.001$) & \textbf{+934.99\%} ($p < 0.001$) & \textbf{+89.82\%} ($p = 0.003$) \\
+Cache References & \textbf{+821.45\%} ($p < 0.001$) & \textbf{+1150.73\%} ($p < 0.001$) & -26.33\% ($p = 0.268$) \\
+Branches & \textbf{+1314.47\%} ($p < 0.001$) & \textbf{+22.84\%} ($p < 0.001$) & \textbf{+1051.51\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+41.91\%} ($p < 0.001$) & \textbf{+24.84\%} ($p = 0.002$) & \textbf{+13.67\%} ($p = 0.010$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_0.0005) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_0.0005) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_0_0005}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & \textbf{+211.86\%} ($p < 0.001$) & \textbf{+102.66\%} ($p < 0.001$) & \textbf{+53.88\%} ($p < 0.001$) \\
+Cycles & \textbf{+197.05\%} ($p < 0.001$) & \textbf{+101.44\%} ($p < 0.001$) & \textbf{+47.46\%} ($p < 0.001$) \\
+Instructions & \textbf{+970.33\%} ($p < 0.001$) & \textbf{+86.96\%} ($p < 0.001$) & \textbf{+472.49\%} ($p < 0.001$) \\
+Cache Misses & \textbf{+1987.40\%} ($p < 0.001$) & \textbf{+880.44\%} ($p < 0.001$) & \textbf{+112.90\%} ($p < 0.001$) \\
+Cache References & \textbf{+1231.39\%} ($p < 0.001$) & \textbf{+924.30\%} ($p < 0.001$) & \textbf{+29.98\%} ($p = 0.024$) \\
+Branches & \textbf{+1328.86\%} ($p < 0.001$) & \textbf{+25.98\%} ($p < 0.001$) & \textbf{+1034.17\%} ($p < 0.001$) \\
+Branch Misses & \textbf{+59.76\%} ($p < 0.001$) & \textbf{+53.54\%} ($p < 0.001$) & +4.05\% ($p = 0.560$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ==================== Lookup Table Comptime (INC_0.0001) ====================
+\begin{table}[htbp]
+\centering
+\caption{Lookup Table Comptime (INC_0.0001) --- Statistical Significance and Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}
+\label{tab:lut_comptime_0_0001}
+\begin{tabular}{l ccc}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+Runtime (ns) & N/A & N/A & \textbf{+7.74\%} ($p = 0.004$) \\
+Cycles & N/A & N/A & -0.05\% ($p = 0.841$) \\
+Instructions & N/A & N/A & \textbf{+466.58\%} ($p < 0.001$) \\
+Cache Misses & N/A & N/A & \textbf{+25.16\%} ($p < 0.001$) \\
+Cache References & N/A & N/A & \textbf{+17.89\%} ($p < 0.001$) \\
+Branches & N/A & N/A & \textbf{+971.84\%} ($p < 0.001$) \\
+Branch Misses & N/A & N/A & +2.93\% ($p = 0.464$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
