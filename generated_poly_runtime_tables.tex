@@ -1,0 +1,75 @@
+% ==================== Polymorphism Runtime Raw Stats Table ====================
+\begin{table}[htbp]
+\centering
+\caption{Polymorphism Runtime Performance --- Raw Metrics}
+\label{tab:poly_runtime_raw_stats}
+\vspace{2pt}
+\centerline{%
+\small
+\setlength{\tabcolsep}{6.0pt}
+\begin{tabular}{l r@{\,$\pm$\,}l r@{\,$\pm$\,}l r@{\,$\pm$\,}l}
+\toprule
+\textbf{Metric} & \multicolumn{2}{c}{\textbf{C++}} & \multicolumn{2}{c}{\textbf{Rust}} & \multicolumn{2}{c}{\textbf{Zig}} \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{\small \textit{Static Polymorphism (poly\_stat)}}} \\
+\midrule
+Runtime (ns) & 1\,340\,626.47 & 61\,944.17 & 843\,645.40 & 10\,131.52 & 998\,032.53 & 19\,779.31 \\
+Cycles & 3\,750\,922.33 & 102\,311.76 & 2\,382\,690.80 & 28\,396.21 & 2\,779\,220.67 & 54\,544.78 \\
+Instructions & 8\,415\,801.40 & 44\,874.10 & 8\,229\,946.53 & 30\,514.48 & 8\,155\,149.13 & 28\,768.40 \\
+Cache Misses & 30\,635.67 & 1\,421.35 & 652.33 & 531.28 & 8\,134.27 & 550.20 \\
+Cache References & 38\,417.47 & 1\,707.61 & 3\,293.27 & 1\,133.97 & 11\,113.33 & 924.98 \\
+Branches & 1\,808\,478.67 & 9\,247.84 & 2\,163\,143.13 & 5\,055.45 & 1\,567\,497.13 & 4\,869.11 \\
+Branch Misses & 3\,816.40 & 236.55 & 1\,188.47 & 211.70 & 3\,145.53 & 282.54 \\
+\midrule
+\multicolumn{7}{@{}l}{\textbf{\small \textit{Dynamic Polymorphism (poly\_dyn)}}} \\
+\midrule
+Runtime (ns) & 4\,018\,693.20 & 58\,286.01 & 2\,190\,989.73 & 68\,648.05 & 2\,692\,907.93 & 53\,369.85 \\
+Cycles & 11\,259\,770.07 & 155\,210.35 & 6\,112\,478.33 & 146\,227.45 & 7\,500\,840.73 & 149\,491.51 \\
+Instructions & 7\,932\,180.07 & 34\,693.27 & 6\,740\,923.67 & 12\,971.92 & 7\,826\,383.20 & 19\,083.22 \\
+Cache Misses & 30\,219.80 & 1\,063.91 & 1\,404.00 & 224.71 & 7\,958.33 & 273.44 \\
+Cache References & 38\,187.33 & 1\,304.40 & 8\,098.20 & 734.89 & 10\,516.13 & 639.88 \\
+Branches & 1\,885\,064.80 & 7\,699.01 & 2\,011\,343.67 & 2\,670.42 & 1\,641\,315.27 & 3\,128.39 \\
+Branch Misses & 206\,408.87 & 2\,306.09 & 111\,472.80 & 4\,561.44 & 173\,583.87 & 5\,589.62 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+
+% ==================== Polymorphism Runtime Pairwise Comparisons Table ====================
+\begin{table}[htbp]
+\centering
+\caption{Polymorphism Runtime Performance --- Pairwise Language Comparisons}
+\label{tab:poly_runtime_pairwise}
+\vspace{2pt}
+\centerline{%
+\small
+\setlength{\tabcolsep}{6.0pt}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{\small \textit{Static Polymorphism (poly\_stat)}}} \\
+\midrule
+Runtime (ns) & \textbf{-37.07\%} ($p<.001$) & \textbf{-25.55\%} ($p<.001$) & \textbf{-15.47\%} ($p<.001$) \\
+Cycles & \textbf{-36.48\%} ($p<.001$) & \textbf{-25.91\%} ($p<.001$) & \textbf{-14.27\%} ($p<.001$) \\
+Instructions & \textbf{-2.21\%} ($p<.001$) & \textbf{-3.10\%} ($p<.001$) & \textbf{+0.92\%} ($p<.001$) \\
+Cache Misses & \textbf{-97.87\%} ($p<.001$) & \textbf{-73.45\%} ($p<.001$) & \textbf{-91.98\%} ($p<.001$) \\
+Cache References & \textbf{-91.43\%} ($p<.001$) & \textbf{-71.07\%} ($p<.001$) & \textbf{-70.37\%} ($p<.001$) \\
+Branches & \textbf{+19.61\%} ($p<.001$) & \textbf{-13.33\%} ($p<.001$) & \textbf{+38.00\%} ($p<.001$) \\
+Branch Misses & \textbf{-68.86\%} ($p<.001$) & \textbf{-17.58\%} ($p<.001$) & \textbf{-62.22\%} ($p<.001$) \\
+\midrule
+\multicolumn{4}{@{}l}{\textbf{\small \textit{Dynamic Polymorphism (poly\_dyn)}}} \\
+\midrule
+Runtime (ns) & \textbf{-45.48\%} ($p<.001$) & \textbf{-32.99\%} ($p<.001$) & \textbf{-18.64\%} ($p<.001$) \\
+Cycles & \textbf{-45.71\%} ($p<.001$) & \textbf{-33.38\%} ($p<.001$) & \textbf{-18.51\%} ($p<.001$) \\
+Instructions & \textbf{-15.02\%} ($p<.001$) & \textbf{-1.33\%} ($p<.001$) & \textbf{-13.87\%} ($p<.001$) \\
+Cache Misses & \textbf{-95.35\%} ($p<.001$) & \textbf{-73.67\%} ($p<.001$) & \textbf{-82.36\%} ($p<.001$) \\
+Cache References & \textbf{-78.79\%} ($p<.001$) & \textbf{-72.46\%} ($p<.001$) & \textbf{-22.99\%} ($p<.001$) \\
+Branches & \textbf{+6.70\%} ($p<.001$) & \textbf{-12.93\%} ($p<.001$) & \textbf{+22.54\%} ($p<.001$) \\
+Branch Misses & \textbf{-45.99\%} ($p<.001$) & \textbf{-15.90\%} ($p<.001$) & \textbf{-35.78\%} ($p<.001$) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+

@@ -1,0 +1,20 @@
+% ==================== Calibration Raw Benchmarks Table ====================
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Runtime Calibration Benchmarks Across Languages}
+\label{tab:calibration_runtimes}
+\centerline{%
+\begin{tabular}{l r@{\,$\pm$\,}l r@{\,$\pm$\,}l r@{\,$\pm$\,}l}
+\toprule
+\textbf{Lang} & \multicolumn{2}{c}{\textbf{Runtime (ns)}} & \multicolumn{2}{c}{\textbf{Instructions}} & \multicolumn{2}{c}{\textbf{Branch Misses}} \\
+\midrule
+C++ & 24\,657.80 & 22.53 & 101\,247.13 & 66.82 & 224.47 & 7.14 \\
+Rust & 24\,465.73 & 58.40 & 105\,034.87 & 3\,205.81 & 239.93 & 29.35 \\
+Zig & 24\,494.67 & 38.53 & 114\,953.93 & 1\,021.28 & 375.60 & 12.83 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+

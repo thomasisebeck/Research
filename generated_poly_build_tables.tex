@@ -1,0 +1,35 @@
+% ==================== Polymorphism Build Performance Table ====================
+\begin{table}[htbp]
+\centering
+\caption{Polymorphism Build Performance --- Raw Metrics and Inter-Language Comparisons}
+\label{tab:poly_build_performance}
+\vspace{2pt}
+\centerline{%
+\small
+\setlength{\tabcolsep}{1.2pt}
+\begin{tabular}{l r@{\,$\pm$\,}l r@{\,$\pm$\,}l r@{\,$\pm$\,}l c c c}
+\toprule
+\textbf{Metric} & \multicolumn{2}{c}{\textbf{C++ (s)}} & \multicolumn{2}{c}{\textbf{Rust (s)}} & \multicolumn{2}{c}{\textbf{Zig (s)}} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\small \textit{Static Polymorphism (poly\_stat)}}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & 5.43 & 0.02 & 3.24 & 0.01 & 26.98 & 0.09 & \textbf{-40.33\%} ($p<.001$) & \textbf{+396.87\%} ($p<.001$) & \textbf{-87.99\%} ($p<.001$) \\
+Cold User ($T_\mathrm{user}$) & 5.16 & 0.02 & 2.73 & 0.01 & 26.03 & 0.08 & \textbf{-47.09\%} ($p<.001$) & \textbf{+404.46\%} ($p<.001$) & \textbf{-89.51\%} ($p<.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & 0.23 & 0.02 & 0.48 & 0.01 & 0.61 & 0.02 & \textbf{+108.70\%} ($p<.001$) & \textbf{+165.22\%} ($p<.001$) & \textbf{-21.31\%} ($p<.001$) \\
+Hot Real ($T_\mathrm{real}$) & 3.00 & 0.01 & 0.38 & 0.00 & 16.34 & 0.02 & \textbf{-87.33\%} ($p<.001$) & \textbf{+444.67\%} ($p<.001$) & \textbf{-97.67\%} ($p<.001$) \\
+Hot User ($T_\mathrm{user}$) & 2.86 & 0.01 & 0.33 & 0.01 & 16.09 & 0.02 & \textbf{-88.46\%} ($p<.001$) & \textbf{+462.59\%} ($p<.001$) & \textbf{-97.95\%} ($p<.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.12 & 0.01 & 0.05 & 0.01 & 0.14 & 0.01 & \textbf{-58.33\%} ($p<.001$) & \textbf{+16.67\%} ($p<.001$) & \textbf{-64.29\%} ($p<.001$) \\
+\midrule
+\multicolumn{10}{@{}l}{\textbf{\small \textit{Dynamic Polymorphism (poly\_dyn)}}} \\
+\midrule
+Cold Real ($T_\mathrm{real}$) & 5.34 & 0.01 & 3.31 & 0.20 & 26.86 & 0.03 & \textbf{-38.01\%} ($p<.001$) & \textbf{+403.00\%} ($p<.001$) & \textbf{-87.68\%} ($p<.001$) \\
+Cold User ($T_\mathrm{user}$) & 5.08 & 0.02 & 2.75 & 0.02 & 25.92 & 0.02 & \textbf{-45.87\%} ($p<.001$) & \textbf{+410.24\%} ($p<.001$) & \textbf{-89.39\%} ($p<.001$) \\
+Cold Sys ($T_\mathrm{sys}$) & 0.22 & 0.01 & 0.48 & 0.02 & 0.60 & 0.03 & \textbf{+118.18\%} ($p<.001$) & \textbf{+172.73\%} ($p<.001$) & \textbf{-20.00\%} ($p<.001$) \\
+Hot Real ($T_\mathrm{real}$) & 2.92 & 0.02 & 0.39 & 0.00 & 16.24 & 0.07 & \textbf{-86.64\%} ($p<.001$) & \textbf{+456.16\%} ($p<.001$) & \textbf{-97.60\%} ($p<.001$) \\
+Hot User ($T_\mathrm{user}$) & 2.78 & 0.01 & 0.33 & 0.01 & 16.00 & 0.06 & \textbf{-88.13\%} ($p<.001$) & \textbf{+475.54\%} ($p<.001$) & \textbf{-97.94\%} ($p<.001$) \\
+Hot Sys ($T_\mathrm{sys}$) & 0.11 & 0.01 & 0.05 & 0.01 & 0.14 & 0.01 & \textbf{-54.55\%} ($p<.001$) & \textbf{+27.27\%} ($p<.001$) & \textbf{-64.29\%} ($p<.001$) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+

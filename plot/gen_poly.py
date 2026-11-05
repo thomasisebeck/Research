@@ -7,10 +7,13 @@ from scipy import stats
 # Configuration
 # -------------------------------------------------------------------------
 
-CSV_PATH = Path("runtime_times_all.csv")
-OUTPUT_TEX = Path("generated_poly_tables.tex")
+RUNTIME_CSV_PATH = Path("runtime_times_all.csv")
+BUILD_CSV_PATH = Path("build_times_all.csv")
 
-METRICS = [
+OUTPUT_RUNTIME_TEX = Path("generated_poly_runtime_tables.tex")
+OUTPUT_BUILD_TEX = Path("generated_poly_build_tables.tex")
+
+RUNTIME_METRICS = [
     ("runtime_ns", "Runtime (ns)"),
     ("cycles", "Cycles"),
     ("instructions", "Instructions"),
@@ -20,39 +23,46 @@ METRICS = [
     ("branch-misses", "Branch Misses"),
 ]
 
+BUILD_METRICS = [
+    ("cold_real", r"Cold Real ($T_\mathrm{real}$)"),
+    ("cold_user", r"Cold User ($T_\mathrm{user}$)"),
+    ("cold_sys", r"Cold Sys ($T_\mathrm{sys}$)"),
+    ("hot_real", r"Hot Real ($T_\mathrm{real}$)"),
+    ("hot_user", r"Hot User ($T_\mathrm{user}$)"),
+    ("hot_sys", r"Hot Sys ($T_\mathrm{sys}$)"),
+]
+
+RUNTIME_SAMPLE_SIZE = 30
+BUILD_SAMPLE_SIZE = 15
 
 # -------------------------------------------------------------------------
-# Utility Functions
+# Formatting & Statistics Helpers
 # -------------------------------------------------------------------------
-
 
 def format_latex_num(val: float) -> str:
     """Formats numbers with LaTeX thin spaces as thousands separators."""
-    if pd.isna(val):
+    if pd.isna(val) or val is None:
         return "N/A"
-    return f"{val:,.2f}".replace(",", r"\,")
+    if val >= 1000:
+        return f"{val:,.2f}".replace(",", r"\,")
+    return f"{val:.2f}"
 
-
-def compute_pct_and_pvalue(
-    mean_a: float,
-    std_a: float,
-    n_a: int,
-    mean_b: float,
-    std_b: float,
-    n_b: int,
-):
-    """Calculates percentage difference (A vs B) and Welch's t-test p-value.
-
-    Percentage diff = ((mean_a - mean_b) / mean_b) * 100
-    """
+def compute_pct_and_pvalue(mean_a: float, std_a: float, n_a: int,
+                           mean_b: float, std_b: float, n_b: int):
+    """Calculates percentage difference (A vs B) and Welch's t-test p-value."""
     if mean_b == 0 or pd.isna(mean_a) or pd.isna(mean_b):
         return 0.0, 1.0
 
     pct_diff = ((mean_a - mean_b) / mean_b) * 100.0
 
-    # Welch's t-test from summary stats
-    se_a = (std_a**2) / n_a
-    se_b = (std_b**2) / n_b
+    if std_a == 0 and std_b == 0:
+        if mean_a == mean_b:
+            return pct_diff, 1.0
+        # Minimal variance floor for zero-variance measurements
+        std_a, std_b = 1e-6, 1e-6
+
+    se_a = (std_a ** 2) / max(n_a, 1)
+    se_b = (std_b ** 2) / max(n_b, 1)
     se_diff = np.sqrt(se_a + se_b)
 
     if se_diff == 0:
@@ -60,220 +70,197 @@ def compute_pct_and_pvalue(
     else:
         t_stat = (mean_a - mean_b) / se_diff
         df_num = (se_a + se_b) ** 2
-        df_denom = (se_a**2) / (n_a - 1) + (se_b**2) / (n_b - 1)
+        df_denom = (se_a ** 2) / max(n_a - 1, 1) + (se_b ** 2) / max(n_b - 1, 1)
         df = df_num / df_denom if df_denom > 0 else (n_a + n_b - 2)
         p_val = stats.t.sf(np.abs(t_stat), df) * 2
 
     return pct_diff, p_val
 
-
 def format_diff_cell(pct_diff: float, p_val: float) -> str:
-    """Formats percentage change and p-value with bolding if p < 0.05."""
+    """Formats percentage change and p-value with bolding if statistically significant."""
     sign = "+" if pct_diff > 0 else ""
-    p_str = "$p < 0.001$" if p_val < 0.001 else f"$p = {p_val:.3f}$"
+    p_str = "$p<.001$" if p_val < 0.001 else f"$p={p_val:.3f}$"
     val_str = f"{sign}{pct_diff:.2f}\\%"
-
+    
     if p_val < 0.05:
-        bold_val = f"\\textbf{{{val_str}}}"
-        return f"{bold_val} ({p_str})"
-    else:
-        return f"{val_str} ({p_str})"
-
+        return f"\\textbf{{{val_str}}} ({p_str})"
+    return f"{val_str} ({p_str})"
 
 # -------------------------------------------------------------------------
-# Table Generators
+# Table 1: Polymorphism Runtime Performance Tables (Raw + Pairwise Split)
 # -------------------------------------------------------------------------
 
-def generate_between_language_poly_table(df: pd.DataFrame) -> str:
-    """Generates a single combined between-language statistical significance
-    table covering both Static (poly_stat) and Dynamic (poly_dyn) dispatch.
-    """
-    latex = []
-    latex.append(
-        "% ==================== Polymorphism Between-Language Comparison"
-        " ===================="
-    )
-    latex.append(r"\begin{table}[htbp]")
-    latex.append(r"\centering")
-    latex.append(
-        r"\caption{Polymorphism Between-Language Statistical Significance and"
-        r" Percentage Differences ($H_1: \text{Lang}_A \neq \text{Lang}_B$)}"
-    )
-    latex.append(r"\label{tab:poly_between_lang}")
-    latex.append(r"\begin{tabular}{l ccc}")
-    latex.append(r"\toprule")
-    latex.append(
-        r"\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} &"
-        r" \textbf{Rust vs. Zig} \\"
-    )
+def generate_poly_runtime_tables(csv_path: Path) -> str:
+    """Generates decoupled LaTeX tables for raw runtime metrics and pairwise comparisons."""
+    if not csv_path.is_file():
+        raise FileNotFoundError(f"Runtime CSV not found at {csv_path}")
+
+    df = pd.read_csv(csv_path, na_filter=False)
 
     sections = [
         ("poly_stat", "Static Polymorphism (poly\\_stat)"),
         ("poly_dyn", "Dynamic Polymorphism (poly\\_dyn)"),
     ]
 
-    for label, sec_title in sections:
-        sub_df = df[df["label"] == label]
+    output_latex = []
 
-        latex.append(r"\midrule")
-        latex.append(
-            r"\multicolumn{4}{c}{\textbf{\textit{" + sec_title + r"}}} \\"
-        )
-        latex.append(r"\midrule")
+    # 1. Raw Stats Table
+    raw_latex = [
+        "% ==================== Polymorphism Runtime Raw Stats Table ====================",
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{Polymorphism Runtime Performance --- Raw Metrics}",
+        r"\label{tab:poly_runtime_raw_stats}",
+        r"\vspace{2pt}",
+        r"\centerline{%",
+        r"\small",
+        r"\setlength{\tabcolsep}{6.0pt}",
+        r"\begin{tabular}{l r@{\,$\pm$\,}l r@{\,$\pm$\,}l r@{\,$\pm$\,}l}",
+        r"\toprule",
+        r"\textbf{Metric} & \multicolumn{2}{c}{\textbf{C++}} & \multicolumn{2}{c}{\textbf{Rust}} & \multicolumn{2}{c}{\textbf{Zig}} \\"
+    ]
 
-        for metric_key, metric_name in METRICS:
-            n_obs = 30
+    for label_key, sec_title in sections:
+        sub_df = df[df["label"] == label_key]
+        raw_latex.extend([r"\midrule", f"\\multicolumn{{7}}{{@{{}}l}}{{\\textbf{{\\small \\textit{{{sec_title}}}}}}} \\\\", r"\midrule"])
 
-            def get_stats(lang):
-                row = sub_df[sub_df["lang"] == lang]
+        for metric_prefix, metric_name in RUNTIME_METRICS:
+            def get_stats(lang_name):
+                row = sub_df[sub_df["lang"] == lang_name]
                 if row.empty:
-                    return 0.0, 0.0, n_obs
-                m = row[f"{metric_key}_mean"].values[0]
-                s = row[f"{metric_key}_std_dev"].values[0]
-                return float(m), float(s), n_obs
+                    return None, None
+                return float(row[f"{metric_prefix}_mean"].values[0]), float(row[f"{metric_prefix}_std_dev"].values[0])
 
-            cpp_m, cpp_s, cpp_n = get_stats("cpp")
-            rust_m, rust_s, rust_n = get_stats("rust")
-            zig_m, zig_s, zig_n = get_stats("zig")
+            cpp_m, cpp_s = get_stats("cpp")
+            rust_m, rust_s = get_stats("rust")
+            zig_m, zig_s = get_stats("zig")
 
-            rust_cpp_pct, rust_cpp_p = compute_pct_and_pvalue(
-                rust_m, rust_s, rust_n, cpp_m, cpp_s, cpp_n
-            )
-            zig_cpp_pct, zig_cpp_p = compute_pct_and_pvalue(
-                zig_m, zig_s, zig_n, cpp_m, cpp_s, cpp_n
-            )
-            rust_zig_pct, rust_zig_p = compute_pct_and_pvalue(
-                rust_m, rust_s, rust_n, zig_m, zig_s, zig_n
-            )
+            cpp_str = f"{format_latex_num(cpp_m)} & {format_latex_num(cpp_s)}" if cpp_m is not None else "N/A & N/A"
+            rust_str = f"{format_latex_num(rust_m)} & {format_latex_num(rust_s)}" if rust_m is not None else "N/A & N/A"
+            zig_str = f"{format_latex_num(zig_m)} & {format_latex_num(zig_s)}" if zig_m is not None else "N/A & N/A"
 
-            cell_rust_cpp = format_diff_cell(rust_cpp_pct, rust_cpp_p)
-            cell_zig_cpp = format_diff_cell(zig_cpp_pct, zig_cpp_p)
-            cell_rust_zig = format_diff_cell(rust_zig_pct, rust_zig_p)
+            raw_latex.append(f"{metric_name} & {cpp_str} & {rust_str} & {zig_str} \\\\")
 
-            latex.append(
-                f"{metric_name:18s} & {cell_rust_cpp} & {cell_zig_cpp} &"
-                f" {cell_rust_zig} \\\\"
-            )
+    raw_latex.extend([r"\bottomrule", r"\end{tabular}%", r"}", r"\end{table}", "\n"])
+    output_latex.append("\n".join(raw_latex))
 
-    latex.append(r"\bottomrule")
-    latex.append(r"\end{tabular}")
-    latex.append(r"\end{table}")
-    latex.append("\n")
+    # 2. Pairwise Language Comparisons Table
+    pairwise_latex = [
+        "% ==================== Polymorphism Runtime Pairwise Comparisons Table ====================",
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{Polymorphism Runtime Performance --- Pairwise Language Comparisons}",
+        r"\label{tab:poly_runtime_pairwise}",
+        r"\vspace{2pt}",
+        r"\centerline{%",
+        r"\small",
+        r"\setlength{\tabcolsep}{6.0pt}",
+        r"\begin{tabular}{l c c c}",
+        r"\toprule",
+        r"\textbf{Metric} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\"
+    ]
 
+    for label_key, sec_title in sections:
+        sub_df = df[df["label"] == label_key]
+        pairwise_latex.extend([r"\midrule", f"\\multicolumn{{4}}{{@{{}}l}}{{\\textbf{{\\small \\textit{{{sec_title}}}}}}} \\\\", r"\midrule"])
+
+        for metric_prefix, metric_name in RUNTIME_METRICS:
+            def get_stats(lang_name):
+                row = sub_df[sub_df["lang"] == lang_name]
+                if row.empty:
+                    return None, None
+                return float(row[f"{metric_prefix}_mean"].values[0]), float(row[f"{metric_prefix}_std_dev"].values[0])
+
+            cpp_m, cpp_s = get_stats("cpp")
+            rust_m, rust_s = get_stats("rust")
+            zig_m, zig_s = get_stats("zig")
+
+            r_c = format_diff_cell(*compute_pct_and_pvalue(rust_m, rust_s, RUNTIME_SAMPLE_SIZE, cpp_m, cpp_s, RUNTIME_SAMPLE_SIZE)) if (rust_m is not None and cpp_m is not None) else "N/A"
+            z_c = format_diff_cell(*compute_pct_and_pvalue(zig_m, zig_s, RUNTIME_SAMPLE_SIZE, cpp_m, cpp_s, RUNTIME_SAMPLE_SIZE)) if (zig_m is not None and cpp_m is not None) else "N/A"
+            r_z = format_diff_cell(*compute_pct_and_pvalue(rust_m, rust_s, RUNTIME_SAMPLE_SIZE, zig_m, zig_s, RUNTIME_SAMPLE_SIZE)) if (rust_m is not None and zig_m is not None) else "N/A"
+
+            pairwise_latex.append(f"{metric_name} & {r_c} & {z_c} & {r_z} \\\\")
+
+    pairwise_latex.extend([r"\bottomrule", r"\end{tabular}%", r"}", r"\end{table}", "\n"])
+    output_latex.append("\n".join(pairwise_latex))
+
+    return "\n".join(output_latex)
+
+# -------------------------------------------------------------------------
+# Table 2: Polymorphism Build Performance Table
+# -------------------------------------------------------------------------
+
+def generate_poly_build_table(csv_path: Path) -> str:
+    """Generates a single unified LaTeX table for polymorphism build performance."""
+    if not csv_path.is_file():
+        raise FileNotFoundError(f"Build CSV not found at {csv_path}")
+
+    df = pd.read_csv(csv_path, na_filter=False)
+
+    sections = [
+        ("poly_stat", "Static Polymorphism (poly\\_stat)"),
+        ("poly_dyn", "Dynamic Polymorphism (poly\\_dyn)"),
+    ]
+
+    latex = [
+        "% ==================== Polymorphism Build Performance Table ====================",
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{Polymorphism Build Performance --- Raw Metrics and Inter-Language Comparisons}",
+        r"\label{tab:poly_build_performance}",
+        r"\vspace{2pt}",
+        r"\centerline{%",
+        r"\small",
+        r"\setlength{\tabcolsep}{1.2pt}",
+        r"\begin{tabular}{l r@{\,$\pm$\,}l r@{\,$\pm$\,}l r@{\,$\pm$\,}l c c c}",
+        r"\toprule",
+        r"\textbf{Metric} & \multicolumn{2}{c}{\textbf{C++ (s)}} & \multicolumn{2}{c}{\textbf{Rust (s)}} & \multicolumn{2}{c}{\textbf{Zig (s)}} & \textbf{Rust vs. C++} & \textbf{Zig vs. C++} & \textbf{Rust vs. Zig} \\"
+    ]
+
+    for label_key, sec_title in sections:
+        sub_df = df[df["label"] == label_key]
+        latex.extend([r"\midrule", f"\\multicolumn{{10}}{{@{{}}l}}{{\\textbf{{\\small \\textit{{{sec_title}}}}}}} \\\\", r"\midrule"])
+
+        for metric_prefix, metric_name in BUILD_METRICS:
+            def get_stats(lang_name):
+                row = sub_df[sub_df["lang"] == lang_name]
+                if row.empty:
+                    return None, None
+                m = row[f"{metric_prefix}_mean"].values[0]
+                s = row[f"{metric_prefix}_std_dev"].values[0]
+                return float(m), float(s)
+
+            cpp_m, cpp_s = get_stats("cpp")
+            rust_m, rust_s = get_stats("rust")
+            zig_m, zig_s = get_stats("zig")
+
+            cpp_str = f"{format_latex_num(cpp_m)} & {format_latex_num(cpp_s)}" if cpp_m is not None else "N/A & N/A"
+            rust_str = f"{format_latex_num(rust_m)} & {format_latex_num(rust_s)}" if rust_m is not None else "N/A & N/A"
+            zig_str = f"{format_latex_num(zig_m)} & {format_latex_num(zig_s)}" if zig_m is not None else "N/A & N/A"
+
+            r_c = format_diff_cell(*compute_pct_and_pvalue(rust_m, rust_s, BUILD_SAMPLE_SIZE, cpp_m, cpp_s, BUILD_SAMPLE_SIZE)) if (rust_m is not None and cpp_m is not None) else "N/A"
+            z_c = format_diff_cell(*compute_pct_and_pvalue(zig_m, zig_s, BUILD_SAMPLE_SIZE, cpp_m, cpp_s, BUILD_SAMPLE_SIZE)) if (zig_m is not None and cpp_m is not None) else "N/A"
+            r_z = format_diff_cell(*compute_pct_and_pvalue(rust_m, rust_s, BUILD_SAMPLE_SIZE, zig_m, zig_s, BUILD_SAMPLE_SIZE)) if (rust_m is not None and zig_m is not None) else "N/A"
+
+            latex.append(f"{metric_name} & {cpp_str} & {rust_str} & {zig_str} & {r_c} & {z_c} & {r_z} \\\\")
+
+    latex.extend([r"\bottomrule", r"\end{tabular}%", r"}", r"\end{table}", "\n"])
     return "\n".join(latex)
-
-
-def generate_within_language_poly_table(df: pd.DataFrame) -> str:
-    """Generates a within-language dispatch comparison table for ALL metrics,
-
-    showing absolute values (dyn -> stat) in the first row and percentage
-    differences with p-values in the second row for each metric.
-    """
-    sub_dyn = df[df["label"] == "poly_dyn"]
-    sub_stat = df[df["label"] == "poly_stat"]
-
-    latex = []
-    latex.append(
-        "% ==================== Polymorphism Within-Language Comparison"
-        " ===================="
-    )
-    latex.append(r"\begin{table}[htbp]")
-    latex.append(r"\centering")
-    latex.append(r"\footnotesize")
-    latex.append(
-        r"\caption{Polymorphism Within-Language Comparison: Dynamic"
-        r" (\texttt{poly\_dyn}) vs. Static (\texttt{poly\_stat}) Absolute"
-        r" Values and Percentage Differences Across All Metrics}"
-    )
-    latex.append(r"\label{tab:poly_within_lang}")
-    latex.append(r"\begin{tabular}{l ccc}")
-    latex.append(r"\toprule")
-    latex.append(
-        r"\textbf{Metric} & \textbf{C++} & \textbf{Rust} & \textbf{Zig} \\"
-    )
-
-    langs = [("cpp", "C++"), ("rust", "Rust"), ("zig", "Zig")]
-    n_obs = 30
-
-    for metric_key, metric_name in METRICS:
-        latex.append(r"\midrule")
-
-        raw_val_cells = []
-        pct_diff_cells = []
-
-        for lang_code, lang_disp in langs:
-            row_dyn = sub_dyn[sub_dyn["lang"] == lang_code]
-            row_stat = sub_stat[sub_stat["lang"] == lang_code]
-
-            if not row_dyn.empty and not row_stat.empty:
-                dyn_m = float(row_dyn[f"{metric_key}_mean"].values[0])
-                dyn_s = float(row_dyn[f"{metric_key}_std_dev"].values[0])
-                stat_m = float(row_stat[f"{metric_key}_mean"].values[0])
-                stat_s = float(row_stat[f"{metric_key}_std_dev"].values[0])
-
-                # Row 1: Absolute numbers formatted as dyn -> stat
-                dyn_m_str = format_latex_num(dyn_m)
-                stat_m_str = format_latex_num(stat_m)
-                raw_val_cells.append(
-                    f"${dyn_m_str} \\rightarrow {stat_m_str}$"
-                )
-
-                # Row 2: Percentage difference + p-value
-                pct_diff, p_val = compute_pct_and_pvalue(
-                    stat_m, stat_s, n_obs, dyn_m, dyn_s, n_obs
-                )
-                pct_diff_cells.append(format_diff_cell(pct_diff, p_val))
-            else:
-                raw_val_cells.append("N/A")
-                pct_diff_cells.append("N/A")
-
-        # Multipage / Multiline metric label spanning the 2 rows
-        label_cell = f"\\multirow{{2}}{{*}}{{{metric_name}}}"
-        latex.append(
-            f"{label_cell:22s} & {raw_val_cells[0]} & {raw_val_cells[1]} &"
-            f" {raw_val_cells[2]} \\\\"
-        )
-        latex.append(
-            f"{'':22s} & {pct_diff_cells[0]} & {pct_diff_cells[1]} &"
-            f" {pct_diff_cells[2]} \\\\"
-        )
-
-    latex.append(r"\bottomrule")
-    latex.append(r"\end{tabular}")
-    latex.append(r"\end{table}")
-    latex.append("\n")
-
-    return "\n".join(latex)
-
 
 # -------------------------------------------------------------------------
 # Main Execution
 # -------------------------------------------------------------------------
 
-
 def main():
-    if not CSV_PATH.is_file():
-        print(f"CSV file not found at {CSV_PATH}.")
-        return
+    if RUNTIME_CSV_PATH.is_file():
+        runtime_tex = generate_poly_runtime_tables(RUNTIME_CSV_PATH)
+        OUTPUT_RUNTIME_TEX.write_text(runtime_tex, encoding="utf-8")
+        print(f"Generated Decoupled Runtime Tables -> {OUTPUT_RUNTIME_TEX}")
 
-    df = pd.read_csv(CSV_PATH, na_filter=False)
-    output_tables = []
-
-    # 1. Between-Language Comparison (Combines poly_stat and poly_dyn)
-    output_tables.append(generate_between_language_poly_table(df))
-
-    # 2. Within-Language Comparison (All Metrics: Static vs. Dynamic)
-    output_tables.append(generate_within_language_poly_table(df))
-
-    full_tex_content = "\n".join(output_tables)
-
-    with open(OUTPUT_TEX, "w", encoding="utf-8") as f:
-        f.write(full_tex_content)
-
-    print(
-        f"Successfully generated polymorphism LaTeX tables to: {OUTPUT_TEX}"
-    )
-
+    if BUILD_CSV_PATH.is_file():
+        build_tex = generate_poly_build_table(BUILD_CSV_PATH)
+        OUTPUT_BUILD_TEX.write_text(build_tex, encoding="utf-8")
+        print(f"Generated Build Table -> {OUTPUT_BUILD_TEX}")
 
 if __name__ == "__main__":
     main()
